@@ -1,18 +1,31 @@
 # Photoshop MCP Server
 
+[![npm version](https://img.shields.io/npm/v/@alisaitteke/photoshop-mcp.svg)](https://www.npmjs.com/package/@alisaitteke/photoshop-mcp)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-lightgrey.svg)]()
+
 A Model Context Protocol (MCP) server that enables AI assistants like Claude and Cursor to control Adobe Photoshop programmatically. This allows you to create designs, manipulate images, and automate Photoshop workflows through natural language commands while working in your IDE.
+
+> **🎨 42+ Tools** | **🖥️ Cross-Platform** | **📦 NPX Ready** | **🔧 ExtendScript API**
 
 ## Features
 
 - ✅ **Cross-Platform Support**: Works on both Windows and macOS
 - ✅ **Multiple Photoshop Versions**: Supports Photoshop 2012-2025+
-- ✅ **Dual API Support**: Automatically uses UXP for modern versions (23.5+) or ExtendScript for legacy versions
+- ✅ **ExtendScript API**: Universal compatibility via AppleScript/COM automation
 - ✅ **Auto-Detection**: Automatically finds Photoshop installation on your system
-- ✅ **Document Management**: Create, open, save, and close documents
-- ✅ **Layer Operations**: Create, delete, and manipulate layers
-- ✅ **Text Layers**: Create and format text with various options
-- ✅ **Image Manipulation**: Resize, crop, and transform images
-- ✅ **Color Operations**: Fill layers with colors and gradients
+- ✅ **42+ Tools**: Comprehensive Photoshop automation
+- ✅ **Document Management**: Create, open, save, close, crop documents
+- ✅ **Layer Operations**: Create, delete, duplicate, merge, transform layers
+- ✅ **Layer Properties**: Opacity, blend modes, visibility, locking
+- ✅ **Text Formatting**: Font, size, color, alignment controls
+- ✅ **Image Placement**: Place images, open files, fit to document
+- ✅ **Filters**: Gaussian Blur, Sharpen, Noise, Motion Blur
+- ✅ **Color Adjustments**: Brightness/Contrast, Hue/Saturation, Auto Levels/Contrast
+- ✅ **Selections & Masks**: Rectangular selections, layer masks
+- ✅ **Actions**: Play recorded actions, execute custom scripts
+- ✅ **Auto-Rasterize**: Automatically converts layers when needed for filters
 - ✅ **NPX Support**: Easy execution via npx without installation
 
 ## Installation
@@ -219,6 +232,98 @@ Get list of all layers in the active document.
 photoshop_get_layers()
 ```
 
+#### `photoshop_set_layer_opacity`
+Set the opacity of the active layer.
+
+**Parameters:**
+- `opacity` (number, required): Opacity value (0-100)
+
+```javascript
+// Example: Set opacity to 75%
+photoshop_set_layer_opacity({ opacity: 75 })
+```
+
+#### `photoshop_set_layer_blend_mode`
+Set the blend mode of the active layer.
+
+**Parameters:**
+- `blendMode` (string, required): Blend mode (NORMAL, MULTIPLY, SCREEN, OVERLAY, etc.)
+
+```javascript
+// Example: Set blend mode to multiply
+photoshop_set_layer_blend_mode({ blendMode: "MULTIPLY" })
+```
+
+Available blend modes: NORMAL, DISSOLVE, DARKEN, MULTIPLY, COLORBURN, LINEARBURN, DARKERCOLOR, LIGHTEN, SCREEN, COLORDODGE, LINEARDODGE, LIGHTERCOLOR, OVERLAY, SOFTLIGHT, HARDLIGHT, VIVIDLIGHT, LINEARLIGHT, PINLIGHT, HARDMIX, DIFFERENCE, EXCLUSION, SUBTRACT, DIVIDE, HUE, SATURATION, COLOR, LUMINOSITY
+
+#### `photoshop_set_layer_visibility`
+Show or hide the active layer.
+
+**Parameters:**
+- `visible` (boolean, required): Visibility state
+
+```javascript
+// Example: Hide layer
+photoshop_set_layer_visibility({ visible: false })
+```
+
+#### `photoshop_set_layer_locked`
+Lock or unlock the active layer.
+
+**Parameters:**
+- `locked` (boolean, required): Lock state
+
+```javascript
+// Example: Lock layer
+photoshop_set_layer_locked({ locked: true })
+```
+
+#### `photoshop_rename_layer`
+Rename the active layer.
+
+**Parameters:**
+- `name` (string, required): New layer name
+
+```javascript
+// Example: Rename layer
+photoshop_rename_layer({ name: "Hero Image" })
+```
+
+#### `photoshop_duplicate_layer`
+Duplicate the active layer.
+
+**Parameters:**
+- `newName` (string, optional): Name for duplicated layer
+
+```javascript
+// Example: Duplicate layer with new name
+photoshop_duplicate_layer({ newName: "Background Copy" })
+```
+
+#### `photoshop_merge_visible_layers`
+Merge all visible layers into one.
+
+```javascript
+// Example: Merge visible layers
+photoshop_merge_visible_layers()
+```
+
+#### `photoshop_flatten_image`
+Flatten all layers into a single background layer.
+
+```javascript
+// Example: Flatten image
+photoshop_flatten_image()
+```
+
+#### `photoshop_rasterize_layer`
+Rasterize the active layer (convert text/smart object to normal layer).
+
+```javascript
+// Example: Rasterize layer
+photoshop_rasterize_layer()
+```
+
 ### Layer Transformations
 
 #### `photoshop_fit_layer_to_document`
@@ -276,6 +381,286 @@ Rotate the active layer.
 photoshop_rotate_layer({ degrees: 45 })
 ```
 
+### Filters
+
+#### `photoshop_apply_gaussian_blur`
+Apply Gaussian Blur filter to the active layer.
+
+**Parameters:**
+- `radius` (number, required): Blur radius in pixels (0.1-250)
+
+```javascript
+// Example: Apply 10px blur
+photoshop_apply_gaussian_blur({ radius: 10 })
+```
+
+#### `photoshop_apply_sharpen`
+Apply Unsharp Mask (sharpen) filter.
+
+**Parameters:**
+- `amount` (number, required): Sharpening amount in percent (1-500)
+- `radius` (number, required): Radius in pixels (0.1-250)
+- `threshold` (number, optional): Threshold levels (0-255, default: 0)
+
+```javascript
+// Example: Sharpen image
+photoshop_apply_sharpen({
+  amount: 100,
+  radius: 1.5,
+  threshold: 0
+})
+```
+
+#### `photoshop_apply_noise`
+Apply Add Noise filter.
+
+**Parameters:**
+- `amount` (number, required): Noise amount in percent (0.1-400)
+- `distribution` (string, optional): UNIFORM or GAUSSIAN (default: UNIFORM)
+- `monochromatic` (boolean, optional): Monochromatic noise (default: false)
+
+```javascript
+// Example: Add noise
+photoshop_apply_noise({
+  amount: 10,
+  distribution: "GAUSSIAN",
+  monochromatic: false
+})
+```
+
+#### `photoshop_apply_motion_blur`
+Apply Motion Blur filter.
+
+**Parameters:**
+- `angle` (number, required): Blur angle in degrees (-360 to 360)
+- `radius` (number, required): Blur distance in pixels (1-999)
+
+```javascript
+// Example: Apply motion blur
+photoshop_apply_motion_blur({
+  angle: 45,
+  radius: 20
+})
+```
+
+### Color Adjustments
+
+#### `photoshop_adjust_brightness_contrast`
+Adjust brightness and contrast.
+
+**Parameters:**
+- `brightness` (number, required): Brightness adjustment (-100 to 100)
+- `contrast` (number, required): Contrast adjustment (-100 to 100)
+
+```javascript
+// Example: Increase brightness and contrast
+photoshop_adjust_brightness_contrast({
+  brightness: 20,
+  contrast: 15
+})
+```
+
+#### `photoshop_adjust_hue_saturation`
+Adjust hue, saturation, and lightness.
+
+**Parameters:**
+- `hue` (number, required): Hue shift (-180 to 180)
+- `saturation` (number, required): Saturation adjustment (-100 to 100)
+- `lightness` (number, required): Lightness adjustment (-100 to 100)
+
+```javascript
+// Example: Adjust colors
+photoshop_adjust_hue_saturation({
+  hue: 30,
+  saturation: 20,
+  lightness: 0
+})
+```
+
+#### `photoshop_auto_levels`
+Apply auto levels adjustment.
+
+```javascript
+// Example: Auto levels
+photoshop_auto_levels()
+```
+
+#### `photoshop_auto_contrast`
+Apply auto contrast adjustment.
+
+```javascript
+// Example: Auto contrast
+photoshop_auto_contrast()
+```
+
+#### `photoshop_desaturate`
+Desaturate the layer (convert to grayscale).
+
+```javascript
+// Example: Desaturate
+photoshop_desaturate()
+```
+
+#### `photoshop_invert`
+Invert colors of the layer.
+
+```javascript
+// Example: Invert colors
+photoshop_invert()
+```
+
+### Text Formatting
+
+#### `photoshop_set_text_font`
+Set font family and size for active text layer.
+
+**Parameters:**
+- `fontName` (string, required): Font family name
+- `fontSize` (number, optional): Font size in points
+
+```javascript
+// Example: Change font
+photoshop_set_text_font({
+  fontName: "Helvetica",
+  fontSize: 48
+})
+```
+
+#### `photoshop_set_text_color`
+Set color for active text layer.
+
+**Parameters:**
+- `red` (number, required): Red component (0-255)
+- `green` (number, required): Green component (0-255)
+- `blue` (number, required): Blue component (0-255)
+
+```javascript
+// Example: Set text to blue
+photoshop_set_text_color({
+  red: 0,
+  green: 100,
+  blue: 255
+})
+```
+
+#### `photoshop_set_text_alignment`
+Set text alignment.
+
+**Parameters:**
+- `alignment` (string, required): LEFT, CENTER, RIGHT, LEFTJUSTIFIED, CENTERJUSTIFIED, RIGHTJUSTIFIED, FULLYJUSTIFIED
+
+```javascript
+// Example: Center align text
+photoshop_set_text_alignment({ alignment: "CENTER" })
+```
+
+#### `photoshop_update_text_content`
+Update text content of active text layer.
+
+**Parameters:**
+- `text` (string, required): New text content
+
+```javascript
+// Example: Update text
+photoshop_update_text_content({ text: "New Text" })
+```
+
+### Selections & Masks
+
+#### `photoshop_select_rectangle`
+Create a rectangular selection.
+
+**Parameters:**
+- `left`, `top`, `right`, `bottom` (number, required): Selection bounds in pixels
+
+```javascript
+// Example: Select area
+photoshop_select_rectangle({
+  left: 100,
+  top: 100,
+  right: 500,
+  bottom: 400
+})
+```
+
+#### `photoshop_select_all`
+Select the entire document.
+
+```javascript
+// Example: Select all
+photoshop_select_all()
+```
+
+#### `photoshop_deselect`
+Clear all selections.
+
+```javascript
+// Example: Deselect
+photoshop_deselect()
+```
+
+#### `photoshop_invert_selection`
+Invert the current selection.
+
+```javascript
+// Example: Invert selection
+photoshop_invert_selection()
+```
+
+#### `photoshop_create_layer_mask`
+Create a layer mask from the current selection.
+
+```javascript
+// Example: Create mask
+photoshop_create_layer_mask()
+```
+
+#### `photoshop_delete_layer_mask`
+Delete the layer mask from active layer.
+
+```javascript
+// Example: Delete mask
+photoshop_delete_layer_mask()
+```
+
+#### `photoshop_apply_layer_mask`
+Apply (merge) the layer mask to the layer.
+
+```javascript
+// Example: Apply mask
+photoshop_apply_layer_mask()
+```
+
+### Actions & Automation
+
+#### `photoshop_play_action`
+Play a recorded action from the Actions palette.
+
+**Parameters:**
+- `actionName` (string, required): Action name
+- `actionSetName` (string, required): Action set name
+
+```javascript
+// Example: Play action
+photoshop_play_action({
+  actionName: "My Action",
+  actionSetName: "Default Actions"
+})
+```
+
+#### `photoshop_execute_script`
+Execute custom ExtendScript code (advanced).
+
+**Parameters:**
+- `code` (string, required): ExtendScript code
+
+```javascript
+// Example: Execute custom code
+photoshop_execute_script({
+  code: "app.beep();"
+})
+```
+
 ### Image Manipulation
 
 #### `photoshop_resize_image`
@@ -290,6 +675,25 @@ Resize the active image.
 photoshop_resize_image({
   width: 1080,
   height: 1080
+})
+```
+
+#### `photoshop_crop_document`
+Crop the document to specified bounds.
+
+**Parameters:**
+- `left` (number, required): Left edge in pixels
+- `top` (number, required): Top edge in pixels
+- `right` (number, required): Right edge in pixels
+- `bottom` (number, required): Bottom edge in pixels
+
+```javascript
+// Example: Crop document
+photoshop_crop_document({
+  left: 100,
+  top: 100,
+  right: 1820,
+  bottom: 980
 })
 ```
 
@@ -322,6 +726,167 @@ photoshop_open_image({
   filePath: "/Users/username/Pictures/photo.jpg"
 })
 ```
+
+## Example Prompts
+
+Below are example prompts you can use with AI assistants (Claude, Cursor, etc.) when this MCP server is configured:
+
+<details>
+<summary>🎨 Basic Design Creation</summary>
+
+```
+Create a 1920x1080 Photoshop document with RGB color mode.
+Add a light blue background layer and fill it with RGB(240, 248, 255).
+Add centered text "Welcome" in 64pt font.
+Save as welcome.psd to my Desktop.
+```
+
+</details>
+
+<details>
+<summary>🖼️ Stock Image Design (with Pexels MCP)</summary>
+
+```
+Search Pexels for "mountain sunset" images.
+Create a 1920x1080 Photoshop document.
+Place the downloaded image and fit it to fill the entire canvas.
+Apply a subtle Gaussian blur of 3px.
+Increase brightness by 15 and contrast by 10.
+Add white text "Adventure Awaits" centered at the top in 72pt.
+Set the text opacity to 90% and blend mode to OVERLAY.
+Save as adventure.jpg with quality 10.
+```
+
+</details>
+
+<details>
+<summary>✨ Photo Enhancement</summary>
+
+```
+Open photo.jpg from my Desktop in Photoshop.
+Apply auto levels and auto contrast.
+Apply unsharp mask with amount 120%, radius 1.5, threshold 0.
+Increase saturation by 15.
+Crop to remove 100px from each edge.
+Save as enhanced-photo.jpg with quality 12.
+```
+
+</details>
+
+<details>
+<summary>🎭 Layer Effects & Blending</summary>
+
+```
+Create a 1200x800 document.
+Add a new layer named "Background" and fill with RGB(50, 50, 50).
+Place logo.png at position (100, 100).
+Fit the logo layer to 50% of its current size.
+Set blend mode to SCREEN and opacity to 85%.
+Add another layer, fill with RGB(255, 100, 50).
+Set this layer's blend mode to MULTIPLY and opacity to 60%.
+Merge all visible layers.
+Save as composite.psd.
+```
+
+</details>
+
+<details>
+<summary>📝 Text Poster Design</summary>
+
+```
+Create a 1080x1350 portrait document (Instagram story size).
+Add a layer and fill with gradient-like color RGB(120, 40, 200).
+Add text "SUMMER" at (540, 300) in 96pt.
+Change text color to white RGB(255, 255, 255).
+Set text alignment to CENTER.
+Add another text "2026" at (540, 450) in 128pt, white color.
+Apply Gaussian blur 2px to the background layer.
+Save as summer-poster.png.
+```
+
+</details>
+
+<details>
+<summary>🎬 Batch Processing</summary>
+
+```
+Open image1.jpg.
+Resize to 1920x1080.
+Apply auto contrast.
+Apply subtle sharpen (amount 80%, radius 1.0).
+Save as processed-1.jpg with quality 10.
+Close without saving changes to original.
+
+Repeat for image2.jpg and image3.jpg.
+```
+
+</details>
+
+<details>
+<summary>🖌️ Creative Manipulation</summary>
+
+```
+Create a 2000x2000 square document.
+Place abstract-pattern.jpg and fit to fill document.
+Duplicate the layer.
+On the duplicate, apply motion blur at 45 degrees, radius 50px.
+Set blend mode to OVERLAY and opacity to 70%.
+Add centered text "MOTION" in 120pt white.
+Apply a rectangular selection from (200, 200) to (1800, 1800).
+Invert the selection and delete (to create a border effect).
+Flatten the image.
+Save as motion-art.jpg.
+```
+
+</details>
+
+<details>
+<summary>🎯 Advanced Workflow</summary>
+
+```
+Create a 3000x2000 document at 300 DPI for print.
+Place hero-image.jpg and fit to fill the canvas.
+Duplicate the image layer.
+On the duplicate, desaturate it completely.
+Set blend mode to LUMINOSITY and opacity to 50%.
+Create a new layer named "Overlay".
+Fill with RGB(255, 150, 0) and set blend mode to SOFTLIGHT at 30% opacity.
+Add text "PORTFOLIO" at top center (1500, 200) in 96pt.
+Set text color to white.
+Add subtext "2026 Collection" at (1500, 320) in 36pt.
+Create a rectangular selection around the text area.
+Create a layer mask on the overlay layer.
+Merge visible layers.
+Save as portfolio-cover.psd.
+Export as portfolio-cover.jpg at quality 12.
+```
+
+</details>
+
+<details>
+<summary>🔄 Using Actions</summary>
+
+```
+Open my-photo.jpg.
+Play the "Vintage Look" action from "My Actions" set.
+Adjust brightness by -10 to darken slightly.
+Save as vintage-photo.jpg.
+```
+
+</details>
+
+<details>
+<summary>⚡ Custom Script Execution</summary>
+
+```
+Execute this custom ExtendScript code:
+app.beep();
+alert('Processing started!');
+```
+
+</details>
+
+---
 
 ## Usage Examples
 
@@ -505,33 +1070,60 @@ npm run lint
 npm run format
 ```
 
+## Quick Start Examples
+
+### 💡 Common Use Cases
+
+| Task | Prompt Example |
+|------|----------------|
+| **Basic Design** | "Create 1920x1080 document, add blue background, center text 'Hello'" |
+| **Photo Edit** | "Open photo.jpg, apply auto levels, sharpen 100%, save as edited.jpg" |
+| **Stock Image** | "Place image.jpg, fit to fill canvas, add overlay text 'Summer 2026'" |
+| **Layer Effects** | "Set active layer blend mode to MULTIPLY, opacity 80%" |
+| **Filters** | "Apply 10px Gaussian blur to current layer" |
+| **Text Styling** | "Change text to Helvetica 64pt, color red, center aligned" |
+| **Batch Work** | "Resize to 1080x1080, auto contrast, save as square.jpg, close" |
+| **Masks** | "Select rectangle 100,100 to 500,500, create layer mask" |
+
+---
+
 ## Architecture
 
 ```
 photoshop-mcp/
 ├── src/
-│   ├── core/           # MCP server core
-│   │   ├── server.ts
-│   │   ├── session.ts
-│   │   └── tool-registry.ts
-│   ├── platform/       # Platform-specific detection & execution
-│   │   ├── detector.ts
-│   │   ├── connection.ts
-│   │   ├── windows-detector.ts
-│   │   ├── windows-executor.ts
-│   │   ├── macos-detector.ts
-│   │   └── macos-executor.ts
-│   ├── api/           # Photoshop API abstractions
-│   │   ├── photoshop-api.ts
-│   │   ├── batch-play.ts
-│   │   └── extendscript.ts
-│   ├── tools/         # MCP tool implementations
-│   │   ├── document-tools.ts
-│   │   ├── layer-tools.ts
-│   │   └── image-tools.ts
-│   └── utils/         # Utilities
-│       └── logger.ts
-└── examples/          # Configuration examples
+│   ├── core/              # MCP server core
+│   │   ├── server.ts      # Main MCP server
+│   │   ├── session.ts     # Session management
+│   │   └── tool-registry.ts  # Tool registration system
+│   ├── platform/          # Platform-specific detection & execution
+│   │   ├── detector.ts    # Main detector
+│   │   ├── connection.ts  # Connection manager
+│   │   ├── windows-detector.ts  # Windows registry detection
+│   │   ├── windows-executor.ts  # Windows COM automation
+│   │   ├── macos-detector.ts    # macOS Spotlight detection
+│   │   └── macos-executor.ts    # macOS AppleScript execution
+│   ├── api/              # Photoshop API abstractions
+│   │   ├── photoshop-api.ts    # API factory
+│   │   ├── batch-play.ts       # UXP batchPlay helpers (legacy)
+│   │   └── extendscript.ts     # ExtendScript snippets library
+│   ├── tools/            # MCP tool implementations (42+ tools)
+│   │   ├── document-tools.ts        # Document operations
+│   │   ├── layer-tools.ts           # Layer creation/deletion
+│   │   ├── layer-properties-tools.ts # Opacity, blend modes, etc.
+│   │   ├── layer-transform-tools.ts  # Scale, rotate, move
+│   │   ├── image-tools.ts           # Resize, crop
+│   │   ├── image-placement-tools.ts # Place/open images
+│   │   ├── filter-tools.ts          # Blur, sharpen, noise
+│   │   ├── adjustment-tools.ts      # Color adjustments
+│   │   ├── text-tools.ts            # Text formatting
+│   │   ├── selection-tools.ts       # Selections & masks
+│   │   └── action-tools.ts          # Actions & custom scripts
+│   └── utils/            # Utilities
+│       └── logger.ts     # Logging system (stderr-based)
+└── examples/             # Configuration examples
+    ├── cursor-config.json
+    └── claude-desktop-config.json
 ```
 
 ## Contributing
