@@ -1,0 +1,38 @@
+# Source files
+src/
+tsconfig.json
+eslint.config.js
+
+# Development
+.taskmaster/
+examples/
+
+# Tests
+*.test.ts
+*.spec.ts
+test/
+tests/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Documentation (keep README)
+docs/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Other
+*.log
+.env
+.env.*
