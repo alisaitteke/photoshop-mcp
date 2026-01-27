@@ -12,8 +12,8 @@ A Model Context Protocol (MCP) server that enables AI assistants like Claude and
 
 ## Features
 
-- ✅ **Cross-Platform Support**: Works on both Windows and macOS
-- ✅ **Multiple Photoshop Versions**: Supports Photoshop 2012-2025+
+- ✅ **Works on both Windows and macOS**
+- ✅ **Supports Photoshop 2012-2025+**
 - ✅ **ExtendScript API**: Universal compatibility via AppleScript/COM automation
 - ✅ **Auto-Detection**: Automatically finds Photoshop installation on your system
 - ✅ **50+ Tools**: Comprehensive Photoshop automation
@@ -29,7 +29,6 @@ A Model Context Protocol (MCP) server that enables AI assistants like Claude and
 - ✅ **Actions**: Play recorded actions, execute custom scripts
 - ✅ **Auto-Rasterize**: Automatically converts layers when needed for filters
 - ✅ **Context Tracking**: Returns document/layer state after each operation for AI context awareness
-- ✅ **NPX Support**: Easy execution via npx without installation
 
 ## Installation
 
