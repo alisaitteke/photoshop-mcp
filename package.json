@@ -36,7 +36,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4"
   },
-  "mcpName": "ai.alisaitteke/photoshop-mcp",
+  "mcpName": "io.github.alisaitteke/photoshop-mcp",
   "devDependencies": {
     "@types/node": "^22.10.5",
     "@typescript-eslint/eslint-plugin": "^8.20.0",
