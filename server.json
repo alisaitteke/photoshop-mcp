@@ -7,7 +7,7 @@
     "source": "github"
   },
   "version": "0.1.2",
-  "mcpName": "ai.alisaitteke/photoshop-mcp",
+  "mcpName": "io.github.alisaitteke/photoshop-mcp",
   "packages": [
     {
       "registryType": "npm",
