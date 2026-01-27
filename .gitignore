@@ -42,3 +42,4 @@ coverage/
 tmp/
 temp/
 *.tmp
+app_data
