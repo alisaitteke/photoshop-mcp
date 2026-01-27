@@ -1,4 +1,5 @@
 # Photoshop MCP Server
+> **Note:** This is an unofficial, community-maintained project and is not affiliated with or endorsed by Adobe Inc.
 
 [![npm version](https://img.shields.io/npm/v/@alisaitteke/photoshop-mcp.svg)](https://www.npmjs.com/package/@alisaitteke/photoshop-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
