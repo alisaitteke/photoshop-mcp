@@ -36,3 +36,4 @@ docs/
 *.log
 .env
 .env.*
+app_data
