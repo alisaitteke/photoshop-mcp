@@ -1,6 +1,6 @@
 {
   "name": "@alisaitteke/photoshop-mcp",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "MCP server for Adobe Photoshop automation - control Photoshop from AI assistants",
   "main": "dist/index.js",
   "type": "module",
