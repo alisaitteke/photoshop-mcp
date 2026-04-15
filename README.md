@@ -43,7 +43,7 @@ npx @alisaitteke/photoshop-mcp
 ### From Source
 
 ```bash
-git clone https://github.com/yourusername/photoshop-mcp.git
+git clone https://github.com/alisaitteke/photoshop-mcp.git
 cd photoshop-mcp
 npm install
 npm run build
