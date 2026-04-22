@@ -186,7 +186,7 @@ Redo 1 step to bring back one operation.
 ```
 
 </details>
-
+---
 > **🎨 50+ Tools** | **🖥️ Cross-Platform** | **📦 NPX Ready** | **🔧 ExtendScript API** | **⏮️ Undo/Redo**
 
 ## Features
