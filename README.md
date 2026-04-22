@@ -8,6 +8,185 @@
 
 A Model Context Protocol (MCP) server that enables AI assistants like Claude and Cursor to control Adobe Photoshop programmatically. This allows you to create designs, manipulate images, and automate Photoshop workflows through natural language commands while working in your IDE.
 
+## Example Prompts
+
+Below are example prompts you can use with AI assistants (Claude, Cursor, etc.) when this MCP server is configured:
+
+<details>
+<summary>🎨 Basic Design Creation</summary>
+
+```
+Create a 1920x1080 Photoshop document with RGB color mode.
+Add a light blue background layer and fill it with RGB(240, 248, 255).
+Add centered text "Welcome" in 64pt font.
+Save as welcome.psd to my Desktop.
+```
+
+</details>
+
+<details>
+<summary>🖼️ Stock Image Design (with Pexels MCP)</summary>
+
+```
+Search Pexels for "mountain sunset" images.
+Create a 1920x1080 Photoshop document.
+Place the downloaded image and fit it to fill the entire canvas.
+Apply a subtle Gaussian blur of 3px.
+Increase brightness by 15 and contrast by 10.
+Add white text "Adventure Awaits" centered at the top in 72pt.
+Set the text opacity to 90% and blend mode to OVERLAY.
+Save as adventure.jpg with quality 10.
+```
+
+</details>
+
+<details>
+<summary>✨ Photo Enhancement</summary>
+
+```
+Open photo.jpg from my Desktop in Photoshop.
+Apply auto levels and auto contrast.
+Apply unsharp mask with amount 120%, radius 1.5, threshold 0.
+Increase saturation by 15.
+Crop to remove 100px from each edge.
+Save as enhanced-photo.jpg with quality 12.
+```
+
+</details>
+
+<details>
+<summary>🎭 Layer Effects & Blending</summary>
+
+```
+Create a 1200x800 document.
+Add a new layer named "Background" and fill with RGB(50, 50, 50).
+Place logo.png at position (100, 100).
+Fit the logo layer to 50% of its current size.
+Set blend mode to SCREEN and opacity to 85%.
+Add another layer, fill with RGB(255, 100, 50).
+Set this layer's blend mode to MULTIPLY and opacity to 60%.
+Merge all visible layers.
+Save as composite.psd.
+```
+
+</details>
+
+<details>
+<summary>📝 Text Poster Design</summary>
+
+```
+Create a 1080x1350 portrait document (Instagram story size).
+Add a layer and fill with gradient-like color RGB(120, 40, 200).
+Add text "SUMMER" at (540, 300) in 96pt.
+Change text color to white RGB(255, 255, 255).
+Set text alignment to CENTER.
+Add another text "2026" at (540, 450) in 128pt, white color.
+Apply Gaussian blur 2px to the background layer.
+Save as summer-poster.png.
+```
+
+</details>
+
+<details>
+<summary>🎬 Batch Processing</summary>
+
+```
+Open image1.jpg.
+Resize to 1920x1080.
+Apply auto contrast.
+Apply subtle sharpen (amount 80%, radius 1.0).
+Save as processed-1.jpg with quality 10.
+Close without saving changes to original.
+
+Repeat for image2.jpg and image3.jpg.
+```
+
+</details>
+
+<details>
+<summary>🖌️ Creative Manipulation</summary>
+
+```
+Create a 2000x2000 square document.
+Place abstract-pattern.jpg and fit to fill document.
+Duplicate the layer.
+On the duplicate, apply motion blur at 45 degrees, radius 50px.
+Set blend mode to OVERLAY and opacity to 70%.
+Add centered text "MOTION" in 120pt white.
+Apply a rectangular selection from (200, 200) to (1800, 1800).
+Invert the selection and delete (to create a border effect).
+Flatten the image.
+Save as motion-art.jpg.
+```
+
+</details>
+
+<details>
+<summary>🎯 Advanced Workflow</summary>
+
+```
+Create a 3000x2000 document at 300 DPI for print.
+Place hero-image.jpg and fit to fill the canvas.
+Duplicate the image layer.
+On the duplicate, desaturate it completely.
+Set blend mode to LUMINOSITY and opacity to 50%.
+Create a new layer named "Overlay".
+Fill with RGB(255, 150, 0) and set blend mode to SOFTLIGHT at 30% opacity.
+Add text "PORTFOLIO" at top center (1500, 200) in 96pt.
+Set text color to white.
+Add subtext "2026 Collection" at (1500, 320) in 36pt.
+Create a rectangular selection around the text area.
+Create a layer mask on the overlay layer.
+Merge visible layers.
+Save as portfolio-cover.psd.
+Export as portfolio-cover.jpg at quality 12.
+```
+
+</details>
+
+<details>
+<summary>🔄 Using Actions</summary>
+
+```
+Open my-photo.jpg.
+Play the "Vintage Look" action from "My Actions" set.
+Adjust brightness by -10 to darken slightly.
+Save as vintage-photo.jpg.
+```
+
+</details>
+
+<details>
+<summary>⚡ Custom Script Execution</summary>
+
+```
+Execute this custom ExtendScript code:
+app.beep();
+alert('Processing started!');
+```
+
+</details>
+
+<details>
+<summary>⏮️ Undo/Redo Operations</summary>
+
+```
+Apply Gaussian blur 15px to the active layer.
+[Wait for result]
+Actually, that's too much blur. Undo that.
+Apply Gaussian blur 5px instead.
+```
+
+Or:
+
+```
+Get the history states to see what operations were performed.
+Undo the last 3 operations.
+Redo 1 step to bring back one operation.
+```
+
+</details>
+
 > **🎨 50+ Tools** | **🖥️ Cross-Platform** | **📦 NPX Ready** | **🔧 ExtendScript API** | **⏮️ Undo/Redo**
 
 ## Features
@@ -816,184 +995,6 @@ photoshop_open_image({
 })
 ```
 
-## Example Prompts
-
-Below are example prompts you can use with AI assistants (Claude, Cursor, etc.) when this MCP server is configured:
-
-<details>
-<summary>🎨 Basic Design Creation</summary>
-
-```
-Create a 1920x1080 Photoshop document with RGB color mode.
-Add a light blue background layer and fill it with RGB(240, 248, 255).
-Add centered text "Welcome" in 64pt font.
-Save as welcome.psd to my Desktop.
-```
-
-</details>
-
-<details>
-<summary>🖼️ Stock Image Design (with Pexels MCP)</summary>
-
-```
-Search Pexels for "mountain sunset" images.
-Create a 1920x1080 Photoshop document.
-Place the downloaded image and fit it to fill the entire canvas.
-Apply a subtle Gaussian blur of 3px.
-Increase brightness by 15 and contrast by 10.
-Add white text "Adventure Awaits" centered at the top in 72pt.
-Set the text opacity to 90% and blend mode to OVERLAY.
-Save as adventure.jpg with quality 10.
-```
-
-</details>
-
-<details>
-<summary>✨ Photo Enhancement</summary>
-
-```
-Open photo.jpg from my Desktop in Photoshop.
-Apply auto levels and auto contrast.
-Apply unsharp mask with amount 120%, radius 1.5, threshold 0.
-Increase saturation by 15.
-Crop to remove 100px from each edge.
-Save as enhanced-photo.jpg with quality 12.
-```
-
-</details>
-
-<details>
-<summary>🎭 Layer Effects & Blending</summary>
-
-```
-Create a 1200x800 document.
-Add a new layer named "Background" and fill with RGB(50, 50, 50).
-Place logo.png at position (100, 100).
-Fit the logo layer to 50% of its current size.
-Set blend mode to SCREEN and opacity to 85%.
-Add another layer, fill with RGB(255, 100, 50).
-Set this layer's blend mode to MULTIPLY and opacity to 60%.
-Merge all visible layers.
-Save as composite.psd.
-```
-
-</details>
-
-<details>
-<summary>📝 Text Poster Design</summary>
-
-```
-Create a 1080x1350 portrait document (Instagram story size).
-Add a layer and fill with gradient-like color RGB(120, 40, 200).
-Add text "SUMMER" at (540, 300) in 96pt.
-Change text color to white RGB(255, 255, 255).
-Set text alignment to CENTER.
-Add another text "2026" at (540, 450) in 128pt, white color.
-Apply Gaussian blur 2px to the background layer.
-Save as summer-poster.png.
-```
-
-</details>
-
-<details>
-<summary>🎬 Batch Processing</summary>
-
-```
-Open image1.jpg.
-Resize to 1920x1080.
-Apply auto contrast.
-Apply subtle sharpen (amount 80%, radius 1.0).
-Save as processed-1.jpg with quality 10.
-Close without saving changes to original.
-
-Repeat for image2.jpg and image3.jpg.
-```
-
-</details>
-
-<details>
-<summary>🖌️ Creative Manipulation</summary>
-
-```
-Create a 2000x2000 square document.
-Place abstract-pattern.jpg and fit to fill document.
-Duplicate the layer.
-On the duplicate, apply motion blur at 45 degrees, radius 50px.
-Set blend mode to OVERLAY and opacity to 70%.
-Add centered text "MOTION" in 120pt white.
-Apply a rectangular selection from (200, 200) to (1800, 1800).
-Invert the selection and delete (to create a border effect).
-Flatten the image.
-Save as motion-art.jpg.
-```
-
-</details>
-
-<details>
-<summary>🎯 Advanced Workflow</summary>
-
-```
-Create a 3000x2000 document at 300 DPI for print.
-Place hero-image.jpg and fit to fill the canvas.
-Duplicate the image layer.
-On the duplicate, desaturate it completely.
-Set blend mode to LUMINOSITY and opacity to 50%.
-Create a new layer named "Overlay".
-Fill with RGB(255, 150, 0) and set blend mode to SOFTLIGHT at 30% opacity.
-Add text "PORTFOLIO" at top center (1500, 200) in 96pt.
-Set text color to white.
-Add subtext "2026 Collection" at (1500, 320) in 36pt.
-Create a rectangular selection around the text area.
-Create a layer mask on the overlay layer.
-Merge visible layers.
-Save as portfolio-cover.psd.
-Export as portfolio-cover.jpg at quality 12.
-```
-
-</details>
-
-<details>
-<summary>🔄 Using Actions</summary>
-
-```
-Open my-photo.jpg.
-Play the "Vintage Look" action from "My Actions" set.
-Adjust brightness by -10 to darken slightly.
-Save as vintage-photo.jpg.
-```
-
-</details>
-
-<details>
-<summary>⚡ Custom Script Execution</summary>
-
-```
-Execute this custom ExtendScript code:
-app.beep();
-alert('Processing started!');
-```
-
-</details>
-
-<details>
-<summary>⏮️ Undo/Redo Operations</summary>
-
-```
-Apply Gaussian blur 15px to the active layer.
-[Wait for result]
-Actually, that's too much blur. Undo that.
-Apply Gaussian blur 5px instead.
-```
-
-Or:
-
-```
-Get the history states to see what operations were performed.
-Undo the last 3 operations.
-Redo 1 step to bring back one operation.
-```
-
-</details>
 
 ---
 
