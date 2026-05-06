@@ -22,7 +22,7 @@ export async function api<T = unknown>(
   return (await res.json()) as T;
 }
 
-export type ProviderId = 'anthropic' | 'openai' | 'openrouter';
+export type ProviderId = 'anthropic' | 'openai' | 'openrouter' | 'google';
 
 export interface Status {
   activeProvider: ProviderId;
