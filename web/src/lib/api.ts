@@ -22,7 +22,7 @@ export async function api<T = unknown>(
   return (await res.json()) as T;
 }
 
-export type ProviderId = 'anthropic' | 'openai' | 'openrouter' | 'google';
+export type ProviderId = 'anthropic' | 'openai' | 'openrouter' | 'google' | 'custom';
 
 export interface Status {
   activeProvider: ProviderId;
@@ -45,6 +45,21 @@ export interface ProviderInfo {
   apiKeyMasked: string | null;
   models: ProviderModel[];
   defaultModel: string;
+}
+
+export interface CustomProviderConfig {
+  name: string;
+  websiteUrl: string;
+  apiKey: string;
+  baseUrl: string;
+  apiFormat: 'openai' | 'anthropic';
+  models: { id: string; label: string }[];
+  defaultModel: string;
+}
+
+export interface CustomProviderResponse extends Omit<CustomProviderConfig, 'apiKey'> {
+  apiKey: string | null;
+  apiKeyPresent: boolean;
 }
 
 export interface ChatSummary {
@@ -135,6 +150,26 @@ export const apiSaveKey = (id: ProviderId, apiKey: string) =>
 
 export const apiDeleteKey = (id: ProviderId) =>
   api<{ ok: true }>(`/api/providers/${id}/key`, { method: 'DELETE' });
+
+// ---- Custom Provider ----------------------------------------------------
+
+export const apiGetCustomProvider = () =>
+  api<CustomProviderResponse | null>('/api/custom-provider');
+
+export const apiSaveCustomProvider = (config: CustomProviderConfig) =>
+  api<{ ok: true }>('/api/custom-provider', {
+    method: 'PUT',
+    body: JSON.stringify(config),
+  });
+
+export const apiDeleteCustomProvider = () =>
+  api<{ ok: true }>('/api/custom-provider', { method: 'DELETE' });
+
+export const apiValidateCustomProvider = (config: Partial<CustomProviderConfig>) =>
+  api<{ ok: boolean; error?: string }>('/api/custom-provider/validate', {
+    method: 'POST',
+    body: JSON.stringify(config),
+  });
 
 // ---- Chats ------------------------------------------------------------
 

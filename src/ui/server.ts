@@ -12,10 +12,14 @@ import {
   type RunChatFinishInfo,
 } from './agent.js';
 import {
+  deleteCustomProvider,
+  getCustomProvider,
   loadConfig,
   maskApiKey,
   saveConfig,
+  saveCustomProvider,
   setProviderConfig,
+  type CustomProviderConfig,
   type ProviderId,
 } from './config.js';
 import { getProvider, listProviders } from './providers/registry.js';
@@ -113,13 +117,15 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
     const config = loadConfig();
     const out = listProviders().map((p) => {
       const cfg = config.providers[p.id];
+      const isCustom = p.id === 'custom';
+      const customCfg = config.customProvider;
       return {
         id: p.id,
-        label: p.label,
-        apiKeyHint: p.apiKeyHint,
-        apiKeyHelpUrl: p.apiKeyHelpUrl,
-        hasApiKey: Boolean(cfg?.apiKey),
-        apiKeyMasked: maskApiKey(cfg?.apiKey),
+        label: isCustom ? (customCfg?.name || 'Custom') : p.label,
+        apiKeyHint: isCustom ? 'Enter your API key' : p.apiKeyHint,
+        apiKeyHelpUrl: isCustom ? (customCfg?.websiteUrl || '') : p.apiKeyHelpUrl,
+        hasApiKey: isCustom ? Boolean(customCfg?.apiKey) : Boolean(cfg?.apiKey),
+        apiKeyMasked: isCustom ? maskApiKey(customCfg?.apiKey) : maskApiKey(cfg?.apiKey),
         models: p.listModels(),
         defaultModel: p.defaultModel(),
       };
@@ -161,6 +167,63 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
     if (!provider) return c.json({ error: 'unknown_provider' }, 404);
     setProviderConfig(provider.id, { apiKey: undefined });
     return c.json({ ok: true });
+  });
+
+  // ---- Custom Provider ----------------------------------------------------
+
+  app.get('/api/custom-provider', (c) => {
+    const cfg = getCustomProvider();
+    if (!cfg) return c.json(null);
+    return c.json({ ...cfg, apiKey: maskApiKey(cfg.apiKey), apiKeyPresent: Boolean(cfg.apiKey) });
+  });
+
+  app.put('/api/custom-provider', async (c) => {
+    const body = (await c.req.json()) as CustomProviderConfig;
+    if (!body.baseUrl || !body.apiFormat) {
+      return c.json({ error: 'baseUrl and apiFormat are required' }, 400);
+    }
+    if (!body.models?.length) {
+      return c.json({ error: 'at least one model is required' }, 400);
+    }
+    if (!body.defaultModel) {
+      body.defaultModel = body.models[0].id;
+    }
+    saveCustomProvider(body);
+    // Sync the custom provider key into the providers record so the rest of
+    // the system (active-provider bootstrap, status endpoint, etc.) works.
+    setProviderConfig('custom', { apiKey: body.apiKey, defaultModel: body.defaultModel });
+    return c.json({ ok: true });
+  });
+
+  app.delete('/api/custom-provider', (c) => {
+    deleteCustomProvider();
+    setProviderConfig('custom', { apiKey: undefined });
+    return c.json({ ok: true });
+  });
+
+  app.post('/api/custom-provider/validate', async (c) => {
+    const body = (await c.req.json()) as Partial<CustomProviderConfig>;
+    if (!body.baseUrl || !body.apiKey || !body.apiFormat) {
+      return c.json({ ok: false, error: 'baseUrl, apiKey, and apiFormat are required' }, 400);
+    }
+    try {
+      const url =
+        body.apiFormat === 'anthropic'
+          ? `${body.baseUrl.replace(/\/+$/, '')}/v1/models?limit=1`
+          : `${body.baseUrl.replace(/\/+$/, '')}/models`;
+      const headers: Record<string, string> =
+        body.apiFormat === 'anthropic'
+          ? { 'x-api-key': body.apiKey, 'anthropic-version': '2023-06-01' }
+          : { Authorization: `Bearer ${body.apiKey}` };
+      const res = await fetch(url, { headers });
+      if (!res.ok) {
+        const text = await res.text().catch(() => res.statusText);
+        return c.json({ ok: false, error: text });
+      }
+      return c.json({ ok: true });
+    } catch (err) {
+      return c.json({ ok: false, error: (err as Error).message });
+    }
   });
 
   // ---- Chats CRUD ---------------------------------------------------------
