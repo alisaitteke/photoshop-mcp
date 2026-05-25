@@ -1,4 +1,5 @@
 import { anthropicAdapter } from './anthropic.js';
+import { customAdapter } from './custom.js';
 import { googleAdapter } from './google.js';
 import { openaiAdapter } from './openai.js';
 import { openrouterAdapter } from './openrouter.js';
@@ -9,6 +10,7 @@ export const providers: Record<ProviderId, ProviderAdapter> = {
   openai: openaiAdapter,
   openrouter: openrouterAdapter,
   google: googleAdapter,
+  custom: customAdapter,
 };
 
 export function getProvider(id: string): ProviderAdapter | undefined {
