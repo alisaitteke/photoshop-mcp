@@ -44,34 +44,26 @@ async function runFrequencySeparation(
 
   const body = `
     var doc = app.activeDocument;
-    var src = doc.activeLayer;
-    if (src.kind !== LayerKind.NORMAL) {
-      return { ok: false, code: 'unsupported_color_mode', message: 'Active layer is not a raster layer. Rasterize or pick a normal layer first.', suggested_next_tool: 'photoshop_rasterize_layer' };
+    var src;
+    try {
+      src = __mcp_ensureRasterActiveLayer();
+    } catch (eRaster) {
+      return { ok: false, code: 'unsupported_color_mode', message: eRaster.message || String(eRaster), suggested_next_tool: 'photoshop_rasterize_layer' };
     }
 
     var group = doc.layerSets.add();
     group.name = 'Frequency Separation';
 
     var low = src.duplicate(group, ElementPlacement.INSIDE);
-    low.name = 'FS · Low';
+    low.name = 'FS Low';
     low.applyGaussianBlur(${radius});
 
     var high = src.duplicate(group, ElementPlacement.INSIDE);
-    high.name = 'FS · High';
-    doc.activeLayer = high;
-
-    var applyDesc = new ActionDescriptor();
-    var srcDesc = new ActionDescriptor();
-    var srcRef = new ActionReference();
-    srcRef.putName(charIDToTypeID('Lyr '), low.name);
-    srcDesc.putReference(charIDToTypeID('T   '), srcRef);
-    srcDesc.putEnumerated(charIDToTypeID('Clcl'), charIDToTypeID('Clcn'), charIDToTypeID('Sbtr'));
-    srcDesc.putInteger(charIDToTypeID('Scl '), 2);
-    srcDesc.putInteger(charIDToTypeID('Ofst'), 128);
-    applyDesc.putObject(charIDToTypeID('With'), charIDToTypeID('Clcl'), srcDesc);
+    high.name = 'FS High';
     try {
-      executeAction(charIDToTypeID('AppI'), applyDesc, DialogModes.NO);
+      __mcp_applyFrequencyHighFromLow(low, high);
     } catch (eApply) {
+      try { group.remove(); } catch (eRmG) {}
       return { ok: false, code: 'recipe_runtime_error', message: 'Apply Image failed: ' + (eApply.message || eApply) };
     }
     high.blendMode = BlendMode.LINEARLIGHT;

@@ -20,9 +20,188 @@ export interface RecipeFailure {
   suggested_next_tool?: string;
 }
 
+/** PS 26-compatible Action Manager helpers shared by all recipes. */
+export const RECIPE_ACTION_HELPERS = `
+function __mcp_s2t(s) { return app.stringIDToTypeID(s); }
+function __mcp_c2t(s) { return app.charIDToTypeID(s); }
+
+function __mcp_ensureRasterActiveLayer() {
+  var doc = app.activeDocument;
+  var layer = doc.activeLayer;
+  if (layer.typename === 'LayerSet') {
+    throw new Error('Active item is a layer group — select a raster layer first.');
+  }
+  var kind = layer.kind;
+  if (kind === LayerKind.NORMAL) {
+    if (layer.isBackgroundLayer) {
+      try { layer.isBackgroundLayer = false; } catch (eBg) {}
+    }
+    return layer;
+  }
+  if (kind === LayerKind.TEXT) {
+    layer.rasterize(RasterizeType.TEXTCONTENTS);
+    return doc.activeLayer;
+  }
+  if (kind === LayerKind.SMARTOBJECT) {
+    var desc = new ActionDescriptor();
+    var ref = new ActionReference();
+    ref.putEnumerated(__mcp_s2t('layer'), __mcp_s2t('ordinal'), __mcp_s2t('targetEnum'));
+    desc.putReference(__mcp_s2t('null'), ref);
+    executeAction(__mcp_s2t('rasterizePlaced'), desc, DialogModes.NO);
+    return doc.activeLayer;
+  }
+  try { layer.rasterize(RasterizeType.ENTIRELAYER); } catch (e) {}
+  return doc.activeLayer;
+}
+
+function __mcp_applyFrequencyHighFromLow(lowLayer, highLayer) {
+  var doc = app.activeDocument;
+  doc.activeLayer = highLayer;
+
+  function applyStringCalculation() {
+    var applyDesc = new ActionDescriptor();
+    var calcDesc = new ActionDescriptor();
+    var srcRef = new ActionReference();
+    srcRef.putEnumerated(__mcp_s2t('channel'), __mcp_s2t('channel'), __mcp_s2t('RGB'));
+    srcRef.putName(__mcp_s2t('layer'), lowLayer.name);
+    calcDesc.putReference(__mcp_s2t('to'), srcRef);
+    calcDesc.putEnumerated(__mcp_s2t('calculation'), __mcp_s2t('calculationType'), __mcp_s2t('subtract'));
+    calcDesc.putDouble(__mcp_s2t('scale'), 2);
+    calcDesc.putInteger(__mcp_s2t('offset'), 128);
+    applyDesc.putObject(__mcp_s2t('with'), __mcp_s2t('calculation'), calcDesc);
+    executeAction(__mcp_s2t('applyImageEvent'), applyDesc, DialogModes.NO);
+  }
+
+  function applyNestedClcl() {
+    var applyDesc = new ActionDescriptor();
+    var srcDesc = new ActionDescriptor();
+    var srcRef = new ActionReference();
+    srcRef.putName(__mcp_c2t('Lyr '), lowLayer.name);
+    srcDesc.putReference(__mcp_c2t('T   '), srcRef);
+    srcDesc.putEnumerated(__mcp_c2t('Clcl'), __mcp_c2t('Clcn'), __mcp_c2t('Sbtr'));
+    srcDesc.putInteger(__mcp_c2t('Scl '), 2);
+    srcDesc.putInteger(__mcp_c2t('Ofst'), 128);
+    applyDesc.putObject(__mcp_c2t('With'), __mcp_c2t('Clcl'), srcDesc);
+    executeAction(__mcp_c2t('AppI'), applyDesc, DialogModes.NO);
+  }
+
+  var lastError = null;
+  try {
+    applyStringCalculation();
+    return;
+  } catch (eString) {
+    lastError = eString;
+  }
+  try {
+    applyNestedClcl();
+    return;
+  } catch (eNested) {
+    lastError = eNested;
+  }
+  throw lastError || new Error('Apply Image failed');
+}
+
+function __mcp_makeLayerMaskRevealSelection() {
+  var desc = new ActionDescriptor();
+  desc.putClass(__mcp_s2t('new'), __mcp_s2t('channel'));
+  var atRef = new ActionReference();
+  atRef.putEnumerated(__mcp_s2t('layer'), __mcp_s2t('ordinal'), __mcp_s2t('targetEnum'));
+  desc.putReference(__mcp_s2t('at'), atRef);
+  desc.putEnumerated(__mcp_s2t('using'), __mcp_s2t('userMaskEnabled'), __mcp_s2t('revealSelection'));
+  executeAction(__mcp_s2t('make'), desc, DialogModes.NO);
+}
+
+function __mcp_makeHueSatAdjustmentLayer(hue, saturation, lightness, colorize) {
+  var desc = new ActionDescriptor();
+  var ref = new ActionReference();
+  ref.putClass(__mcp_s2t('adjustmentLayer'));
+  desc.putReference(__mcp_s2t('null'), ref);
+  var using = new ActionDescriptor();
+  var typeDesc = new ActionDescriptor();
+  typeDesc.putEnumerated(__mcp_s2t('presetKind'), __mcp_s2t('presetKindType'), __mcp_s2t('presetKindCustom'));
+  typeDesc.putBoolean(__mcp_c2t('Clrz'), colorize);
+  var adjustments = new ActionList();
+  var adjustment = new ActionDescriptor();
+  adjustment.putInteger(__mcp_c2t('H   '), hue);
+  adjustment.putInteger(__mcp_c2t('Strt'), saturation);
+  adjustment.putInteger(__mcp_c2t('Lght'), lightness);
+  adjustments.putObject(__mcp_c2t('Hsrt'), adjustment);
+  typeDesc.putList(__mcp_c2t('Adjs'), adjustments);
+  using.putObject(__mcp_s2t('type'), __mcp_s2t('hueSaturation'), typeDesc);
+  desc.putObject(__mcp_s2t('using'), __mcp_s2t('adjustmentLayer'), using);
+  executeAction(__mcp_s2t('make'), desc, DialogModes.NO);
+  return app.activeDocument.activeLayer;
+}
+
+function __mcp_makeCurvesAdjustmentLayer() {
+  var desc = new ActionDescriptor();
+  var ref = new ActionReference();
+  ref.putClass(__mcp_s2t('adjustmentLayer'));
+  desc.putReference(__mcp_s2t('null'), ref);
+  var using = new ActionDescriptor();
+  var curvesAdjust = new ActionDescriptor();
+  var curvesAdjustments = new ActionList();
+  var curvesPair = new ActionDescriptor();
+  var curvesPoints = new ActionList();
+  var ptBlack = new ActionDescriptor();
+  ptBlack.putDouble(__mcp_c2t('Hrzn'), 12);
+  ptBlack.putDouble(__mcp_c2t('Vrtc'), 0);
+  var ptWhite = new ActionDescriptor();
+  ptWhite.putDouble(__mcp_c2t('Hrzn'), 243);
+  ptWhite.putDouble(__mcp_c2t('Vrtc'), 255);
+  curvesPoints.putObject(__mcp_c2t('Pnt '), ptBlack);
+  curvesPoints.putObject(__mcp_c2t('Pnt '), ptWhite);
+  curvesPair.putList(__mcp_c2t('Crv '), curvesPoints);
+  var channelRef = new ActionReference();
+  channelRef.putEnumerated(__mcp_c2t('Chnl'), __mcp_c2t('Chnl'), __mcp_c2t('Cmps'));
+  curvesPair.putReference(__mcp_c2t('Chnl'), channelRef);
+  curvesAdjustments.putObject(__mcp_c2t('CrvA'), curvesPair);
+  curvesAdjust.putList(__mcp_c2t('Adjs'), curvesAdjustments);
+  using.putObject(__mcp_s2t('type'), __mcp_s2t('curves'), curvesAdjust);
+  desc.putObject(__mcp_s2t('using'), __mcp_s2t('adjustmentLayer'), using);
+  executeAction(__mcp_s2t('make'), desc, DialogModes.NO);
+  return app.activeDocument.activeLayer;
+}
+`;
+
+const EXTENDSCRIPT_JSON_HELPER = `
+function __mcp_json_stringify(value) {
+  if (value === null) return 'null';
+  var t = typeof value;
+  if (t === 'boolean') return value ? 'true' : 'false';
+  if (t === 'number') return isFinite(value) ? String(value) : 'null';
+  if (t === 'string') {
+    return '"' + value
+      .replace(/\\\\/g, '\\\\\\\\')
+      .replace(/"/g, '\\\\"')
+      .replace(/\\n/g, '\\\\n')
+      .replace(/\\r/g, '\\\\r')
+      .replace(/\\t/g, '\\\\t') + '"';
+  }
+  if (value instanceof Array) {
+    var items = [];
+    for (var i = 0; i < value.length; i++) {
+      items.push(__mcp_json_stringify(value[i]));
+    }
+    return '[' + items.join(',') + ']';
+  }
+  if (t === 'object') {
+    var pairs = [];
+    for (var key in value) {
+      if (!value.hasOwnProperty(key)) continue;
+      pairs.push(__mcp_json_stringify(String(key)) + ':' + __mcp_json_stringify(value[key]));
+    }
+    return '{' + pairs.join(',') + '}';
+  }
+  return 'null';
+}
+`;
+
 export function wrapInSuspendHistory(historyName: string, body: string): string {
   const escapedName = historyName.replace(/"/g, '\\"');
   return `
+    ${RECIPE_ACTION_HELPERS}
+    ${EXTENDSCRIPT_JSON_HELPER}
     if (app.documents.length === 0) {
       throw new Error('No active document');
     }
@@ -38,7 +217,7 @@ export function wrapInSuspendHistory(historyName: string, body: string): string 
     if (!__mcp_recipe_result) {
       __mcp_recipe_result = { ok: false, code: 'recipe_no_result', message: 'Recipe produced no result' };
     }
-    return __mcp_recipe_result;
+    return __mcp_json_stringify(__mcp_recipe_result);
   `;
 }
 

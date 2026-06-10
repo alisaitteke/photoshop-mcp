@@ -28,6 +28,8 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
     "verify:photoshop-prompts": "tsx scripts/verify-photoshop-prompt-coverage.ts",
+    "test:mcp-local": "tsx scripts/test-mcp-local.ts",
+    "test:mcp-all": "tsx scripts/test-all-mcp-tools.ts",
     "prepare": "npm run build",
     "prepublishOnly": "npm run build"
   },

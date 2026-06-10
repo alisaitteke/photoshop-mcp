@@ -78,28 +78,13 @@ async function runApplyColorGrade(
     var group = doc.layerSets.add();
     group.name = 'Color Grade · ' + '${preset}';
 
-    var idMk = charIDToTypeID('Mk  ');
-    var idHueSat = charIDToTypeID('HStr');
-    var hueSatDesc = new ActionDescriptor();
-    var hueSatRef = new ActionReference();
-    hueSatRef.putClass(idHueSat);
-    hueSatDesc.putReference(charIDToTypeID('null'), hueSatRef);
-    var hueSatUsing = new ActionDescriptor();
-    var hueSatAdjust = new ActionDescriptor();
-    hueSatAdjust.putEnumerated(stringIDToTypeID('presetKind'), stringIDToTypeID('presetKindType'), stringIDToTypeID('presetKindCustom'));
-    hueSatAdjust.putBoolean(charIDToTypeID('Clrz'), ${config.desaturate ? 'true' : 'false'});
-    var hsAdjustments = new ActionList();
-    var hsAdjustment = new ActionDescriptor();
-    hsAdjustment.putInteger(charIDToTypeID('H   '), ${config.hue});
-    hsAdjustment.putInteger(charIDToTypeID('Strt'), ${config.saturation});
-    hsAdjustment.putInteger(charIDToTypeID('Lght'), ${config.lightness});
-    hsAdjustments.putObject(charIDToTypeID('Hsrt'), hsAdjustment);
-    hueSatAdjust.putList(charIDToTypeID('Adjs'), hsAdjustments);
-    hueSatUsing.putObject(charIDToTypeID('Type'), idHueSat, hueSatAdjust);
-    hueSatDesc.putObject(charIDToTypeID('Usng'), charIDToTypeID('AdjL'), hueSatUsing);
     try {
-      executeAction(idMk, hueSatDesc, DialogModes.NO);
-      var hueSatLayer = doc.activeLayer;
+      var hueSatLayer = __mcp_makeHueSatAdjustmentLayer(
+        ${config.hue},
+        ${config.saturation},
+        ${config.lightness},
+        ${config.desaturate ? 'true' : 'false'}
+      );
       hueSatLayer.move(group, ElementPlacement.INSIDE);
       hueSatLayer.name = 'HueSat · ${preset}';
     } catch (eHueSat) {

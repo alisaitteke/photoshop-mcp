@@ -60,12 +60,11 @@ async function runEnhancePortrait(
 
   const body = `
     var doc = app.activeDocument;
-    var src = doc.activeLayer;
-    if (src.kind !== LayerKind.NORMAL && !src.isBackgroundLayer) {
-      return { ok: false, code: 'unsupported_color_mode', message: 'Active layer is not a raster layer (kind=' + src.kind + '). Rasterize or pick a normal layer first.', suggested_next_tool: 'photoshop_rasterize_layer' };
-    }
-    if (src.isBackgroundLayer) {
-      try { src.isBackgroundLayer = false; } catch (eBg) {}
+    var src;
+    try {
+      src = __mcp_ensureRasterActiveLayer();
+    } catch (eRaster) {
+      return { ok: false, code: 'unsupported_color_mode', message: eRaster.message || String(eRaster), suggested_next_tool: 'photoshop_rasterize_layer' };
     }
 
     var group = doc.layerSets.add();
@@ -75,61 +74,24 @@ async function runEnhancePortrait(
 
     if (${skinSmoothing ? 'true' : 'false'}) {
       var low = src.duplicate(group, ElementPlacement.INSIDE);
-      low.name = 'FS · Low';
+      low.name = 'FS Low';
       low.applyGaussianBlur(${radius});
       createdNames.push(low.name);
 
       var high = src.duplicate(group, ElementPlacement.INSIDE);
-      high.name = 'FS · High';
-      doc.activeLayer = high;
-      var applyDesc = new ActionDescriptor();
-      var srcDesc = new ActionDescriptor();
-      var srcRef = new ActionReference();
-      srcRef.putName(charIDToTypeID('Lyr '), low.name);
-      srcDesc.putReference(charIDToTypeID('T   '), srcRef);
-      srcDesc.putEnumerated(charIDToTypeID('Clcl'), charIDToTypeID('Clcn'), charIDToTypeID('Sbtr'));
-      srcDesc.putInteger(charIDToTypeID('Scl '), 2);
-      srcDesc.putInteger(charIDToTypeID('Ofst'), 128);
-      applyDesc.putObject(charIDToTypeID('With'), charIDToTypeID('Clcl'), srcDesc);
+      high.name = 'FS High';
       try {
-        executeAction(charIDToTypeID('AppI'), applyDesc, DialogModes.NO);
+        __mcp_applyFrequencyHighFromLow(low, high);
       } catch (eApplyImage) {
+        try { group.remove(); } catch (eRmG) {}
         return { ok: false, code: 'recipe_runtime_error', message: 'Apply Image step failed: ' + (eApplyImage.message || eApplyImage) };
       }
       high.blendMode = BlendMode.LINEARLIGHT;
       createdNames.push(high.name);
     }
 
-    var idMk = charIDToTypeID('Mk  ');
-    var idCrvs = charIDToTypeID('Crvs');
-    var curvesDesc = new ActionDescriptor();
-    var curvesRef = new ActionReference();
-    curvesRef.putClass(idCrvs);
-    curvesDesc.putReference(charIDToTypeID('null'), curvesRef);
-    var curvesUsing = new ActionDescriptor();
-    var curvesAdjust = new ActionDescriptor();
-    var curvesAdjustments = new ActionList();
-    var curvesPair = new ActionDescriptor();
-    var curvesPoints = new ActionList();
-    var ptBlack = new ActionDescriptor();
-    ptBlack.putDouble(charIDToTypeID('Hrzn'), 12);
-    ptBlack.putDouble(charIDToTypeID('Vrtc'), 0);
-    var ptWhite = new ActionDescriptor();
-    ptWhite.putDouble(charIDToTypeID('Hrzn'), 243);
-    ptWhite.putDouble(charIDToTypeID('Vrtc'), 255);
-    curvesPoints.putObject(charIDToTypeID('Pnt '), ptBlack);
-    curvesPoints.putObject(charIDToTypeID('Pnt '), ptWhite);
-    curvesPair.putList(charIDToTypeID('Crv '), curvesPoints);
-    var channelRef = new ActionReference();
-    channelRef.putEnumerated(charIDToTypeID('Chnl'), charIDToTypeID('Chnl'), charIDToTypeID('Cmps'));
-    curvesPair.putReference(charIDToTypeID('Chnl'), channelRef);
-    curvesAdjustments.putObject(charIDToTypeID('CrvA'), curvesPair);
-    curvesAdjust.putList(charIDToTypeID('Adjs'), curvesAdjustments);
-    curvesUsing.putObject(charIDToTypeID('Type'), idCrvs, curvesAdjust);
-    curvesDesc.putObject(charIDToTypeID('Usng'), charIDToTypeID('AdjL'), curvesUsing);
     try {
-      executeAction(idMk, curvesDesc, DialogModes.NO);
-      var curvesLayer = doc.activeLayer;
+      var curvesLayer = __mcp_makeCurvesAdjustmentLayer();
       curvesLayer.move(group, ElementPlacement.INSIDE);
       curvesLayer.name = 'Auto-tone (curves)';
       createdNames.push(curvesLayer.name);

@@ -866,23 +866,44 @@ export const ExtendScriptSnippets = {
       layer.rasterize(RasterizeType.ENTIRELAYER);
     }
 
-    var desc = new ActionDescriptor();
-    desc.putEnumerated(
-      sTID('presetKind'),
-      sTID('presetKindType'),
-      sTID('presetKindCustom')
-    );
-    desc.putBoolean(cTID('Clrz'), false);
+    if (layer.blendMode !== BlendMode.NORMAL) {
+      layer.blendMode = BlendMode.NORMAL;
+    }
 
-    var adjustments = new ActionList();
-    var adjustment = new ActionDescriptor();
-    adjustment.putInteger(cTID('H   '), ${hue});
-    adjustment.putInteger(cTID('Strt'), ${saturation});
-    adjustment.putInteger(cTID('Lght'), ${lightness});
-    adjustments.putObject(cTID('Hsrt'), adjustment);
-    desc.putList(cTID('Adjs'), adjustments);
+    if (layer.kind === LayerKind.NORMAL) {
+      try { layer.rasterize(RasterizeType.ENTIRELAYER); } catch (eRaster) {}
+    }
 
-    executeAction(cTID('HStr'), desc, DialogModes.NO);
+    function __runHueSatAction(hueVal, satVal, lightVal) {
+      var desc = new ActionDescriptor();
+      desc.putEnumerated(sTID('presetKind'), sTID('presetKindType'), sTID('presetKindCustom'));
+      desc.putBoolean(cTID('Clrz'), false);
+      var adjustments = new ActionList();
+      var adjustment = new ActionDescriptor();
+      adjustment.putEnumerated(cTID('Chnl'), cTID('Chnl'), cTID('Cmps'));
+      adjustment.putInteger(cTID('H   '), hueVal);
+      adjustment.putInteger(cTID('Strt'), satVal);
+      adjustment.putInteger(cTID('Lght'), lightVal);
+      adjustments.putObject(cTID('Hst2'), adjustment);
+      desc.putList(cTID('Adjs'), adjustments);
+      executeAction(cTID('HStr'), desc, DialogModes.NO);
+    }
+
+    try {
+      __runHueSatAction(${hue}, ${saturation}, ${lightness});
+    } catch (eHst2) {
+      var legacy = new ActionDescriptor();
+      legacy.putEnumerated(sTID('presetKind'), sTID('presetKindType'), sTID('presetKindCustom'));
+      legacy.putBoolean(cTID('Clrz'), false);
+      var legacyAdj = new ActionList();
+      var legacyItem = new ActionDescriptor();
+      legacyItem.putInteger(cTID('H   '), ${hue});
+      legacyItem.putInteger(cTID('Strt'), ${saturation});
+      legacyItem.putInteger(cTID('Lght'), ${lightness});
+      legacyAdj.putObject(cTID('Hsrt'), legacyItem);
+      legacy.putList(cTID('Adjs'), legacyAdj);
+      executeAction(cTID('HStr'), legacy, DialogModes.NO);
+    }
 
     return {
       adjustment: 'Hue/Saturation',
@@ -938,19 +959,47 @@ export const ExtendScriptSnippets = {
    * Desaturate (convert to grayscale without changing color mode)
    */
   desaturate: () => `
+    ${helperFunctions}
+
     if (app.documents.length === 0) {
       throw new Error('No active document');
     }
     var layer = app.activeDocument.activeLayer;
-    
-    // Auto-rasterize if needed
+
+    if (layer.blendMode !== BlendMode.NORMAL) {
+      layer.blendMode = BlendMode.NORMAL;
+    }
+
     if (layer.kind === LayerKind.TEXT || layer.kind === LayerKind.SMARTOBJECT) {
       layer.rasterize(RasterizeType.ENTIRELAYER);
     }
-    
-    layer.desaturate();
-    
-    return { 
+
+    if (layer.kind === LayerKind.NORMAL) {
+      try { layer.rasterize(RasterizeType.ENTIRELAYER); } catch (eRaster) {}
+    }
+
+    try {
+      layer.desaturate();
+    } catch (eDom) {
+      try {
+        executeAction(sTID('desaturate'), undefined, DialogModes.NO);
+      } catch (eAction) {
+        var desc = new ActionDescriptor();
+        desc.putEnumerated(sTID('presetKind'), sTID('presetKindType'), sTID('presetKindCustom'));
+        desc.putBoolean(cTID('Clrz'), false);
+        var adjustments = new ActionList();
+        var adjustment = new ActionDescriptor();
+        adjustment.putEnumerated(cTID('Chnl'), cTID('Chnl'), cTID('Cmps'));
+        adjustment.putInteger(cTID('H   '), 0);
+        adjustment.putInteger(cTID('Strt'), -100);
+        adjustment.putInteger(cTID('Lght'), 0);
+        adjustments.putObject(cTID('Hst2'), adjustment);
+        desc.putList(cTID('Adjs'), adjustments);
+        executeAction(cTID('HStr'), desc, DialogModes.NO);
+      }
+    }
+
+    return {
       adjustment: 'Desaturate'
     };
   `,
@@ -1149,21 +1198,29 @@ export const ExtendScriptSnippets = {
    */
   createLayerMask: () => `
     ${helperFunctions}
-    
+
     if (app.documents.length === 0) {
       throw new Error('No active document');
     }
-    
-    // Create mask using ActionDescriptor
+
+    var hasSelection = false;
+    try { hasSelection = !!(app.activeDocument.selection.bounds); } catch (e) { hasSelection = false; }
+
     var desc = new ActionDescriptor();
-    var ref = new ActionReference();
-    ref.putEnumerated(cTID('Chnl'), cTID('Chnl'), cTID('Msk '));
-    desc.putReference(cTID('Nw  '), ref);
-    desc.putEnumerated(cTID('Usng'), cTID('UsrM'), cTID('RvlS'));
-    executeAction(cTID('Mk  '), desc, DialogModes.NO);
-    
-    return { 
-      maskCreated: true
+    desc.putClass(sTID('new'), sTID('channel'));
+    var atRef = new ActionReference();
+    atRef.putEnumerated(sTID('layer'), sTID('ordinal'), sTID('targetEnum'));
+    desc.putReference(sTID('at'), atRef);
+    if (hasSelection) {
+      desc.putEnumerated(sTID('using'), sTID('userMaskEnabled'), sTID('revealSelection'));
+    } else {
+      desc.putEnumerated(sTID('using'), cTID('UsrM'), sTID('revealAll'));
+    }
+    executeAction(sTID('make'), desc, DialogModes.NO);
+
+    return {
+      maskCreated: true,
+      fromSelection: hasSelection
     };
   `,
 
@@ -1172,18 +1229,23 @@ export const ExtendScriptSnippets = {
    */
   deleteLayerMask: () => `
     ${helperFunctions}
-    
+
     if (app.documents.length === 0) {
       throw new Error('No active document');
     }
-    
+
+    var layer = app.activeDocument.activeLayer;
+    if (!layer.hasLayerMask) {
+      return { maskDeleted: false, message: 'Layer has no mask' };
+    }
+
     var desc = new ActionDescriptor();
     var ref = new ActionReference();
     ref.putEnumerated(cTID('Chnl'), cTID('Chnl'), cTID('Msk '));
     desc.putReference(cTID('null'), ref);
     executeAction(cTID('Dlt '), desc, DialogModes.NO);
-    
-    return { 
+
+    return {
       maskDeleted: true
     };
   `,
@@ -1193,18 +1255,27 @@ export const ExtendScriptSnippets = {
    */
   applyLayerMask: () => `
     ${helperFunctions}
-    
+
     if (app.documents.length === 0) {
       throw new Error('No active document');
     }
-    
+
     var desc = new ActionDescriptor();
     var ref = new ActionReference();
-    ref.putEnumerated(cTID('Chnl'), cTID('Chnl'), cTID('Msk '));
-    desc.putReference(cTID('null'), ref);
-    executeAction(cTID('Aply'), desc, DialogModes.NO);
-    
-    return { 
+    ref.putEnumerated(sTID('channel'), sTID('ordinal'), sTID('targetEnum'));
+    desc.putReference(sTID('null'), ref);
+    desc.putBoolean(sTID('apply'), true);
+    try {
+      executeAction(sTID('delete'), desc, DialogModes.NO);
+    } catch (eDeleteApply) {
+      var legacy = new ActionDescriptor();
+      var legacyRef = new ActionReference();
+      legacyRef.putEnumerated(cTID('Chnl'), cTID('Chnl'), cTID('Msk '));
+      legacy.putReference(cTID('null'), legacyRef);
+      executeAction(cTID('Aply'), legacy, DialogModes.NO);
+    }
+
+    return {
       maskApplied: true
     };
   `,
@@ -1232,22 +1303,46 @@ export const ExtendScriptSnippets = {
    * Rasterize active layer
    */
   rasterizeLayer: () => `
+    ${helperFunctions}
+
     if (app.documents.length === 0) {
       throw new Error('No active document');
     }
     var layer = app.activeDocument.activeLayer;
-    
+
+    if (layer.typename === 'LayerSet') {
+      throw new Error('Cannot rasterize a layer group — select a single layer');
+    }
+
+    var originalKind = String(layer.kind);
     if (layer.kind === LayerKind.NORMAL) {
-      return { 
+      return {
         message: 'Layer is already rasterized',
         kind: 'NORMAL'
       };
     }
-    
-    var originalKind = String(layer.kind);
-    layer.rasterize(RasterizeType.ENTIRELAYER);
-    
-    return { 
+
+    if (layer.kind === LayerKind.TEXT) {
+      layer.rasterize(RasterizeType.TEXTCONTENTS);
+    } else if (layer.kind === LayerKind.SMARTOBJECT) {
+      var desc = new ActionDescriptor();
+      var ref = new ActionReference();
+      ref.putEnumerated(sTID('layer'), sTID('ordinal'), sTID('targetEnum'));
+      desc.putReference(sTID('null'), ref);
+      executeAction(sTID('rasterizePlaced'), desc, DialogModes.NO);
+    } else {
+      try {
+        layer.rasterize(RasterizeType.ENTIRELAYER);
+      } catch (eDom) {
+        var desc2 = new ActionDescriptor();
+        var ref2 = new ActionReference();
+        ref2.putEnumerated(sTID('layer'), sTID('ordinal'), sTID('targetEnum'));
+        desc2.putReference(sTID('null'), ref2);
+        executeAction(sTID('rasterizeLayer'), desc2, DialogModes.NO);
+      }
+    }
+
+    return {
       rasterized: true,
       originalKind: originalKind,
       newKind: 'NORMAL'
@@ -1464,9 +1559,14 @@ export const ExtendScriptSnippets = {
     }
     var doc = app.activeDocument;
     var layer = doc.activeLayer;
-    
+
+    if (layer.isBackgroundLayer) {
+      throw new Error('Cannot move background layer');
+    }
+
     if (doc.layers.length > 0) {
-      layer.move(doc.layers[doc.layers.length - 1], ElementPlacement.PLACEAFTER);
+      var bottomLayer = doc.layers[doc.layers.length - 1];
+      layer.move(bottomLayer, ElementPlacement.PLACEBEFORE);
     }
     
     var result = {

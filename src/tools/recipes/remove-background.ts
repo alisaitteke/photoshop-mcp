@@ -71,11 +71,21 @@ async function runRemoveBackground(
       return { ok: false, code: 'no_active_layer', message: 'Active layer is the Background layer — convert it to a normal layer first.', suggested_next_tool: 'photoshop_rasterize_layer' };
     }
 
+    app.displayDialogs = DialogModes.NO;
+    var subjectSelected = false;
     try {
-      var idAutoCutout = stringIDToTypeID('autoCutout');
-      executeAction(idAutoCutout, undefined, DialogModes.NO);
-    } catch (eSelectSubject) {
-      return { ok: false, code: 'generative_unavailable', message: 'Select Subject is not available: ' + (eSelectSubject.message || eSelectSubject), suggested_next_tool: 'photoshop_get_capabilities' };
+      doc.selection.selectSubject();
+      subjectSelected = true;
+    } catch (eDomSubject) {}
+    if (!subjectSelected) {
+      try {
+        var cutoutDesc = new ActionDescriptor();
+        cutoutDesc.putBoolean(stringIDToTypeID('sampleAllLayers'), false);
+        executeAction(stringIDToTypeID('autoCutout'), cutoutDesc, DialogModes.NO);
+        subjectSelected = true;
+      } catch (eSelectSubject) {
+        return { ok: false, code: 'generative_unavailable', message: 'Select Subject is not available: ' + (eSelectSubject.message || eSelectSubject), suggested_next_tool: 'photoshop_get_capabilities' };
+      }
     }
 
     var hasSel = false;
@@ -88,18 +98,7 @@ async function runRemoveBackground(
       try { doc.selection.feather(${feather}); } catch (eF) {}
     }
 
-    var idMk = charIDToTypeID('Mk  ');
-    var idMsk = charIDToTypeID('Msk ');
-    var idChnl = charIDToTypeID('Chnl');
-    var idUsng = charIDToTypeID('Usng');
-    var idUsrM = charIDToTypeID('UsrM');
-    var idRvlS = charIDToTypeID('RvlS');
-    var maskDesc = new ActionDescriptor();
-    var maskRef = new ActionReference();
-    maskRef.putEnumerated(idChnl, idChnl, idMsk);
-    maskDesc.putReference(charIDToTypeID('null'), maskRef);
-    maskDesc.putEnumerated(idUsng, idUsrM, idRvlS);
-    executeAction(idMk, maskDesc, DialogModes.NO);
+    __mcp_makeLayerMaskRevealSelection();
 
     return {
       ok: true,
