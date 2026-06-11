@@ -1,6 +1,6 @@
 import type { LanguageModel } from 'ai';
 
-export type ProviderId = 'anthropic' | 'openai' | 'openrouter' | 'google';
+export type ProviderId = 'anthropic' | 'openai' | 'openrouter' | 'google' | 'custom';
 
 export interface ModelPricing {
   inputUsdPerMTok: number;
@@ -26,6 +26,21 @@ export interface UsageCost {
 export interface ApiKeyValidation {
   ok: boolean;
   error?: string;
+}
+
+export interface CustomModelEntry {
+  id: string;
+  label: string;
+}
+
+export interface CustomProviderConfig {
+  name: string;
+  websiteUrl: string;
+  apiKey: string;
+  baseUrl: string;
+  apiFormat: 'openai' | 'anthropic';
+  models: CustomModelEntry[];
+  defaultModel: string;
 }
 
 export interface ProviderAdapter {
