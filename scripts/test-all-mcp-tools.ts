@@ -307,10 +307,18 @@ async function main(): Promise<void> {
   await t.run('photoshop_apply_motion_blur', { angle: 0, radius: 5 });
 
   console.log('\n=== Phase 9: Text ===');
+  await t.run('photoshop_list_fonts', { query: 'Arial', limit: 50 });
   await t.run('photoshop_execute_script', {
     code: `for (var i = 0; i < app.activeDocument.artLayers.length; i++) { var L = app.activeDocument.artLayers[i]; if (L.kind == LayerKind.TEXT) { app.activeDocument.activeLayer = L; break; } } return { active: app.activeDocument.activeLayer.name };`,
   });
   await t.run('photoshop_set_text_font', { fontName: 'Arial', fontSize: 32 });
+  await t.run('photoshop_create_text_layer', {
+    text: 'MCP Arial',
+    x: 160,
+    y: 160,
+    fontSize: 20,
+    fontName: 'Arial',
+  });
   await t.run('photoshop_set_text_color', { red: 10, green: 10, blue: 200 });
   await t.run('photoshop_set_text_alignment', { alignment: 'CENTER' });
   await t.run('photoshop_update_text_content', { text: 'MCP Updated' });

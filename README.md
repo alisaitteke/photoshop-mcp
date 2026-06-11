@@ -82,7 +82,7 @@ requests into reliable Photoshop actions:
   background, enhance portrait, prepare for web, export social variants, color
   grade, frequency separation, batch mockup, organize layers, gradient fade,
   sky blend, dodge & burn, remove distraction). Each wraps steps in a single
-  Photoshop history state (one Undo reverts all). **78 tools total** (66 atomic
+  Photoshop history state (one Undo reverts all). **80 tools total** (68 atomic
   + 12 recipe).
 - **State & preview** — `photoshop_get_state` (cheap snapshot),
   `photoshop_get_preview` (base64 JPEG for vision verification),
@@ -104,12 +104,12 @@ Local MCP integration tests run against a live Photoshop instance over stdio
 
 | Suite | Command | Result |
 |-------|---------|--------|
-| Issue #2 regression | `npm run spike:issue-2` | 10 targeted checks (document metadata, layers, place, alert, CJK names) |
-| Full tool + recipe sweep | `npm run test:mcp-all` | **117 pass**, **0 fail**, **4 skip** (121 total) |
+| Issue #2 regression | `npm run spike:issue-2` | Targeted checks (metadata, layers, place, Smart Object transform, jsString escapes, fonts, alert, CJK names) |
+| Full tool + recipe sweep | `npm run test:mcp-all` | **119 pass**, **0 fail**, **4 skip** (123 total) |
 | Prompt-layer smoke | `npm run test:mcp-local` | 16 prompt templates + core recipes |
 | Prompt ↔ recipe parity | `npm run verify:photoshop-prompts` | 12↔12 strict match + 4 guides |
 
-**Tool coverage:** 79 total tools (67 atomic `photoshop_*` + 12 recipe
+**Tool coverage:** 80 total tools (68 atomic `photoshop_*` + 12 recipe
 `photoshop_recipe_*`) — re-run `npm run test:mcp-all` for a fresh pass count.
 
 **Intentional skips** (environment-dependent, not regressions):
@@ -612,14 +612,16 @@ Create a text layer.
 - `x` (number, optional): X position in pixels (default: 100)
 - `y` (number, optional): Y position in pixels (default: 100)
 - `fontSize` (number, optional): Font size in points (default: 24)
+- `fontName` (string, optional): Font display or PostScript name (see `photoshop_list_fonts`)
 
 ```javascript
-// Example: Create a text layer
+// Example: Create a text layer with Arial
 photoshop_create_text_layer({
   text: "Hello World",
   x: 200,
   y: 150,
-  fontSize: 48
+  fontSize: 48,
+  fontName: "Arial"
 })
 ```
 
@@ -987,11 +989,27 @@ photoshop_invert()
 
 ### Text Formatting
 
-#### `photoshop_set_text_font`
-Set font family and size for active text layer.
+#### `photoshop_list_fonts`
+List installed fonts available to Photoshop. First call may be slow (`app.fonts` can exceed 1000 entries).
 
 **Parameters:**
-- `fontName` (string, required): Font family name
+- `query` (string, optional): Substring filter (matches name, postScriptName, or family)
+- `limit` (number, optional): Maximum fonts to return (default: 200)
+
+**Returns:** `{ fonts: [{ name, postScriptName, family, style }], total, truncated }`
+
+Use `postScriptName` when setting fonts manually via `execute_script`; `photoshop_set_text_font` and `photoshop_create_text_layer` resolve display names automatically.
+
+```javascript
+// Example: Find Arial variants
+photoshop_list_fonts({ query: "Arial", limit: 20 })
+```
+
+#### `photoshop_set_text_font`
+Set font family and size for active text layer. Accepts display name (e.g. `"Arial"`) or PostScript name (e.g. `"ArialMT"`).
+
+**Parameters:**
+- `fontName` (string, required): Font display or PostScript name (use `photoshop_list_fonts` to discover)
 - `fontSize` (number, optional): Font size in points
 
 ```javascript
@@ -1566,7 +1584,7 @@ photoshop-mcp/
 │   │   ├── photoshop-api.ts    # API factory
 │   │   ├── batch-play.ts       # UXP batchPlay helpers (legacy)
 │   │   └── extendscript.ts     # ExtendScript snippets library
-│   ├── tools/            # MCP tool implementations (78 tools: 66 atomic + 12 recipe)
+│   ├── tools/            # MCP tool implementations (80 tools: 68 atomic + 12 recipe)
 │   │   ├── document-tools.ts        # Document operations
 │   │   ├── layer-tools.ts           # Layer creation/deletion
 │   │   ├── layer-properties-tools.ts # Opacity, blend modes, etc.

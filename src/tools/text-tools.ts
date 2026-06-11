@@ -7,14 +7,45 @@ export function createTextTools(connection: PhotoshopConnection): ToolDefinition
   return [
     {
       tool: {
+        name: 'photoshop_list_fonts',
+        description:
+          'List installed fonts available to Photoshop.\n\n' +
+          'Use when: choosing a font for photoshop_create_text_layer or photoshop_set_text_font.\n' +
+          'TextItem.font requires the PostScript name — use postScriptName from results, or pass display name to set/create tools (they resolve automatically).\n\n' +
+          'Returns: fonts array ({ name, postScriptName, family, style }), total count, truncated flag.\n' +
+          'First call may be slow (app.fonts.length can exceed 1000). Side effects: none.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            query: {
+              type: 'string',
+              description: 'Optional substring filter (matches name, postScriptName, or family)',
+            },
+            limit: {
+              type: 'number',
+              description: 'Maximum fonts to return (default: 200)',
+              default: 200,
+              minimum: 1,
+              maximum: 1000,
+            },
+          },
+        },
+      },
+      handler: async (args) => listFonts(connection, args),
+    },
+    {
+      tool: {
         name: 'photoshop_set_text_font',
-        description: 'Set font family and size for active text layer',
+        description:
+          'Set font family and size for active text layer.\n\n' +
+          'Accepts display name (e.g. "Arial") or PostScript name (e.g. "ArialMT") — resolved via app.fonts.\n' +
+          'Use photoshop_list_fonts to discover available fonts.',
         inputSchema: {
           type: 'object',
           properties: {
             fontName: {
               type: 'string',
-              description: 'Font family name (e.g., "Arial", "Helvetica")',
+              description: 'Font display or PostScript name (see photoshop_list_fonts)',
             },
             fontSize: {
               type: 'number',
@@ -94,6 +125,41 @@ export function createTextTools(connection: PhotoshopConnection): ToolDefinition
       handler: async (args) => updateTextContent(connection, args),
     },
   ];
+}
+
+async function listFonts(
+  connection: PhotoshopConnection,
+  args: Record<string, unknown>
+): Promise<ToolResult> {
+  const query = args.query as string | undefined;
+  const limit = (args.limit as number | undefined) ?? 200;
+
+  try {
+    const apiFactory = new PhotoshopAPIFactory(connection);
+    const api = await apiFactory.createAPI();
+
+    const script = ExtendScriptSnippets.listFonts(query, limit);
+    const result = await api.executeScript(script);
+
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: `Fonts listed${query ? ` (query: "${query}")` : ''}\nResult: ${JSON.stringify(result)}`,
+        },
+      ],
+    };
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: `Error listing fonts: ${error instanceof Error ? error.message : String(error)}`,
+        },
+      ],
+      isError: true,
+    };
+  }
 }
 
 async function setTextFont(

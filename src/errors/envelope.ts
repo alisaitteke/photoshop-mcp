@@ -10,6 +10,7 @@ export type PhotoshopErrorCode =
   | 'generative_unavailable'
   | 'extendscript_runtime_error'
   | 'file_not_found'
+  | 'font_not_found'
   | 'unsupported_color_mode'
   | 'unknown';
 
@@ -33,6 +34,7 @@ const ERROR_PATTERNS: Array<{
   { pattern: /selection/i, code: 'selection_required', suggested_next_tool: 'photoshop_get_state' },
   { pattern: /version_unsupported|not supported.*version/i, code: 'version_unsupported', suggested_next_tool: 'photoshop_get_capabilities' },
   { pattern: /generative/i, code: 'generative_unavailable', suggested_next_tool: 'photoshop_get_capabilities' },
+  { pattern: /font_not_found/i, code: 'font_not_found', suggested_next_tool: 'photoshop_list_fonts' },
   { pattern: /file not found|does not exist/i, code: 'file_not_found' },
   { pattern: /color mode/i, code: 'unsupported_color_mode', suggested_next_tool: 'photoshop_get_document_info' },
 ];

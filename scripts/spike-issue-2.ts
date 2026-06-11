@@ -195,6 +195,51 @@ async function main(): Promise<void> {
     fail('photoshop_place_image (parse)', error instanceof Error ? error.message : String(error));
   }
 
+  // Step 6b: Smart Object transform after place (DialogModes.NO must not block)
+  console.log('\n--- Step 6b: Smart Object scale + move after place_image ---');
+  try {
+    const placePayload = parseJsonFromText(textFrom(place)) as { layerName?: string };
+    if (placePayload.layerName) {
+      const selectPlaced = await callTool(client, 'photoshop_select_layer_by_name', {
+        name: placePayload.layerName,
+      });
+      assert(!selectPlaced.isError, 'photoshop_select_layer_by_name (placed layer)');
+    }
+    const scale = await callTool(
+      client,
+      'photoshop_scale_layer',
+      { scalePercent: 95 },
+      ALERT_TIMEOUT_MS
+    );
+    assert(!scale.isError, 'photoshop_scale_layer on placed Smart Object');
+    const move = await callTool(
+      client,
+      'photoshop_move_layer',
+      { deltaX: 5, deltaY: 5 },
+      ALERT_TIMEOUT_MS
+    );
+    assert(!move.isError, 'photoshop_move_layer on placed Smart Object');
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    fail('Smart Object transform after place', msg.includes('Timed out') ? 'dialog blocked — timed out' : msg);
+  }
+
+  // Step 6c: jsString edge case (backslash, quote, newline in layer name)
+  console.log('\n--- Step 6c: jsString escape round-trip ---');
+  const ESCAPE_LAYER_NAME = 'MCP\\"Test\\nName';
+  const escapeCreate = await callTool(client, 'photoshop_create_layer', { name: ESCAPE_LAYER_NAME });
+  assert(!escapeCreate.isError, 'photoshop_create_layer (escaped name)');
+  const escapeSelect = await callTool(client, 'photoshop_select_layer_by_name', {
+    name: ESCAPE_LAYER_NAME,
+  });
+  assert(!escapeSelect.isError, 'photoshop_select_layer_by_name (escaped name)');
+  try {
+    const payload = parseJsonFromText(textFrom(escapeSelect)) as { layerName?: string };
+    assert(payload.layerName === ESCAPE_LAYER_NAME, 'escaped layer name round-trip', payload.layerName);
+  } catch (error) {
+    fail('jsString round-trip (parse)', error instanceof Error ? error.message : String(error));
+  }
+
   // Step 7
   console.log('\n--- Step 7: execute_script alert (dialog suppression) ---');
   try {
@@ -226,7 +271,37 @@ async function main(): Promise<void> {
   }
 
   // Step 9
-  console.log('\n--- Step 9: CJK layer name round-trip ---');
+  console.log('\n--- Step 9: font discovery + create_text_layer fontName ---');
+  const listFonts = await callTool(client, 'photoshop_list_fonts', { query: 'Arial', limit: 20 });
+  assert(!listFonts.isError, 'photoshop_list_fonts (query: Arial)');
+  try {
+    const fontPayload = parseJsonFromText(textFrom(listFonts)) as {
+      fonts?: Array<{ name?: string; postScriptName?: string }>;
+    };
+    assert((fontPayload.fonts?.length ?? 0) > 0, 'list_fonts returns Arial matches');
+  } catch (error) {
+    fail('photoshop_list_fonts (parse)', error instanceof Error ? error.message : String(error));
+  }
+  const fontText = await callTool(client, 'photoshop_create_text_layer', {
+    text: 'Font Test',
+    x: 200,
+    y: 200,
+    fontSize: 18,
+    fontName: 'Arial',
+  });
+  assert(!fontText.isError, 'photoshop_create_text_layer with fontName');
+  try {
+    const fontVerify = await callTool(client, 'photoshop_execute_script', {
+      code: `for (var i=0;i<app.activeDocument.artLayers.length;i++){var L=app.activeDocument.artLayers[i]; if(L.kind==LayerKind.TEXT&&L.textItem.contents=="Font Test"){return{font:L.textItem.font,contents:L.textItem.contents};}} throw new Error("text layer not found");`,
+    });
+    const verifyPayload = parseJsonFromText(textFrom(fontVerify)) as { font?: string };
+    assert(typeof verifyPayload.font === 'string' && verifyPayload.font.length > 0, 'font applied on text layer', verifyPayload.font);
+  } catch (error) {
+    fail('fontName verify (parse)', error instanceof Error ? error.message : String(error));
+  }
+
+  // Step 10
+  console.log('\n--- Step 10: CJK layer name round-trip ---');
   const cjkCreate = await callTool(client, 'photoshop_create_layer', { name: CJK_LAYER_NAME });
   assert(!cjkCreate.isError, 'photoshop_create_layer (CJK name)');
   const cjkSelect = await callTool(client, 'photoshop_select_layer_by_name', {
@@ -241,8 +316,8 @@ async function main(): Promise<void> {
     fail('CJK round-trip (parse)', error instanceof Error ? error.message : String(error));
   }
 
-  // Step 10
-  console.log('\n--- Step 10: select_layer_by_name missing ---');
+  // Step 11
+  console.log('\n--- Step 11: select_layer_by_name missing ---');
   const missing = await callTool(client, 'photoshop_select_layer_by_name', {
     name: '__MCP_MISSING_LAYER__',
   });

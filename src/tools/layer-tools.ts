@@ -41,10 +41,11 @@ export function createLayerTools(connection: PhotoshopConnection): ToolDefinitio
       tool: {
         name: 'photoshop_create_text_layer',
         description:
-          'Create a text layer with content, position, and font size.\n\n' +
+          'Create a text layer with content, position, font size, and optional font.\n\n' +
           'Use when: adding labels, titles, or typography to the design.\n' +
           'Do NOT use when: editing existing text — use photoshop_update_text_content.\n\n' +
-          'Returns: layer name, text, position, fontSize, context.\n' +
+          'Returns: layer name, text, position, fontSize, font (when fontName set), context.\n' +
+          'Use photoshop_list_fonts to discover font names; photoshop_set_text_font to change font later.\n' +
           'Preconditions: active document. Side effects: adds text layer.',
         inputSchema: {
           type: 'object',
@@ -67,6 +68,11 @@ export function createLayerTools(connection: PhotoshopConnection): ToolDefinitio
               type: 'number',
               description: 'Font size in points (default: 24)',
               default: 24,
+            },
+            fontName: {
+              type: 'string',
+              description:
+                'Optional font display or PostScript name (resolved via app.fonts; see photoshop_list_fonts)',
             },
           },
           required: ['text'],
@@ -218,19 +224,20 @@ async function createTextLayer(
   const x = (args.x as number) || 100;
   const y = (args.y as number) || 100;
   const fontSize = (args.fontSize as number) || 24;
+  const fontName = args.fontName as string | undefined;
 
   try {
     const apiFactory = new PhotoshopAPIFactory(connection);
     const api = await apiFactory.createAPI();
 
-    const script = ExtendScriptSnippets.createTextLayer(text, x, y, fontSize);
+    const script = ExtendScriptSnippets.createTextLayer(text, x, y, fontSize, fontName);
     await api.executeScript(script);
 
     return {
       content: [
         {
           type: 'text' as const,
-          text: `Text layer created: "${text}" at (${x}, ${y})`,
+          text: `Text layer created: "${text}" at (${x}, ${y})${fontName ? ` with font ${fontName}` : ''}`,
         },
       ],
     };
