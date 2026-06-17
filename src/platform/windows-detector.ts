@@ -66,7 +66,7 @@ export class WindowsDetector {
             const info = await this.checkPath(latest.path);
             if (info) return info;
           }
-        } catch (error) {
+        } catch {
           // Continue to next registry path
           continue;
         }
@@ -86,7 +86,7 @@ export class WindowsDetector {
             const info = await this.checkPath(exePath);
             if (info) return info;
           }
-        } catch (error) {
+        } catch {
           continue;
         }
       }
@@ -177,7 +177,7 @@ export class WindowsDetector {
         path: cleanPath,
         isRunning: await this.checkIfRunning(),
       };
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -202,7 +202,7 @@ export class WindowsDetector {
     try {
       const { stdout } = await execAsync('tasklist /FI "IMAGENAME eq Photoshop.exe"');
       return stdout.toLowerCase().includes('photoshop.exe');
-    } catch (error) {
+    } catch {
       return false;
     }
   }

@@ -109,7 +109,7 @@ export class MacOSDetector {
         isRunning: await this.checkIfRunning(cleanPath),
         appName,
       };
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -130,7 +130,7 @@ export class MacOSDetector {
         if (version.trim()) {
           return version.trim();
         }
-      } catch (error) {
+      } catch {
         // PlistBuddy failed, try parsing manually
         const content = await readFile(plistPath, 'utf8');
         const versionMatch = content.match(
@@ -162,7 +162,7 @@ export class MacOSDetector {
       // Use pgrep to check if process is running
       const { stdout } = await execAsync(`pgrep -f "${appName}"`);
       return stdout.trim().length > 0;
-    } catch (error) {
+    } catch {
       // pgrep returns non-zero exit code if no process found
       return false;
     }
@@ -175,7 +175,7 @@ export class MacOSDetector {
         `/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "${plistPath}"`
       );
       return stdout.trim();
-    } catch (error) {
+    } catch {
       return null;
     }
   }

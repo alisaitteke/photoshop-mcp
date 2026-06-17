@@ -32,7 +32,7 @@ export default [
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
-          caughtErrors: 'none',
+          caughtErrorsIgnorePattern: '^_',
         },
       ],
       '@typescript-eslint/no-explicit-any': 'warn',

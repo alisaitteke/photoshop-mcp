@@ -129,7 +129,7 @@ end tell`;
     try {
       const { stdout } = await execAsync('pgrep -f "Adobe Photoshop"');
       return stdout.trim().length > 0;
-    } catch (error) {
+    } catch {
       // pgrep returns non-zero exit code if no process found
       return false;
     }
