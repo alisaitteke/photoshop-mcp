@@ -110,7 +110,7 @@ End If
 
 ' Execute the JSX script
 Dim result
-result = photoshopApp.DoJavaScript("return $.evalFile('" & Replace("${jsxPath}", "\\", "\\\\") & "');")
+result = photoshopApp.DoJavaScript("$.evalFile('" & Replace("${jsxPath}", "\\", "\\\\") & "')")
 
 If Err.Number <> 0 Then
     WScript.Echo "ERROR: " & Err.Description
