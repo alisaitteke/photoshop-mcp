@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue';
 import { ChevronDown, ChevronRight } from 'lucide-vue-next';
 import PlanCard from './PlanCard.vue';
-import ToolCallCard from './ToolCallCard.vue';
+import ToolCallStrip, { type ToolStripItem } from './ToolCallStrip.vue';
 import type { ChatMessage, ToolCall } from '@/stores/chat';
 
 const props = defineProps<{
@@ -45,6 +45,17 @@ const showContent = computed(
     props.message.toolCalls.length > 0 ||
     Boolean(activityLabel.value)
 );
+
+const standaloneStripItems = computed((): ToolStripItem[] =>
+  props.standaloneToolCalls.map((tc) => ({
+    id: tc.id,
+    name: tc.name,
+    status: tc.status === 'success' ? 'done' : tc.status,
+    input: tc.input,
+    result: tc.result,
+    clickable: true,
+  }))
+);
 </script>
 
 <template>
@@ -78,6 +89,20 @@ const showContent = computed(
       </div>
     </div>
 
+    <PlanCard
+      v-if="message.plan"
+      :plan="message.plan"
+      :tool-calls="message.toolCalls"
+      :partial="message.planPartial"
+    />
+
+    <div
+      v-if="standaloneStripItems.length > 0"
+      class="rounded-lg border border-border bg-card/50"
+    >
+      <ToolCallStrip :items="standaloneStripItems" />
+    </div>
+
     <div
       v-if="message.text || (message.isStreaming && !showActivity)"
       class="whitespace-pre-wrap text-sm leading-relaxed text-foreground"
@@ -87,18 +112,5 @@ const showContent = computed(
         class="ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-foreground align-middle"
       />
     </div>
-
-    <PlanCard
-      v-if="message.plan"
-      :plan="message.plan"
-      :tool-calls="message.toolCalls"
-      :partial="message.planPartial"
-    />
-
-    <ToolCallCard
-      v-for="tc in standaloneToolCalls"
-      :key="tc.id"
-      :tool-call="tc"
-    />
   </div>
 </template>
