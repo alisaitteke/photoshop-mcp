@@ -1,5 +1,6 @@
-import { getAnalytics } from './provider.js';
 import { isAnalyticsEnabled, isBetaTelemetryOptIn } from './identity.js';
+import { getLaunchMethod } from './launch-method.js';
+import { getAnalytics } from './provider.js';
 
 const MAX_TEXT_LENGTH = 16_000;
 const TRUNCATION_SUFFIX = '…[truncated]';
@@ -43,6 +44,7 @@ export function captureBetaChatTurn(input: BetaChatTurnInput): void {
       os: process.platform,
       arch: process.arch,
       node_version: process.version,
+      launch_method: getLaunchMethod(),
       event_source: 'server',
       provider_id: input.providerId,
       auth_method: input.authMethod,

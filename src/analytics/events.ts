@@ -1,4 +1,5 @@
 import { getServerAnalyticsContext } from './context.js';
+import { getLaunchMethod } from './launch-method.js';
 
 const BLOCKED_PROPERTY_KEYS = new Set([
   'api_key',
@@ -43,6 +44,7 @@ const ALLOWED_PROPERTY_KEYS = new Set([
   'analytics_enabled',
   'beta_telemetry_opt_in',
   'theme',
+  'launch_method',
 ]);
 
 export function sanitizeAnalyticsProperties(
@@ -70,6 +72,7 @@ export function buildRuntimeProperties(
     os: process.platform,
     arch: process.arch,
     node_version: process.version,
+    launch_method: getLaunchMethod(),
     ...getServerAnalyticsContext(),
     ...sanitizeAnalyticsProperties(properties),
   };
