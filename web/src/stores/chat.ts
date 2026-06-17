@@ -9,6 +9,8 @@ import {
   streamChat,
   type ChatSummary,
   type PersistedToolCall,
+  type PlanStepStatus,
+  type PlanView,
   type ProviderId,
   type UsageCost,
   type UsageDetails,
@@ -21,6 +23,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   text: string;
   toolCalls: ToolCall[];
+  plan?: PlanView;
   usage?: UsageDetails;
   cost?: UsageCost;
   provider?: ProviderId;
@@ -39,6 +42,11 @@ export interface ChatStreamEventPayload {
   usage?: UsageDetails;
   cost?: UsageCost;
   message?: string;
+  // Action Plan (beta) events
+  summary?: string;
+  steps?: PlanView['steps'];
+  status?: PlanStepStatus;
+  stepId?: string;
 }
 
 export interface ChatTotals {
@@ -123,6 +131,7 @@ export function useChatStore() {
         role: m.role,
         text: m.content.text,
         toolCalls: m.content.toolCalls ?? [],
+        plan: m.content.plan,
         usage: m.content.usage,
         cost: m.content.cost,
         provider: m.content.provider,
@@ -199,6 +208,16 @@ export function useChatStore() {
         tc.result = { ok: Boolean(data.ok), content: data.content ?? '' };
         tc.status = data.ok ? 'success' : 'error';
       }
+    } else if (event === 'plan') {
+      const m = ensureAssistantMessage();
+      m.plan = { summary: data.summary ?? '', steps: data.steps ?? [] };
+    } else if (event === 'plan-step' && data.id && data.status) {
+      const m = ensureAssistantMessage();
+      const step = m.plan?.steps.find((s) => s.id === data.id);
+      if (step) step.status = data.status;
+    } else if (event === 'plan-repair') {
+      // Re-plan announced; the subsequent 'plan' event replaces the step list.
+      // No dedicated state needed beyond the refreshed plan that follows.
     } else if (event === 'finish') {
       const m = ensureAssistantMessage();
       if (data.usage) m.usage = data.usage;

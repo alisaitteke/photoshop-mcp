@@ -33,6 +33,7 @@ export interface Status {
   hasApiKey: boolean;
   apiKeyMasked: string | null;
   accountLabel: string | null;
+  actionPlanBeta: boolean;
 }
 
 export interface ProviderModel {
@@ -96,6 +97,20 @@ export interface UsageCost {
   cachedWriteUsd: number;
 }
 
+export type PlanStepStatus = 'pending' | 'running' | 'done' | 'error';
+
+export interface PlanStepView {
+  id: string;
+  tool: string;
+  rationale?: string;
+  status: PlanStepStatus;
+}
+
+export interface PlanView {
+  summary: string;
+  steps: PlanStepView[];
+}
+
 export interface PersistedMessage {
   id: string;
   chatId: string;
@@ -107,6 +122,7 @@ export interface PersistedMessage {
     cost?: UsageCost;
     provider?: ProviderId;
     model?: string;
+    plan?: PlanView;
   };
   createdAt: number;
 }
@@ -124,6 +140,12 @@ export const apiSetActive = (body: Partial<{ activeProvider: ProviderId; activeM
   api<{ activeProvider: ProviderId; activeModel: string }>('/api/active', {
     method: 'POST',
     body: JSON.stringify(body),
+  });
+
+export const apiSetActionPlanBeta = (enabled: boolean) =>
+  api<{ ok: true; actionPlanBeta: boolean }>('/api/config/action-plan', {
+    method: 'POST',
+    body: JSON.stringify({ enabled }),
   });
 
 // ---- Providers --------------------------------------------------------

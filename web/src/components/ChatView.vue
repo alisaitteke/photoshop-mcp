@@ -1,25 +1,50 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { MessageSquarePlus } from 'lucide-vue-next';
+import { computed, ref, watch } from 'vue';
+import { MessageSquarePlus, FlaskConical } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import StatusBar from './StatusBar.vue';
 import MessageList from './MessageList.vue';
 import Composer from './Composer.vue';
 import ModelSelector from './ModelSelector.vue';
 import Footer from './Footer.vue';
-import { apiUpdateChatModel, type ProviderId, type ProviderInfo } from '@/lib/api';
+import {
+  apiSetActionPlanBeta,
+  apiUpdateChatModel,
+  type ProviderId,
+  type ProviderInfo,
+} from '@/lib/api';
 import type { useChatStore } from '@/stores/chat';
 
 const props = defineProps<{
   providers: ProviderInfo[];
   store: ReturnType<typeof useChatStore>;
   settingsOpen: boolean;
+  actionPlanBeta: boolean;
+  hasApiKey: boolean;
 }>();
 
 const emit = defineEmits<{ 
   'new-chat': [];
   'open-settings': [];
 }>();
+
+const planBeta = ref(props.actionPlanBeta);
+watch(
+  () => props.actionPlanBeta,
+  (v) => {
+    planBeta.value = v;
+  }
+);
+
+async function toggleActionPlanBeta(): Promise<void> {
+  const next = !planBeta.value;
+  planBeta.value = next;
+  try {
+    await apiSetActionPlanBeta(next);
+  } catch {
+    planBeta.value = !next;
+  }
+}
 
 const activeChat = computed(() => {
   const id = props.store.activeChatId.value;
@@ -35,6 +60,10 @@ const activeProviderInfo = computed(() => {
 
 const subscriptionMode = computed(
   () => activeProviderInfo.value?.authMethod === 'cli_account'
+);
+
+const actionPlanAvailable = computed(
+  () => props.hasApiKey || !subscriptionMode.value
 );
 
 async function onProviderChange(providerId: ProviderId): Promise<void> {
@@ -88,15 +117,45 @@ async function onModelChange(modelId: string): Promise<void> {
         @abort="props.store.abort"
       >
         <template #actions>
-      <ModelSelector
-        :providers="props.providers"
-        :current-provider="activeChat.provider"
-        :current-model="activeChat.model"
-        :disabled="props.store.sending.value"
-        @update:provider="onProviderChange"
-        @update:model="onModelChange"
-        @open-settings="emit('open-settings')"
-      />
+          <div class="flex items-center gap-1">
+            <ModelSelector
+              :providers="props.providers"
+              :current-provider="activeChat.provider"
+              :current-model="activeChat.model"
+              :disabled="props.store.sending.value"
+              @update:provider="onProviderChange"
+              @update:model="onModelChange"
+              @open-settings="emit('open-settings')"
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              :disabled="props.store.sending.value || !actionPlanAvailable"
+              :title="
+                !actionPlanAvailable
+                  ? 'Action Plan needs an API key for the planning call. Add one in Settings.'
+                  : subscriptionMode
+                    ? 'Uses your stored API key to plan all steps in one call, then executes them directly.'
+                    : 'Beta: plan all Photoshop steps in one call, then execute them in a single pass.'
+              "
+              class="h-7 gap-1.5 px-2 text-xs"
+              :class="
+                planBeta
+                  ? 'text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              "
+              @click="toggleActionPlanBeta"
+            >
+              <FlaskConical class="size-3.5" :class="planBeta ? 'text-amber-500' : ''" />
+              Action Plan
+              <span
+                class="rounded px-1 text-[9px] font-semibold uppercase"
+                :class="planBeta ? 'bg-amber-500/15 text-amber-600' : 'bg-muted text-muted-foreground'"
+              >
+                {{ planBeta ? 'On' : 'Beta' }}
+              </span>
+            </Button>
+          </div>
         </template>
       </Composer>
     </template>

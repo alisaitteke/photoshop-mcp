@@ -26,6 +26,16 @@ export interface MessageContent {
   cost?: UsageCost;
   provider?: string;
   model?: string;
+  /** Present only for Action Plan (beta) runs. */
+  plan?: {
+    summary: string;
+    steps: Array<{
+      id: string;
+      tool: string;
+      rationale?: string;
+      status: 'pending' | 'running' | 'done' | 'error';
+    }>;
+  };
 }
 
 export interface MessageRow {

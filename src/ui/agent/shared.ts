@@ -12,13 +12,37 @@ export interface ToolCallPersist {
   status: 'pending' | 'success' | 'error';
 }
 
+export type PlanStepStatus = 'pending' | 'running' | 'done' | 'error';
+
+export interface PlanStepView {
+  id: string;
+  tool: string;
+  rationale?: string;
+  status: PlanStepStatus;
+}
+
+export interface PlanView {
+  summary: string;
+  steps: PlanStepView[];
+}
+
 export interface AssistantBuffer {
   text: string;
   toolCalls: ToolCallPersist[];
+  /** Present only for Action Plan (beta) runs; persisted so it survives reload. */
+  plan?: PlanView;
 }
 
 export interface RunChatStreamEvent {
-  type: 'text-delta' | 'tool-call' | 'tool-result' | 'finish' | 'error';
+  type:
+    | 'text-delta'
+    | 'tool-call'
+    | 'tool-result'
+    | 'finish'
+    | 'error'
+    | 'plan'
+    | 'plan-step'
+    | 'plan-repair';
   payload: unknown;
 }
 

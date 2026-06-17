@@ -2,6 +2,7 @@
 import { nextTick, onMounted, ref, watch } from 'vue';
 import { User, Sparkles } from 'lucide-vue-next';
 import ToolCallCard from './ToolCallCard.vue';
+import PlanCard from './PlanCard.vue';
 import ProviderIcon from './ProviderIcon.vue';
 import type { ChatMessage } from '@/stores/chat';
 import type { ProviderInfo } from '@/lib/api';
@@ -38,6 +39,12 @@ function assistantLabel(m: ChatMessage): string {
   const modelLabel = provider?.models.find((mm) => mm.id === m.model)?.label ?? m.model;
   return modelLabel ? `${providerLabel} · ${modelLabel}` : providerLabel;
 }
+
+/** When an action plan is present, tool calls are shown inline on the plan rows. */
+function standaloneToolCalls(m: ChatMessage) {
+  if (!m.plan) return m.toolCalls;
+  return m.toolCalls.slice(m.plan.steps.length);
+}
 </script>
 
 <template>
@@ -71,7 +78,8 @@ function assistantLabel(m: ChatMessage): string {
             v-if="m.text"
             class="whitespace-pre-wrap text-sm leading-relaxed text-foreground"
           >{{ m.text }}</div>
-          <ToolCallCard v-for="tc in m.toolCalls" :key="tc.id" :tool-call="tc" />
+          <PlanCard v-if="m.plan" :plan="m.plan" :tool-calls="m.toolCalls" />
+          <ToolCallCard v-for="tc in standaloneToolCalls(m)" :key="tc.id" :tool-call="tc" />
         </div>
       </div>
 

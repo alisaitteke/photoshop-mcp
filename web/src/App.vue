@@ -121,6 +121,8 @@ onMounted(refresh);
       :providers="providers"
       :store="chat"
       :settings-open="settingsOpen"
+      :action-plan-beta="status?.actionPlanBeta ?? false"
+      :has-api-key="status?.hasApiKey ?? false"
       @new-chat="handleNewChat"
       @open-settings="settingsOpen = true"
     />

@@ -102,7 +102,14 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
       hasApiKey: Boolean(active?.apiKey),
       apiKeyMasked: maskApiKey(active?.apiKey),
       accountLabel: active?.cliAccountLabel ?? null,
+      actionPlanBeta: Boolean(config.actionPlanBeta),
     });
+  });
+
+  app.post('/api/config/action-plan', async (c) => {
+    const body = await c.req.json().catch(() => ({})) as { enabled?: boolean };
+    const next = saveConfig({ actionPlanBeta: Boolean(body.enabled) });
+    return c.json({ ok: true, actionPlanBeta: Boolean(next.actionPlanBeta) });
   });
 
   app.post('/api/active', async (c) => {
@@ -331,7 +338,7 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
 
       const persistAssistant = () => {
         if (assistantPersisted) return;
-        if (!buffer.text && buffer.toolCalls.length === 0) return;
+        if (!buffer.text && buffer.toolCalls.length === 0 && !buffer.plan) return;
         appendMessage({
           chatId: chat.id,
           role: 'assistant',
@@ -340,6 +347,7 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
             toolCalls: buffer.toolCalls,
             provider: chat.provider,
             model: chat.model,
+            ...(buffer.plan ? { plan: buffer.plan } : {}),
             ...(lastFinish?.usage ? { usage: lastFinish.usage } : {}),
             ...(lastFinish?.cost ? { cost: lastFinish.cost } : {}),
           },
