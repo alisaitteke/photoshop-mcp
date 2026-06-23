@@ -52,9 +52,9 @@ This starts the server on port 5174 (with hot reload) and the web dev server con
 | `src/` | MCP server core, tools, recipes, and UI backend |
 | `web/` | Vue 3 standalone UI (Tailwind v4, shadcn-vue) |
 | `scripts/` | Integration and verification test scripts |
-| `docs/` | Additional documentation |
+| `README.md` | Project documentation (installation, tools, development, architecture) |
 
-See [`docs/architecture.md`](docs/architecture.md) for a detailed breakdown.
+See the [Architecture](README.md#architecture) section in `README.md` for a detailed breakdown.
 
 ## Making changes
 

@@ -128,32 +128,86 @@ photoshop-mcp-ui [--port 5174] [--host 127.0.0.1] [--no-open]
 
 ## AI/Prompt Layer for Photoshop
 
-On top of atomic `photoshop_*` tools, the server ships an opinionated AI/prompt
-layer that helps host LLMs (Cursor, Claude Desktop, etc.) translate vague user
-requests into reliable Photoshop actions:
+The photoshop-mcp server exposes 66 atomic `photoshop_*` tools plus 12 recipe
+`photoshop_recipe_*` tools (78 total), along with a thin
+AI/prompt layer ported from TTT: server-level instructions, MCP prompt templates,
+recipe tools, state/preview tools, version-aware capabilities, and structured
+error envelopes.
 
-- **Server `instructions`** — workflow contract advertised on MCP `initialize`
-  (ping once, state-before-action, prefer recipes, error recovery). See
-  [`src/prompts/instructions.ts`](src/prompts/instructions.ts).
-- **MCP `prompts` primitive** — 16 pre-engineered templates (12 recipe + 4 guide:
-  `ps.enhance_portrait`, `ps.remove_background`, `ps.gradient_fade`, `ps.sky_blend`, …)
-  via `prompts/list` and `prompts/get`.
-- **Recipe tools** — 12 outcome-oriented `photoshop_recipe_*` tools (remove
-  background, enhance portrait, prepare for web, export social variants, color
-  grade, frequency separation, batch mockup, organize layers, gradient fade,
-  sky blend, dodge & burn, remove distraction). Each wraps steps in a single
-  Photoshop history state (one Undo reverts all). **80 tools total** (68 atomic
-  + 12 recipe).
-- **State & preview** — `photoshop_get_state` (cheap snapshot),
-  `photoshop_get_preview` (base64 JPEG for vision verification),
-  `photoshop_get_capabilities` (version-aware feature flags).
-- **Structured errors** — failures return JSON envelopes with `code` and
-  `suggested_next_tool` for self-correction.
+### 1. Server `instructions`
 
-Full reference: [`docs/prompt-layer.md`](docs/prompt-layer.md).
+Source: [`src/prompts/instructions.ts`](src/prompts/instructions.ts)
 
-Verify parity: `npm run verify:photoshop-prompts`. Latest results:
-[`docs/development.md#integration-test-results`](docs/development.md#integration-test-results).
+Advertised on MCP `initialize`. Covers session bootstrap, recipe-over-atomic
+selection, user intent glossary, degrade paths, disambiguation, guide vs recipe
+prompt discovery, `~/.photoshop-mcp/exports` conventions, and error recovery contract.
+
+### 2. MCP `prompts` primitive
+
+Sixteen templates in [`src/prompts/templates/`](src/prompts/templates/), registered via
+[`src/prompts/registry.ts`](src/prompts/registry.ts).
+
+#### Recipe prompts (12 — 1:1 with `photoshop_recipe_*`)
+
+| Prompt | Recipe tool |
+|--------|-------------|
+| `ps.enhance_portrait` | `photoshop_recipe_enhance_portrait` |
+| `ps.remove_background` | `photoshop_recipe_remove_background` |
+| `ps.prepare_for_web` | `photoshop_recipe_prepare_for_web` |
+| `ps.export_social_variants` | `photoshop_recipe_export_social_variants` |
+| `ps.apply_color_grade` | `photoshop_recipe_apply_color_grade` |
+| `ps.frequency_separation` | `photoshop_recipe_frequency_separation` |
+| `ps.batch_mockup_replace` | `photoshop_recipe_batch_mockup_replace` |
+| `ps.organize_layers` | `photoshop_recipe_organize_layers` |
+| `ps.gradient_fade` | `photoshop_recipe_gradient_fade` |
+| `ps.sky_blend` | `photoshop_recipe_sky_blend` |
+| `ps.dodge_burn` | `photoshop_recipe_dodge_burn` |
+| `ps.remove_distraction` | `photoshop_recipe_remove_distraction` |
+
+#### Guide prompts (4 — no recipe pair)
+
+| Prompt | Purpose |
+|--------|---------|
+| `ps.gradient_blend` | Fade subject into background via mask gradient (atomic chain) |
+| `ps.color_correct` | Tone / contrast fix chain |
+| `ps.dodge_burn_guide` | 50% gray overlay retouch setup |
+| `ps.composite_blend` | Place asset + mask + blend mode |
+
+Each template uses arg coercion helpers from [`src/prompts/_shared.ts`](src/prompts/_shared.ts)
+and returns a `GetPromptResult` with `description` + structured Goal/Plan/End state text
+(guide prompts also include an Intent line).
+
+### 3. Recipe tools
+
+Twelve recipes in [`src/tools/recipes/`](src/tools/recipes/), sharing
+[`src/tools/recipes/_shared.ts`](src/tools/recipes/_shared.ts) (`executeRecipe`,
+`suspendHistory`, uniform `{ ok, summary, ... }` envelope).
+
+Export recipes write to `~/.photoshop-mcp/exports` (or `~/.photoshop-mcp/exports/<chat-id>`
+when the standalone UI passes `PHOTOSHOP_EXPORT_CHAT_ID` to the MCP child).
+
+### 4. State & preview tools
+
+| Tool | File |
+|------|------|
+| `photoshop_get_state` | [`src/tools/state-tools.ts`](src/tools/state-tools.ts) |
+| `photoshop_get_preview` | same |
+| `photoshop_get_capabilities` | same |
+
+### 5. Verification
+
+```bash
+npm run verify:photoshop-prompts
+```
+
+Strict **12↔12** recipe/prompt parity plus separate guide prompt registration check.
+
+### Backwards compatibility
+
+All original `photoshop_*` tool names and schemas are unchanged; this expansion
+added 4 atomics + 4 recipes + 8 prompt templates (additive only).
+
+Verify parity: `npm run verify:photoshop-prompts`. Latest results: [Integration test results](#integration-test-results).
 
 ## Example Prompts
 
@@ -481,7 +535,7 @@ No installation required! Just configure your MCP client:
 npx @alisaitteke/photoshop-mcp
 ```
 
-To hack on the repo locally, see [From Source](docs/development.md#from-source) in the development guide.
+To hack on the repo locally, see [From Source](#from-source) in the Development section below.
 
 ## Configuration
 
@@ -532,9 +586,796 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 
 ## Available Tools
 
-Full reference for all atomic `photoshop_*` tools (parameters, examples, and usage):
-[`docs/available-tools.md`](docs/available-tools.md).
+Reference for all atomic `photoshop_*` MCP tools exposed by this server (parameters, examples, and return shapes).
 
+
+### Connection & Info
+
+#### `photoshop_ping`
+Test connection to Photoshop.
+
+```javascript
+// Example: Check if Photoshop is accessible
+photoshop_ping()
+```
+
+#### `photoshop_get_version`
+Get Photoshop version information.
+
+```javascript
+// Example: Get version details
+photoshop_get_version()
+```
+
+### Document Management
+
+#### `photoshop_create_document`
+Create a new Photoshop document.
+
+**Parameters:**
+- `width` (number, required): Document width in pixels
+- `height` (number, required): Document height in pixels
+- `resolution` (number, optional): DPI resolution (default: 72)
+- `colorMode` (string, optional): Color mode - RGB, CMYK, or Grayscale (default: RGB)
+
+```javascript
+// Example: Create a 1920x1080 RGB document
+photoshop_create_document({
+  width: 1920,
+  height: 1080,
+  resolution: 72,
+  colorMode: "RGB"
+})
+```
+
+#### `photoshop_get_document_info`
+Get information about the active document.
+
+```javascript
+// Example: Get current document details
+photoshop_get_document_info()
+```
+
+#### `photoshop_save_document`
+Save the active document.
+
+**Parameters:**
+- `path` (string, required): Full path where to save
+- `format` (string, optional): PSD, JPEG, or PNG (default: PSD)
+- `quality` (number, optional): JPEG quality 1-12 (default: 8)
+
+```javascript
+// Example: Save as JPEG
+photoshop_save_document({
+  path: "/Users/username/Desktop/output.jpg",
+  format: "JPEG",
+  quality: 10
+})
+```
+
+#### `photoshop_close_document`
+Close the active document.
+
+**Parameters:**
+- `save` (boolean, optional): Save before closing (default: false)
+
+```javascript
+// Example: Close without saving
+photoshop_close_document({ save: false })
+```
+
+### Layer Operations
+
+#### `photoshop_create_layer`
+Create a new layer.
+
+**Parameters:**
+- `name` (string, optional): Layer name
+
+```javascript
+// Example: Create a named layer
+photoshop_create_layer({ name: "Background" })
+```
+
+#### `photoshop_delete_layer`
+Delete the active layer.
+
+```javascript
+// Example: Delete current layer
+photoshop_delete_layer()
+```
+
+#### `photoshop_create_text_layer`
+Create a text layer.
+
+**Parameters:**
+- `text` (string, required): Text content
+- `x` (number, optional): X position in pixels (default: 100)
+- `y` (number, optional): Y position in pixels (default: 100)
+- `fontSize` (number, optional): Font size in points (default: 24)
+- `fontName` (string, optional): Font display or PostScript name (see `photoshop_list_fonts`)
+
+```javascript
+// Example: Create a text layer with Arial
+photoshop_create_text_layer({
+  text: "Hello World",
+  x: 200,
+  y: 150,
+  fontSize: 48,
+  fontName: "Arial"
+})
+```
+
+#### `photoshop_fill_layer`
+Fill the active layer with a solid color.
+
+**Parameters:**
+- `red` (number, required): Red component (0-255)
+- `green` (number, required): Green component (0-255)
+- `blue` (number, required): Blue component (0-255)
+
+```javascript
+// Example: Fill with blue
+photoshop_fill_layer({
+  red: 0,
+  green: 100,
+  blue: 255
+})
+```
+
+#### `photoshop_get_layers`
+Get list of all layers in the active document.
+
+```javascript
+// Example: List all layers
+photoshop_get_layers()
+```
+
+#### `photoshop_set_layer_opacity`
+Set the opacity of the active layer.
+
+**Parameters:**
+- `opacity` (number, required): Opacity value (0-100)
+
+```javascript
+// Example: Set opacity to 75%
+photoshop_set_layer_opacity({ opacity: 75 })
+```
+
+#### `photoshop_set_layer_blend_mode`
+Set the blend mode of the active layer.
+
+**Parameters:**
+- `blendMode` (string, required): Blend mode (NORMAL, MULTIPLY, SCREEN, OVERLAY, etc.)
+
+```javascript
+// Example: Set blend mode to multiply
+photoshop_set_layer_blend_mode({ blendMode: "MULTIPLY" })
+```
+
+Available blend modes: NORMAL, DISSOLVE, DARKEN, MULTIPLY, COLORBURN, LINEARBURN, DARKERCOLOR, LIGHTEN, SCREEN, COLORDODGE, LINEARDODGE, LIGHTERCOLOR, OVERLAY, SOFTLIGHT, HARDLIGHT, VIVIDLIGHT, LINEARLIGHT, PINLIGHT, HARDMIX, DIFFERENCE, EXCLUSION, SUBTRACT, DIVIDE, HUE, SATURATION, COLOR, LUMINOSITY
+
+#### `photoshop_set_layer_visibility`
+Show or hide the active layer.
+
+**Parameters:**
+- `visible` (boolean, required): Visibility state
+
+```javascript
+// Example: Hide layer
+photoshop_set_layer_visibility({ visible: false })
+```
+
+#### `photoshop_set_layer_locked`
+Lock or unlock the active layer.
+
+**Parameters:**
+- `locked` (boolean, required): Lock state
+
+```javascript
+// Example: Lock layer
+photoshop_set_layer_locked({ locked: true })
+```
+
+#### `photoshop_rename_layer`
+Rename the active layer.
+
+**Parameters:**
+- `name` (string, required): New layer name
+
+```javascript
+// Example: Rename layer
+photoshop_rename_layer({ name: "Hero Image" })
+```
+
+#### `photoshop_duplicate_layer`
+Duplicate the active layer.
+
+**Parameters:**
+- `newName` (string, optional): Name for duplicated layer
+
+```javascript
+// Example: Duplicate layer with new name
+photoshop_duplicate_layer({ newName: "Background Copy" })
+```
+
+#### `photoshop_merge_visible_layers`
+Merge all visible layers into one.
+
+```javascript
+// Example: Merge visible layers
+photoshop_merge_visible_layers()
+```
+
+#### `photoshop_flatten_image`
+Flatten all layers into a single background layer.
+
+```javascript
+// Example: Flatten image
+photoshop_flatten_image()
+```
+
+#### `photoshop_rasterize_layer`
+Rasterize the active layer (convert text/smart object to normal layer).
+
+```javascript
+// Example: Rasterize layer
+photoshop_rasterize_layer()
+```
+
+### Layer Ordering
+
+#### `photoshop_move_layer_to_position`
+Move the active layer relative to another layer.
+
+**Parameters:**
+- `targetLayerName` (string, required): Name of the reference layer
+- `position` (string, required): ABOVE, BELOW, TOP, or BOTTOM
+
+```javascript
+// Example: Move layer above "Background"
+photoshop_move_layer_to_position({
+  targetLayerName: "Background",
+  position: "ABOVE"
+})
+```
+
+#### `photoshop_move_layer_to_top`
+Move the active layer to the top of the layer stack.
+
+```javascript
+// Example: Move to top
+photoshop_move_layer_to_top()
+```
+
+#### `photoshop_move_layer_to_bottom`
+Move the active layer to the bottom of the layer stack.
+
+```javascript
+// Example: Move to bottom
+photoshop_move_layer_to_bottom()
+```
+
+#### `photoshop_move_layer_up`
+Move the active layer up one position.
+
+```javascript
+// Example: Move up
+photoshop_move_layer_up()
+```
+
+#### `photoshop_move_layer_down`
+Move the active layer down one position.
+
+```javascript
+// Example: Move down
+photoshop_move_layer_down()
+```
+
+### Layer Transformations
+
+#### `photoshop_fit_layer_to_document`
+Scale the active layer to fit the document canvas while maintaining aspect ratio.
+
+**Parameters:**
+- `fillDocument` (boolean, optional): If true, fills entire canvas (may crop). If false, fits within canvas (may have margins). Default: false
+
+```javascript
+// Example: Fit layer within canvas
+photoshop_fit_layer_to_document({ fillDocument: false })
+
+// Example: Fill entire canvas (cropping if needed)
+photoshop_fit_layer_to_document({ fillDocument: true })
+```
+
+#### `photoshop_scale_layer`
+Scale the active layer by a percentage.
+
+**Parameters:**
+- `scalePercent` (number, required): Scale percentage (e.g., 50 for 50%, 200 for 200%)
+- `centerAnchor` (boolean, optional): Scale from center (true) or top-left (false). Default: true
+
+```javascript
+// Example: Scale to 150%
+photoshop_scale_layer({
+  scalePercent: 150,
+  centerAnchor: true
+})
+```
+
+#### `photoshop_move_layer`
+Move the active layer by specified offset.
+
+**Parameters:**
+- `deltaX` (number, required): Horizontal offset in pixels
+- `deltaY` (number, required): Vertical offset in pixels
+
+```javascript
+// Example: Move layer 100px right and 50px down
+photoshop_move_layer({
+  deltaX: 100,
+  deltaY: 50
+})
+```
+
+#### `photoshop_rotate_layer`
+Rotate the active layer.
+
+**Parameters:**
+- `degrees` (number, required): Rotation angle in degrees (positive = clockwise)
+
+```javascript
+// Example: Rotate 45 degrees clockwise
+photoshop_rotate_layer({ degrees: 45 })
+```
+
+### Filters
+
+#### `photoshop_apply_gaussian_blur`
+Apply Gaussian Blur filter to the active layer.
+
+**Parameters:**
+- `radius` (number, required): Blur radius in pixels (0.1-250)
+
+```javascript
+// Example: Apply 10px blur
+photoshop_apply_gaussian_blur({ radius: 10 })
+```
+
+#### `photoshop_apply_sharpen`
+Apply Unsharp Mask (sharpen) filter.
+
+**Parameters:**
+- `amount` (number, required): Sharpening amount in percent (1-500)
+- `radius` (number, required): Radius in pixels (0.1-250)
+- `threshold` (number, optional): Threshold levels (0-255, default: 0)
+
+```javascript
+// Example: Sharpen image
+photoshop_apply_sharpen({
+  amount: 100,
+  radius: 1.5,
+  threshold: 0
+})
+```
+
+#### `photoshop_apply_noise`
+Apply Add Noise filter.
+
+**Parameters:**
+- `amount` (number, required): Noise amount in percent (0.1-400)
+- `distribution` (string, optional): UNIFORM or GAUSSIAN (default: UNIFORM)
+- `monochromatic` (boolean, optional): Monochromatic noise (default: false)
+
+```javascript
+// Example: Add noise
+photoshop_apply_noise({
+  amount: 10,
+  distribution: "GAUSSIAN",
+  monochromatic: false
+})
+```
+
+#### `photoshop_apply_motion_blur`
+Apply Motion Blur filter.
+
+**Parameters:**
+- `angle` (number, required): Blur angle in degrees (-360 to 360)
+- `radius` (number, required): Blur distance in pixels (1-999)
+
+```javascript
+// Example: Apply motion blur
+photoshop_apply_motion_blur({
+  angle: 45,
+  radius: 20
+})
+```
+
+### Color Adjustments
+
+#### `photoshop_adjust_brightness_contrast`
+Adjust brightness and contrast.
+
+**Parameters:**
+- `brightness` (number, required): Brightness adjustment (-100 to 100)
+- `contrast` (number, required): Contrast adjustment (-100 to 100)
+
+```javascript
+// Example: Increase brightness and contrast
+photoshop_adjust_brightness_contrast({
+  brightness: 20,
+  contrast: 15
+})
+```
+
+#### `photoshop_adjust_hue_saturation`
+Adjust hue, saturation, and lightness.
+
+**Parameters:**
+- `hue` (number, required): Hue shift (-180 to 180)
+- `saturation` (number, required): Saturation adjustment (-100 to 100)
+- `lightness` (number, required): Lightness adjustment (-100 to 100)
+
+```javascript
+// Example: Adjust colors
+photoshop_adjust_hue_saturation({
+  hue: 30,
+  saturation: 20,
+  lightness: 0
+})
+```
+
+#### `photoshop_auto_levels`
+Apply auto levels adjustment.
+
+```javascript
+// Example: Auto levels
+photoshop_auto_levels()
+```
+
+#### `photoshop_auto_contrast`
+Apply auto contrast adjustment.
+
+```javascript
+// Example: Auto contrast
+photoshop_auto_contrast()
+```
+
+#### `photoshop_adjust_curves`
+Create a Curves adjustment layer on the active document.
+
+**Parameters:**
+- `preset` (string, optional): `auto_tone` (S-curve) or `neutral` (identity curve); default `auto_tone`
+
+```javascript
+// Example: Auto-tone S-curve
+photoshop_adjust_curves({ preset: 'auto_tone' })
+```
+
+#### `photoshop_desaturate`
+Desaturate the layer (convert to grayscale).
+
+```javascript
+// Example: Desaturate
+photoshop_desaturate()
+```
+
+#### `photoshop_invert`
+Invert colors of the layer.
+
+```javascript
+// Example: Invert colors
+photoshop_invert()
+```
+
+### Text Formatting
+
+#### `photoshop_list_fonts`
+List installed fonts available to Photoshop. First call may be slow (`app.fonts` can exceed 1000 entries).
+
+**Parameters:**
+- `query` (string, optional): Substring filter (matches name, postScriptName, or family)
+- `limit` (number, optional): Maximum fonts to return (default: 200)
+
+**Returns:** `{ fonts: [{ name, postScriptName, family, style }], total, truncated }`
+
+Use `postScriptName` when setting fonts manually via `execute_script`; `photoshop_set_text_font` and `photoshop_create_text_layer` resolve display names automatically.
+
+```javascript
+// Example: Find Arial variants
+photoshop_list_fonts({ query: "Arial", limit: 20 })
+```
+
+#### `photoshop_set_text_font`
+Set font family and size for active text layer. Accepts display name (e.g. `"Arial"`) or PostScript name (e.g. `"ArialMT"`).
+
+**Parameters:**
+- `fontName` (string, required): Font display or PostScript name (use `photoshop_list_fonts` to discover)
+- `fontSize` (number, optional): Font size in points
+
+```javascript
+// Example: Change font
+photoshop_set_text_font({
+  fontName: "Helvetica",
+  fontSize: 48
+})
+```
+
+#### `photoshop_set_text_color`
+Set color for active text layer.
+
+**Parameters:**
+- `red` (number, required): Red component (0-255)
+- `green` (number, required): Green component (0-255)
+- `blue` (number, required): Blue component (0-255)
+
+```javascript
+// Example: Set text to blue
+photoshop_set_text_color({
+  red: 0,
+  green: 100,
+  blue: 255
+})
+```
+
+#### `photoshop_set_text_alignment`
+Set text alignment.
+
+**Parameters:**
+- `alignment` (string, required): LEFT, CENTER, RIGHT, LEFTJUSTIFIED, CENTERJUSTIFIED, RIGHTJUSTIFIED, FULLYJUSTIFIED
+
+```javascript
+// Example: Center align text
+photoshop_set_text_alignment({ alignment: "CENTER" })
+```
+
+#### `photoshop_update_text_content`
+Update text content of active text layer.
+
+**Parameters:**
+- `text` (string, required): New text content
+
+```javascript
+// Example: Update text
+photoshop_update_text_content({ text: "New Text" })
+```
+
+### Selections & Masks
+
+#### `photoshop_select_rectangle`
+Create a rectangular selection.
+
+**Parameters:**
+- `left`, `top`, `right`, `bottom` (number, required): Selection bounds in pixels
+
+```javascript
+// Example: Select area
+photoshop_select_rectangle({
+  left: 100,
+  top: 100,
+  right: 500,
+  bottom: 400
+})
+```
+
+#### `photoshop_select_all`
+Select the entire document.
+
+```javascript
+// Example: Select all
+photoshop_select_all()
+```
+
+#### `photoshop_deselect`
+Clear all selections.
+
+```javascript
+// Example: Deselect
+photoshop_deselect()
+```
+
+#### `photoshop_invert_selection`
+Invert the current selection.
+
+```javascript
+// Example: Invert selection
+photoshop_invert_selection()
+```
+
+#### `photoshop_create_layer_mask`
+Create a layer mask from the current selection.
+
+```javascript
+// Example: Create mask
+photoshop_create_layer_mask()
+```
+
+#### `photoshop_delete_layer_mask`
+Delete the layer mask from active layer.
+
+```javascript
+// Example: Delete mask
+photoshop_delete_layer_mask()
+```
+
+#### `photoshop_apply_layer_mask`
+Apply (merge) the layer mask to the layer.
+
+```javascript
+// Example: Apply mask
+photoshop_apply_layer_mask()
+```
+
+#### `photoshop_select_subject`
+Run Select Subject on the active layer (pixel selection only, no mask). Requires Photoshop 23+.
+
+**Parameters:**
+- `sample_all_layers` (boolean, optional): Sample all layers for autoCutout fallback; default `false`
+
+```javascript
+// Example: Select the main subject
+photoshop_select_subject()
+```
+
+#### `photoshop_content_aware_fill`
+Fill the current pixel selection using Content-Aware Fill. Requires an active selection.
+
+```javascript
+// Example: Remove selected distraction
+photoshop_content_aware_fill()
+```
+
+#### `photoshop_apply_gradient_mask`
+Apply a linear black-to-white gradient on the active layer mask (fade/blend).
+
+**Parameters:**
+- `direction` (string, optional): Fade direction — `bottom_to_top`, `top_to_bottom`, `left_to_right`, `right_to_left`; default `bottom_to_top`
+- `start_pct` (number, optional): Gradient start along fade axis (0–100); default `0`
+- `end_pct` (number, optional): Gradient end along fade axis (0–100); default `100`
+- `angle_deg` (number, optional): Override gradient angle in degrees
+
+```javascript
+// Example: Fade subject into background from bottom
+photoshop_apply_gradient_mask({
+  direction: 'bottom_to_top',
+  start_pct: 0,
+  end_pct: 100
+})
+```
+
+### History & Undo/Redo
+
+#### `photoshop_undo`
+Undo the last operation(s) - equivalent to Ctrl/Cmd+Z.
+
+**Parameters:**
+- `steps` (number, optional): Number of steps to undo (default: 1)
+
+```javascript
+// Example: Undo last operation
+photoshop_undo()
+
+// Example: Undo last 3 operations
+photoshop_undo({ steps: 3 })
+```
+
+#### `photoshop_redo`
+Redo previously undone operation(s) - equivalent to Ctrl/Cmd+Shift+Z.
+
+**Parameters:**
+- `steps` (number, optional): Number of steps to redo (default: 1)
+
+```javascript
+// Example: Redo last undone operation
+photoshop_redo()
+
+// Example: Redo last 2 undone operations
+photoshop_redo({ steps: 2 })
+```
+
+#### `photoshop_get_history`
+Get the history states of the active document.
+
+```javascript
+// Example: View history
+photoshop_get_history()
+```
+
+### Actions & Automation
+
+#### `photoshop_play_action`
+Play a recorded action from the Actions palette.
+
+**Parameters:**
+- `actionName` (string, required): Action name
+- `actionSetName` (string, required): Action set name
+
+```javascript
+// Example: Play action
+photoshop_play_action({
+  actionName: "My Action",
+  actionSetName: "Default Actions"
+})
+```
+
+#### `photoshop_execute_script`
+Execute custom ExtendScript code (advanced).
+
+**Parameters:**
+- `code` (string, required): ExtendScript code
+
+```javascript
+// Example: Execute custom code
+photoshop_execute_script({
+  code: "app.beep();"
+})
+```
+
+### Image Manipulation
+
+#### `photoshop_resize_image`
+Resize the active image.
+
+**Parameters:**
+- `width` (number, required): New width in pixels
+- `height` (number, required): New height in pixels
+
+```javascript
+// Example: Resize to Instagram post size
+photoshop_resize_image({
+  width: 1080,
+  height: 1080
+})
+```
+
+#### `photoshop_crop_document`
+Crop the document to specified bounds.
+
+**Parameters:**
+- `left` (number, required): Left edge in pixels
+- `top` (number, required): Top edge in pixels
+- `right` (number, required): Right edge in pixels
+- `bottom` (number, required): Bottom edge in pixels
+
+```javascript
+// Example: Crop document
+photoshop_crop_document({
+  left: 100,
+  top: 100,
+  right: 1820,
+  bottom: 980
+})
+```
+
+#### `photoshop_place_image`
+Place an image file as a layer in the active document.
+
+**Parameters:**
+- `filePath` (string, required): Full path to the image file
+- `x` (number, optional): X position offset in pixels (default: 0)
+- `y` (number, optional): Y position offset in pixels (default: 0)
+
+```javascript
+// Example: Place an image at specific position
+photoshop_place_image({
+  filePath: "/Users/username/Pictures/photo.jpg",
+  x: 100,
+  y: 200
+})
+```
+
+#### `photoshop_open_image`
+Open an image file as a new document.
+
+**Parameters:**
+- `filePath` (string, required): Full path to the image file
+
+```javascript
+// Example: Open an image
+photoshop_open_image({
+  filePath: "/Users/username/Pictures/photo.jpg"
+})
+```
 
 ## Context Tracking
 
@@ -611,10 +1452,47 @@ This context helps AI assistants remember what document and layer they're workin
 
 ## Troubleshooting
 
-Common connection, scripting, and logging issues:
-[`docs/troubleshooting.md`](docs/troubleshooting.md).
+Common issues when connecting to or scripting Photoshop through the MCP server.
 
-### Standalone UI — CLI account auth
+
+### "Photoshop not found"
+
+1. Make sure Photoshop is installed in the default location
+2. Or set `PHOTOSHOP_PATH` environment variable to custom installation path
+
+```json
+{
+  "env": {
+    "PHOTOSHOP_PATH": "C:\Custom\Path\Adobe Photoshop 2025\Photoshop.exe"
+  }
+}
+```
+
+### "Failed to connect to Photoshop"
+
+1. Ensure Photoshop is running (the server will try to launch it if not)
+2. Check that scripting is enabled in Photoshop preferences
+3. On Windows, verify COM automation is not blocked by security settings
+
+### "Script execution timeout"
+
+- Some operations may take longer on large documents
+- The default timeout is 30 seconds
+- For complex operations, consider breaking them into smaller steps
+
+### Debug Logging
+
+Enable detailed logging by setting `LOG_LEVEL=0`:
+
+```json
+{
+  "env": {
+    "LOG_LEVEL": "0"
+  }
+}
+```
+
+## Standalone UI — CLI account auth
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
@@ -624,15 +1502,170 @@ Common connection, scripting, and logging issues:
 | Chat works in IDE but not UI (CLI mode) | OAuth tokens are CLI-only | Use **CLI account** in UI; API keys and CLI sessions are separate |
 | Gemini multi-turn feels forgetful | Headless CLI may start a fresh session each turn | Known limitation; history is prepended to the prompt (MVP) |
 
+
 ## Development
 
-From-source setup, build, lint, integration tests (with latest results), and usage examples:
-[`docs/development.md`](docs/development.md).
+Build, lint, and test the photoshop-mcp server locally.
+
+### From Source
+
+```bash
+git clone https://github.com/alisaitteke/photoshop-mcp.git
+cd photoshop-mcp
+npm install
+npm run build
+```
+
+### Build
+
+```bash
+npm run build
+```
+
+### Watch Mode
+
+```bash
+npm run dev
+```
+
+### Lint & Format
+
+```bash
+npm run lint
+npm run format
+```
+
+### Integration tests (requires running Photoshop)
+
+```bash
+npm run build:server
+npm run spike:issue-2     # issue #2 targeted regression (10 checks)
+npm run test:mcp-local    # prompt-layer smoke
+npm run test:mcp-all      # full sequential tool sweep
+npm run verify:photoshop-prompts
+```
+
+### Integration test results
+
+Local MCP integration tests run against a live Photoshop instance over stdio
+(same path as Cursor / Claude Desktop). Last verified on **Photoshop 26.5.0**
+(macOS).
+
+*Recorded on PS 26.5.0 (macOS) after issue #2 fixes and Phase 2 test harness — re-run `npm run test:mcp-all` to refresh.*
+
+| Suite | Command | Result |
+|-------|---------|--------|
+| Issue #2 regression | `npm run spike:issue-2` | Targeted checks (metadata, layers, place, Smart Object transform, jsString escapes, fonts, alert, CJK names) |
+| Full tool + recipe sweep | `npm run test:mcp-all` | **119 pass**, **0 fail**, **4 skip** (123 total) |
+| Prompt-layer smoke | `npm run test:mcp-local` | 16 prompt templates + core recipes |
+| Prompt ↔ recipe parity | `npm run verify:photoshop-prompts` | 12↔12 strict match + 4 guides |
+
+**Tool coverage:** 80 total tools (68 atomic `photoshop_*` + 12 recipe
+`photoshop_recipe_*`) — re-run `npm run test:mcp-all` for a fresh pass count.
+
+**Intentional skips** (environment-dependent, not regressions):
+
+| Tool | Reason |
+|------|--------|
+| `photoshop_play_action` | Requires a real Actions palette entry on the machine |
+| `photoshop_select_subject` | Requires a recognizable subject in the active layer |
+| `photoshop_recipe_remove_background` | Synthetic test canvas has no recognizable subject for Select Subject |
+| `photoshop_recipe_batch_mockup_replace` | Requires a Smart Object mockup PSD |
+
+**PS 26 compatibility notes** (ExtendScript): layer masks use `stringID make`;
+mask apply uses `delete` + `apply: true`; hue/saturation uses `Hst2` descriptors;
+frequency separation uses `applyImageEvent` calculation descriptors. See
+[`src/api/extendscript.ts`](src/api/extendscript.ts) and
+[`src/tools/recipes/_shared.ts`](src/tools/recipes/_shared.ts).
+
+Prerequisites: Photoshop installed and scriptable; run from the repo root after
+`npm run build:server`.
+
+### Usage Examples
+
+Prompt the AI assistant in natural language — the MCP server picks the right tools.
+
+#### Create a Simple Design
+
+> Create an 800×600 RGB document, add a light blue background layer, center the text "My Design" at 64pt, then save as `design.psd` on the Desktop.
+
+#### Batch Process Images
+
+> Open my image, resize to 1920×1080, save as a high-quality JPEG to the Desktop, then close without saving the PSD.
+
+#### Design with Stock Images (Pexels)
+
+Combine with a [Pexels MCP server](https://github.com/modelcontextprotocol/servers) if configured:
+
+> Search Pexels for "nature landscape", place the downloaded photo in a 1920×1080 document, fit to fill the canvas, add "Beautiful Nature" as overlay text at the top, save as `nature-design.psd`.
+
+### Quick Start Examples
+
+#### Common Use Cases
+
+| Task | Prompt Example |
+|------|----------------|
+| **Basic Design** | "Create 1920x1080 document, add blue background, center text 'Hello'" |
+| **Photo Edit** | "Open photo.jpg, apply auto levels, sharpen 100%, save as edited.jpg" |
+| **Stock Image** | "Place image.jpg, fit to fill canvas, add overlay text 'Summer 2026'" |
+| **Layer Effects** | "Set active layer blend mode to MULTIPLY, opacity 80%" |
+| **Filters** | "Apply 10px Gaussian blur to current layer" |
+| **Text Styling** | "Change text to Helvetica 64pt, color red, center aligned" |
+| **Batch Work** | "Resize to 1080x1080, auto contrast, save as square.jpg, close" |
+| **Masks** | "Select rectangle 100,100 to 500,500, create layer mask" |
+| **Portrait recipe** | "Enhance portrait at medium intensity with skin smoothing, then preview" |
+| **Background removal** | "Remove background from active layer, 2px feather, non-destructive mask" |
+| **Web export** | "Prepare for web + export Instagram and X post variants to exports folder" |
+| **Color grade** | "Apply warm_film color grade as adjustment layers" |
+| **Frequency separation** | "Build FS stack at 6px — I'll paint the Low/High layers myself" |
+| **State check** | "Ping Photoshop, get capabilities, then get_state before editing" |
+
 
 ## Architecture
 
-Repository layout and module map:
-[`docs/architecture.md`](docs/architecture.md).
+Repository layout and module responsibilities.
+
+
+```
+photoshop-mcp/
+├── src/
+│   ├── core/              # MCP server core
+│   │   ├── server.ts      # Main MCP server
+│   │   ├── session.ts     # Session management
+│   │   └── tool-registry.ts  # Tool registration system
+│   ├── platform/          # Platform-specific detection & execution
+│   │   ├── detector.ts    # Main detector
+│   │   ├── connection.ts  # Connection manager
+│   │   ├── windows-detector.ts  # Windows registry detection
+│   │   ├── windows-executor.ts  # Windows COM automation
+│   │   ├── macos-detector.ts    # macOS Spotlight detection
+│   │   └── macos-executor.ts    # macOS AppleScript execution
+│   ├── api/              # Photoshop API abstractions
+│   │   ├── photoshop-api.ts    # API factory
+│   │   ├── batch-play.ts       # UXP batchPlay helpers (legacy)
+│   │   └── extendscript.ts     # ExtendScript snippets library
+│   ├── tools/            # MCP tool implementations (80 tools: 68 atomic + 12 recipe)
+│   │   ├── document-tools.ts        # Document operations
+│   │   ├── layer-tools.ts           # Layer creation/deletion
+│   │   ├── layer-properties-tools.ts # Opacity, blend modes, etc.
+│   │   ├── layer-transform-tools.ts  # Scale, rotate, move
+│   │   ├── image-tools.ts           # Resize, crop
+│   │   ├── image-placement-tools.ts # Place/open images
+│   │   ├── filter-tools.ts          # Blur, sharpen, noise
+│   │   ├── adjustment-tools.ts      # Color adjustments
+│   │   ├── text-tools.ts            # Text formatting
+│   │   ├── selection-tools.ts       # Selections & subject isolation
+│   │   ├── mask-tools.ts            # Gradient mask blending
+│   │   ├── state-tools.ts           # State, preview, capabilities
+│   │   ├── action-tools.ts          # Actions & custom scripts
+│   │   └── recipes/                 # 12 outcome-oriented recipe tools
+│   └── utils/            # Utilities
+│       └── logger.ts     # Logging system (stderr-based)
+└── examples/             # Configuration examples
+    ├── cursor-config.json
+    └── claude-desktop-config.json
+```
+
 
 ## Contributing
 
@@ -644,9 +1677,123 @@ MIT
 
 ## Anonymous Usage Analytics
 
-Anonymous, aggregated usage events are collected by default to improve the
-product. You can opt out at any time. Full details:
-[`docs/anonymous-usage-analytics.md`](docs/anonymous-usage-analytics.md).
+This project collects **anonymous, aggregated usage events** to understand how the
+MCP server and standalone UI are used and to improve the product. Analytics are
+**enabled by default** and can be turned off at any time.
+
+
+### What we collect
+
+- App version, operating system (platform, type, release), CPU count, memory tier
+  (bucketed GB), Node.js version, launch method, system locale/timezone, and whether
+  optional env overrides are configured (flags only — never paths or values)
+- **MCP-only usage** (no UI required): session lifecycle, virtual page views,
+  Photoshop connection status, **batched** tool usage summaries (tool names and
+  counts per agent turn — never arguments or results), and prompt template names
+  when requested
+- **UI server** startup and setup funnel events (provider chosen, auth method,
+  validation success/failure codes — not credentials)
+- **Browser UI** events (app loaded, onboarding completed, page views on route
+  changes)
+
+Events use a random anonymous identifier stored locally at
+`~/.photoshop-mcp/` (SQLite `kv` table and/or `analytics-store.json`). That ID
+is registered with PostHog via `identify()` so MCP, UI server, and browser
+events merge under one anonymous person per install (`person_profiles:
+identified_only` — no email, name, or other PII).
+
+The person profile also stores **total installed RAM (GB)** and the **detected
+Photoshop version** when available, so cohort reports can segment by hardware
+and Photoshop release without repeating those fields on every event.
+
+Country/region signals come from PostHog GeoIP on outbound requests (when enabled)
+and from `system_locale_region` / `browser_locale_region` as a secondary hint.
+
+### MCP events
+
+When you run `photoshop-mcp` directly (e.g. via Cursor MCP config), these events
+are sent:
+
+| Event | When | Key properties |
+| --- | --- | --- |
+| `$pageview` | MCP session start | Virtual URL `photoshop-mcp://mcp`, `usage_surface: mcp` |
+| `mcp_session_started` | MCP session start | `app_version`, `photoshop_detected`, `tools_registered_count` |
+| `mcp_session_startup_failed` | Startup error | `ok: false`, `error_code` |
+| `mcp_photoshop_connection` | Initial connect or failed reconnect | `ok`, `photoshop_connected`, `error_code?` |
+| `mcp_tool_batch` | After 30s idle or session end | `tools_called_count`, `tools_error_count`, `unique_tools_count`, `tool_usage_summary`, `error_codes_summary?`, `batch_flush_reason` |
+| `mcp_prompt_requested` | Prompt template fetch | `prompt_name` |
+| `$pageleave` | Graceful shutdown (SIGINT/SIGTERM/stdio close) | `duration_ms`, `shutdown_reason` |
+| `mcp_session_ended` | Graceful shutdown | `duration_ms`, `shutdown_reason` |
+
+Tool usage is **not** sent per call. Calls are aggregated in memory and flushed as
+`mcp_tool_batch` when the MCP client goes idle for 30 seconds (proxy for end of an
+agent turn) or when the session ends.
+
+MCP-only installs appear in PostHog Web Analytics via the virtual `$pageview` at
+`photoshop-mcp://mcp`, even when the standalone UI is never opened.
+
+### What we do **not** collect (unless you opt into beta team sharing)
+
+- API keys or OAuth tokens
+- Chat messages, prompts, or model responses **by default**
+- Photoshop document or layer names, file paths, or image content
+- CLI account labels, email addresses, or other account identifiers
+- Tool call **arguments** or **results** (MCP logs tool **names** only)
+
+### Beta team content sharing (opt-in)
+
+On first launch of the standalone UI, you are asked whether you want to **join the
+beta team**. This is separate from anonymous usage analytics above.
+
+If you accept:
+
+- Your **prompts**, **assistant responses**, **reasoning text**, and **tool names**
+  (not arguments or results) may be sent to PostHog after each chat turn
+- Content is truncated for very long messages
+- Requires anonymous analytics to remain enabled
+
+If you decline, no chat content is logged. You can change this later in
+**Settings → General → Privacy → Beta team content sharing**.
+
+Existing installs that have not answered yet are prompted once on the next launch.
+
+### Processor and hosting
+
+Analytics are processed by [PostHog](https://posthog.com/). Events are sent to a
+managed reverse proxy at `https://a.alisait.com`; the PostHog project UI is
+hosted in the EU (`https://eu.posthog.com`). See the
+[PostHog privacy policy](https://posthog.com/privacy) for how PostHog handles
+data on their side.
+
+#### GeoIP and the reverse proxy
+
+PostHog enriches server-side events with `$geoip_country_code` from the client IP
+when GeoIP is enabled (`disableGeoip: false` in `posthog-node`). The reverse proxy
+at `https://a.alisait.com` **must forward the end-user IP** (e.g. via
+`X-Forwarded-For` / `X-Real-IP`) to PostHog ingest. If all MCP users appear in one
+country, fix proxy headers before investigating application code.
+
+### PostHog dashboard recipes (maintainers)
+
+| Insight | Configuration |
+| --- | --- |
+| MCP active users | `$pageview` where `$current_url = photoshop-mcp://mcp` |
+| Country breakdown | Breakdown by `$geoip_country_code` on `mcp_tool_batch` or `$pageview` |
+| Tool error rate | `mcp_tool_batch` where `tools_error_count > 0`, breakdown by `error_codes_summary` |
+| Photoshop reachability | `mcp_photoshop_connection` where `ok = false` |
+| Session duration | Average `duration_ms` on `mcp_session_ended` |
+| MCP vs UI usage | Person property `usage_surface` or filter `event_source = mcp` |
+
+### How to opt out
+
+1. **Standalone UI:** Settings → General → Privacy → set **Anonymous usage
+   analytics** to **Off** (also disables beta content sharing).
+2. **Beta content only:** Settings → General → Privacy → set **Beta team content
+   sharing** to **Off** (anonymous analytics can stay on).
+3. **Environment variable:** set `POSTHOG_DISABLED=1` before starting
+   `photoshop-mcp` or `photoshop-mcp-ui` (disables all analytics for that
+   process and persists opt-out in local storage).
+
 
 ## Acknowledgments
 
