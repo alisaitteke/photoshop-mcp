@@ -9,30 +9,33 @@ set -euo pipefail
 TAG="${1:?tag required (e.g. v1.3.9)}"
 PREV="${2:-}"
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/release-notes-lib.sh
+source "${SCRIPT_DIR}/release-notes-lib.sh"
+
 VERSION="${TAG#v}"
 PKG="$(node -p "require('./package.json').name")"
-REPO="${GITHUB_REPOSITORY:-alisaitteke/photoshop-mcp}"
+REPO="${release_notes_repo}"
 NPM_URL="https://www.npmjs.com/package/${PKG}/v/${VERSION}"
 README_URL="https://github.com/${REPO}/blob/${TAG}/README.md"
+CHANGELOG_URL="https://github.com/${REPO}/blob/${TAG}/CHANGELOG.md#$(changelog_anchor "$VERSION")"
 
-NPM_NOTE=""
-if command -v npm >/dev/null 2>&1; then
-  if npm view "${PKG}@${VERSION}" version 2>/dev/null | grep -qx "${VERSION}"; then
-    NPM_NOTE="✅ Published on npm."
-  else
-    NPM_NOTE="⏳ Not on npm yet — \`npm publish\` usually follows shortly after this GitHub release."
-  fi
-fi
+NPM_NOTE="$(npm_status_note "$PKG" "$VERSION")"
 
 if [[ -n "$PREV" ]]; then
   COMPARE_URL="https://github.com/${REPO}/compare/${PREV}...${TAG}"
-  CHANGES="$(git log "${PREV}..${TAG}" --pretty=format:'- %s (`%h`)' --no-merges || true)"
 else
   COMPARE_URL=""
-  CHANGES="$(git log -30 "${TAG}" --pretty=format:'- %s (`%h`)' --no-merges || true)"
 fi
 
-[[ -n "$CHANGES" ]] || CHANGES="- No commits in range."
+commits="$(collect_commits "$PREV" "$TAG")"
+if [[ -n "$commits" ]]; then
+  CHANGES="$(categorize_commits <<<"$commits")"
+else
+  CHANGES="- No commits in range."
+fi
+
+CONTRIBUTORS="$(new_contributors "$PREV" "$TAG")"
 
 {
   echo "## Install"
@@ -54,8 +57,9 @@ fi
   echo "| --- | --- |"
   echo "| **npm** | [${PKG}@${VERSION}](${NPM_URL}) |"
   echo "| **Docs** | [README](${README_URL}) |"
+  echo "| **Changelog** | [${VERSION} in CHANGELOG.md](${CHANGELOG_URL}) |"
   if [[ -n "$COMPARE_URL" ]]; then
-    echo "| **Full changelog** | [${PREV}...${TAG}](${COMPARE_URL}) |"
+    echo "| **Full diff** | [${PREV}...${TAG}](${COMPARE_URL}) |"
   fi
   echo
   echo "## Requirements"
@@ -63,11 +67,12 @@ fi
   echo "- Node.js ≥ 18"
   echo "- Adobe Photoshop (Windows or macOS)"
   echo
-  if [[ -n "$NPM_NOTE" ]]; then
-    echo "> ${NPM_NOTE}"
-    echo
+  echo "> ${NPM_NOTE}"
+  echo
+  if [[ -n "$CONTRIBUTORS" ]]; then
+    echo "$CONTRIBUTORS"
   fi
   echo "## What's Changed"
   echo
   echo "$CHANGES"
-} 
+}

@@ -55,7 +55,14 @@ publish stays manual on the maintainer machine (OTP/2FA).
 2. Bump the `version` field in the root [`package.json`](package.json) only (the
    standalone UI package in `web/package.json` uses its own semver and is bumped
    separately when needed).
-3. Commit with the version as the message, e.g. `1.3.8` (matches existing convention).
+3. Regenerate [`CHANGELOG.md`](CHANGELOG.md) and include it in the release commit:
+
+   ```bash
+   ./scripts/backfill-changelog.sh
+   git add CHANGELOG.md package.json
+   git commit -m "X.Y.Z"
+   ```
+
 4. Tag and push:
 
    ```bash
@@ -66,11 +73,21 @@ publish stays manual on the maintainer machine (OTP/2FA).
 
 5. Wait for the [Release workflow](.github/workflows/release.yml) to finish, then
    verify the new release on the repo **Releases** page. Each release includes
-   `npx` / `npm install` commands, an npm registry link for that version, a
-   compare URL, and commit-based changelog notes (see
+   install commands, npm registry link, [CHANGELOG.md](CHANGELOG.md) anchor,
+   categorized commits, PR links (when `#123` appears in messages), and
+   **New Contributors** when applicable (see
    [`scripts/build-release-notes.sh`](scripts/build-release-notes.sh)).
 6. From a clean `master` checkout, run `npm publish` (`prepublishOnly` runs
    `npm run build` automatically).
+7. After npm publish, refresh the GitHub release so the body shows **Published on
+   npm**:
+
+   ```bash
+   ./scripts/refresh-release-notes.sh vX.Y.Z
+   ```
+
+   Or run the [Refresh Release Notes](.github/workflows/refresh-release-notes.yml)
+   workflow in GitHub Actions (Actions → Refresh Release Notes → enter the tag).
 
 Always tag the **release commit on `master`**, not a feature branch. Re-pushing an
 existing tag is safe — the workflow skips creation when a release already exists.
