@@ -45,6 +45,41 @@ npm run dev:ui
 
 This starts the server on port 5174 (with hot reload) and the web dev server concurrently.
 
+## Releasing
+
+Version bumps ship from **`master`**. npm publish and GitHub Releases are related but
+separate steps: pushing a version tag triggers a GitHub Release automatically; npm
+publish stays manual on the maintainer machine (OTP/2FA).
+
+1. Merge feature work to `master`.
+2. Bump the `version` field in the root [`package.json`](package.json) only (the
+   standalone UI package in `web/package.json` uses its own semver and is bumped
+   separately when needed).
+3. Commit with the version as the message, e.g. `1.3.8` (matches existing convention).
+4. Tag and push:
+
+   ```bash
+   git tag vX.Y.Z
+   git push origin master
+   git push origin vX.Y.Z
+   ```
+
+5. Wait for the [Release workflow](.github/workflows/release.yml) to finish, then
+   verify the new release on the repo **Releases** page.
+6. From a clean `master` checkout, run `npm publish` (`prepublishOnly` runs
+   `npm run build` automatically).
+
+Always tag the **release commit on `master`**, not a feature branch. Re-pushing an
+existing tag is safe — the workflow skips creation when a release already exists.
+
+To backfill releases for tags that predate this workflow, run once:
+
+```bash
+./scripts/backfill-github-releases.sh
+```
+
+Use `--dry-run` to preview without creating releases.
+
 ## Project layout
 
 | Path | Purpose |

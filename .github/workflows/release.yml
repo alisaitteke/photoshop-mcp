@@ -1,0 +1,37 @@
+# Creates a GitHub Release when a version tag (v*) is pushed.
+# Release notes are built from commit messages between the previous tag and HEAD.
+# npm publish remains a separate manual step — see CONTRIBUTING.md § Releasing.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  github-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build release notes from commits
+        id: notes
+        run: |
+          PREV=$(git tag --sort=-v:refname | grep -v "^${GITHUB_REF_NAME}$" | head -1 || true)
+          if [ -n "$PREV" ]; then
+            BODY=$(git log "${PREV}..HEAD" --pretty=format:'- %s (`%h`)' --no-merges)
+          else
+            BODY=$(git log -30 --pretty=format:'- %s (`%h`)' --no-merges)
+          fi
+          { echo "body<<EOF"; echo "$BODY"; echo "EOF"; } >> "$GITHUB_OUTPUT"
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body: ${{ steps.notes.outputs.body }}
+          skip_if_release_exists: true
