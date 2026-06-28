@@ -90,9 +90,32 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
 
   const abortControllers = new Map<string, AbortController>();
 
+  // Guard /api/* against cross-origin and non-browser callers.
+  //
+  // The API stores LLM provider credentials and drives Photoshop, so we only
+  // want traffic from the bundled Vue UI loaded over loopback. Two header
+  // signals are required (either is sufficient):
+  //
+  //   1. `Origin` present and pointing at a loopback Origin matching our port.
+  //      Browsers always set Origin on non-`GET`/`HEAD` fetches.
+  //   2. `Sec-Fetch-Site: same-origin` (or `none` for direct address-bar
+  //      navigation). Modern browsers always send this on every fetch, even
+  //      same-origin `GET` requests where `Origin` is omitted.
+  //
+  // Rejecting requests that present *neither* header closes the previous
+  // bypass where a local non-browser process (curl, scripts, or a malicious
+  // application running on the same host) could hit `/api/providers/:id/key`
+  // and exfiltrate stored API keys simply by omitting `Origin`.
   app.use('/api/*', async (c, next) => {
     const origin = c.req.header('origin');
-    if (origin && !isLoopbackOrigin(origin, opts.port)) {
+    const secFetchSite = c.req.header('sec-fetch-site');
+    const hasTrustedOrigin = origin !== undefined && isLoopbackOrigin(origin, opts.port);
+    const hasSameSiteSignal = secFetchSite === 'same-origin' || secFetchSite === 'none';
+
+    if (origin !== undefined && !hasTrustedOrigin) {
+      return c.json({ error: 'invalid_origin' }, 403);
+    }
+    if (!hasTrustedOrigin && !hasSameSiteSignal) {
       return c.json({ error: 'invalid_origin' }, 403);
     }
     return next();
