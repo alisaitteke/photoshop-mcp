@@ -5,6 +5,27 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.11] - 2026-07-02
+
+[v1.3.10...v1.3.11](https://github.com/alisaitteke/photoshop-mcp/compare/v1.3.10...v1.3.11)
+
+### Features
+
+- feat(ui): add custom OpenAI/Anthropic-compatible API provider (`a1d3a1a`)
+- feat(analytics): default to Mixpanel with PostHog rollback path (`4e9444d`)
+
+### Fixes
+
+- fix(release): generate CHANGELOG from package.json before tag exists (`c7f1a58`)
+
+### Documentation
+
+- docs: add CHANGELOG section for 1.3.10 and fix release tag order (`e6a58c1`)
+
+### Version bumps
+
+- 1.3.11 (`7908066`)
+
 ## [1.3.10] - 2026-06-24
 
 [v1.3.9...v1.3.10](https://github.com/alisaitteke/photoshop-mcp/compare/v1.3.9...v1.3.10)
@@ -201,20 +222,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 1.1.0 (`6e1c1f0`)
 - 1.0.0 (`17d8d91`)
 
-## [1.3.11] - 2026-07-02
+## [1.3.12] - 2026-07-02
 
-[v1.3.10...HEAD](https://github.com/alisaitteke/photoshop-mcp/compare/v1.3.10...HEAD) *(pending tag v1.3.11)*
+[v1.3.11...HEAD](https://github.com/alisaitteke/photoshop-mcp/compare/v1.3.11...HEAD) *(pending tag v1.3.12)*
 
 ### Features
 
-- feat(ui): add custom OpenAI/Anthropic-compatible API provider (`a1d3a1a`)
-- feat(analytics): default to Mixpanel with PostHog rollback path (`4e9444d`)
-
-### Fixes
-
-- fix(release): generate CHANGELOG from package.json before tag exists (`c7f1a58`)
-
-### Documentation
-
-- docs: add CHANGELOG section for 1.3.10 and fix release tag order (`e6a58c1`)
+- feat(analytics): improve Mixpanel tracking with cohorts, milestones, and flush parity (`b7daf3a`)
 
