@@ -201,3 +201,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 1.1.0 (`6e1c1f0`)
 - 1.0.0 (`17d8d91`)
 
+## [1.3.11] - 2026-07-02
+
+[v1.3.10...HEAD](https://github.com/alisaitteke/photoshop-mcp/compare/v1.3.10...HEAD) *(pending tag v1.3.11)*
+
+### Features
+
+- feat(ui): add custom OpenAI/Anthropic-compatible API provider (`a1d3a1a`)
+- feat(analytics): default to Mixpanel with PostHog rollback path (`4e9444d`)
+
+### Fixes
+
+- fix(release): generate CHANGELOG from package.json before tag exists (`c7f1a58`)
+
+### Documentation
+
+- docs: add CHANGELOG section for 1.3.10 and fix release tag order (`e6a58c1`)
+
