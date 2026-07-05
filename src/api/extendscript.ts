@@ -890,7 +890,12 @@ export const ExtendScriptSnippets = {
   `,
 
   /**
-   * Duplicate active layer
+   * Duplicate active layer.
+   *
+   * DOM layer.duplicate() does NOT activate the duplicate — the original
+   * layer stays active, so without the explicit activeLayer assignment any
+   * follow-up active-layer tool (masks, filters, transforms) would target
+   * the original instead of the copy.
    */
   duplicateLayer: (newName?: string) => `
     if (app.documents.length === 0) {
@@ -901,11 +906,15 @@ export const ExtendScriptSnippets = {
     
     var duplicated = layer.duplicate();
     ${newName ? `duplicated.name = "${jsString(newName)}";` : ''}
+    doc.activeLayer = duplicated;
     
-    return { 
+    var result = {
       originalName: layer.name,
-      newName: duplicated.name
+      newName: duplicated.name,
+      activated: true
     };
+    try { result.newLayerId = duplicated.id; } catch (e) {}
+    return result;
   `,
 
   /**
