@@ -6,7 +6,7 @@
   </a>
 </p>
 
-**Languages:** English · [简体中文](README.zh-CN.md) · [Español](README.es.md)
+**Languages:** English · [简体中文](README.zh-CN.md) · [Español](README.es.md) · [Deutsch](README.de.md)
 
 *v1.1+ — recipe workflows, fewer round-trips, snappier sessions. Standalone UI ships **Action Plan (beta)** for plan-then-execute runs.*
 

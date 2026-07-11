@@ -6,7 +6,7 @@
   </a>
 </p>
 
-**Idiomas:** [English](README.md) · [简体中文](README.zh-CN.md) · Español
+**Idiomas:** [English](README.md) · [简体中文](README.zh-CN.md) · Español · [Deutsch](README.de.md)
 
 *v1.1+ — flujos de trabajo con recetas, menos intercambios, sesiones más ágiles. La UI independiente incluye **Action Plan (beta)** para ejecuciones de planificar-y-ejecutar.*
 
