@@ -157,8 +157,9 @@ Plantilla de prompt MCP equivalente: `ps.enhance_portrait` con `{ intensity: "me
 <summary>✂️ Eliminación de fondo (receta)</summary>
 
 ```
-Elimina el fondo de la capa de retrato activa.
+Elimina el fondo de la capa de retrato activa para un catálogo e-commerce.
 Usa Seleccionar sujeto + una máscara de capa con difuminado de 2px. Mantén los píxeles originales detrás de la máscara.
+Si el brief pide fondo blanco puro para marketplace, coloca RGB(255,255,255) y centra el producto al 70 % del encuadre.
 El sujeto debe estar en la capa activa — no en un relleno de color plano.
 ```
 
@@ -195,7 +196,7 @@ Plantilla de prompt MCP equivalente: `ps.frequency_separation` con `{ radius_px:
 
 ```
 Prepara el documento activo para web: sRGB, reducir tamaño, enfocar, exportar un JPEG optimizado a ~/.photoshop-mcp/exports.
-Después exporta variantes para Instagram y X como JPEGs separados desde el mismo documento.
+Luego exporta variantes para post de Instagram (1080×1080), Feed vertical (1080×1350), Stories/Reels (1080×1920) y post de X (1200×675) desde el mismo documento.
 Lista las rutas de salida en una tabla.
 ```
 
@@ -407,6 +408,90 @@ Rehaz 1 paso para recuperar una operación.
 Si una receta devuelve version_unsupported o generative_unavailable, llama a get_capabilities y dime qué función de Photoshop falta.
 Si una herramienta falla con suggested_next_tool, sigue esa sugerencia (p. ej. rasterize_layer antes de una receta solo para capas rasterizadas).
 Nunca adivines — lee get_state después de un fallo y propón el siguiente paso único.
+```
+
+</details>
+
+<details>
+<summary>📱 Kit de formatos para redes sociales (agencias)</summary>
+
+```
+Tengo un KV maestro 1:1 (2000×2000 px) para una campaña de cosmética.
+Prepara el documento activo para web: sRGB, recortar y exportar variantes con el recipe prepare-for-web.
+Luego exporta variantes para Instagram Feed (1080×1350), Stories/Reels (1080×1920 con zona segura superior e inferior), LinkedIn (1200×627) y banner Meta (1200×628).
+Usa Ampliación generativa solo si hace falta para 9:16 sin perder el producto en el encuadre.
+El producto debe ocupar al menos el 60 % del área visual; el logo en la esquina superior derecha con 20 px de margen.
+Lista las rutas de salida en una tabla.
+```
+
+Plantillas equivalentes: `ps.prepare_for_web`, `ps.export_social_variants`.
+
+</details>
+
+<details>
+<summary>🖨️ Arte final para impresión (CMYK / FOGRA39)</summary>
+
+```
+Prepara el documento activo para impresión offset en España:
+convierte a CMYK con perfil Coated FOGRA39, añade 3 mm de sangrado, comprueba la resolución a 300 ppp en tamaño final.
+Configura prueba en pantalla para FOGRA39 y avísame si hay colores fuera de gamut.
+Las áreas de negro profundo deben ir a C50 M20 Y20 K100; el texto negro solo en K100.
+Exporta un PDF/X-4 listo para imprenta y muéstrame una vista previa antes de cerrar.
+```
+
+</details>
+
+<details>
+<summary>🛍️ Bodegón publicitario con Relleno Generativo</summary>
+
+```
+Tengo un frasco de perfume en PNG con fondo eliminado sobre la capa activa.
+Con photoshop_generative_fill crea tres escenarios publicitarios: baño de mármol con luz cálida, jardín mediterráneo al atardecer y superficie de hielo con gotas de agua.
+Para cada variante usa photoshop_generative_expand hasta 1080×1350 (4:5) manteniendo el producto centrado.
+Después de cada escena, obtén una vista previa para comprobar sombras y perspectiva.
+Si generative_unavailable, llama a get_capabilities y dime qué falta.
+```
+
+</details>
+
+<details>
+<summary>🎨 Gradación de color unificada para campaña</summary>
+
+```
+Tengo 30 fotos de una campaña de moda veraniega con luces distintas.
+Aplica el recipe apply-color-grade con preset warm_film como capas de ajuste no destructivas.
+Si hace falta, ajusta Curvas y Tono/Saturación para un look cinematográfico mediterráneo: sombras frías, altas luces doradas.
+Prepara una Acción que exporte cada imagen a 1080 px de ancho en sRGB, JPEG calidad 85, en ~/.photoshop-mcp/exports/campana/.
+Muéstrame una vista previa del antes/después en tres imágenes representativas.
+```
+
+Equivalente MCP: `ps.apply_color_grade` con `{ preset: "warm_film" }`.
+
+</details>
+
+<details>
+<summary>🏢 Mockup de identidad corporativa (manual de marca)</summary>
+
+```
+Tengo un mockup PSD abierto con Smart Objects para tarjeta de visita, menú A4, packaging kraft y perfil de Instagram.
+Sustituye cada Smart Object con los assets de ~/assets/marca-cliente/ sin aplanar capas — conserva perspectiva y sombras.
+Ejecuta el recipe batch_mockup_replace para exportar un JPEG por aplicación en ~/.photoshop-mcp/exports/mockups/.
+Lista las rutas finales en una tabla para la presentación al cliente.
+```
+
+Plantilla equivalente: `ps.batch_mockup_replace`.
+
+</details>
+
+<details>
+<summary>🏷️ Producción masiva multicliente (retail / Navidad)</summary>
+
+```
+Tengo un creativo maestro 1:1 para campaña navideña y 6 logos de clientes retail en ~/assets/clientes/.
+Para cada cliente exporta Story 9:16, Feed 4:5 y banner 1200×628 desde el mismo PSD usando Smart Objects para logo y claim.
+Nombra los archivos Cliente_Formato_Navidad2025.jpg y guarda todo en ~/.photoshop-mcp/exports/navidad/.
+Si un paso falla, lee get_state y propón solo el siguiente paso.
+Al terminar, lista todas las rutas en una tabla.
 ```
 
 </details>

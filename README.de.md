@@ -201,8 +201,9 @@ Entsprechendes MCP-Prompt-Template: `ps.enhance_portrait` mit `{ intensity: "med
 <summary>✂️ Hintergrundentfernung (Rezept)</summary>
 
 ```
-Den Hintergrund von der aktiven Porträtebene entfernen.
+Den Hintergrund von der aktiven Porträtebene für einen E-Commerce-Packshot entfernen.
 Select Subject + eine Ebenenmaske mit 2 Pixel Weichzeichnung verwenden. Die Originalpixel hinter der Maske beibehalten.
+Falls der Briefing reinweiß RGB(255,255,255) verlangt, Produkt zentrieren und mindestens 70 % der Bildfläche einnehmen lassen.
 Das Motiv muss auf der aktiven Ebene liegen — keine einfarbige Füllfläche.
 ```
 
@@ -239,7 +240,7 @@ Entsprechendes MCP-Prompt-Template: `ps.frequency_separation` mit `{ radius_px: 
 
 ```
 Das aktive Dokument für das Web vorbereiten: sRGB, verkleinern, schärfen, ein optimiertes JPEG nach ~/.photoshop-mcp/exports exportieren.
-Dann Instagram-Post- und X-Post-Varianten als separate JPEGs aus demselben Dokument exportieren.
+Dann Instagram-Feed (1080×1350), Story/Reels (1080×1920), LinkedIn (1200×627) und XING-Anzeige (1200×628) als separate JPEGs exportieren.
 Die Ausgabepfade in einer Tabelle auflisten.
 ```
 
@@ -452,6 +453,86 @@ Falls ein Rezept version_unsupported oder generative_unavailable zurückgibt, ge
 Falls ein Werkzeug mit suggested_next_tool fehlschlägt, diesen Hinweis befolgen (z. B. rasterize_layer vor einem nur für Rasterebenen geeigneten Rezept).
 Niemals raten — nach einem Fehler get_state auslesen und den nächsten einzelnen Schritt vorschlagen.
 ```
+
+</details>
+
+<details>
+<summary>📱 Social-Media-Kampagnenpaket (Agentur)</summary>
+
+```
+Ich habe ein Key-Visual-Master im Quadratformat für eine deutsche Mittelstandskampagne.
+Bereite das aktive Dokument mit dem prepare-for-web recipe für sRGB vor und exportiere optimierte JPEGs nach ~/.photoshop-mcp/exports.
+Exportiere zusätzlich Instagram-Feed (1080×1350), Story/Reels (1080×1920, obere und untere 250 px als sichere Zone freihalten), LinkedIn Sponsored Content (1200×627) und XING-Anzeige (1200×628).
+Nutze photoshop_generative_expand nur, wenn das Motiv im 9:16-Format sonst abgeschnitten würde.
+Produkt mindestens 60 % der Bildfläche; Logo oben rechts mit 20 px Abstand.
+Gib alle Ausgabepfade in einer Tabelle aus.
+```
+
+Entsprechende Templates: `ps.prepare_for_web`, `ps.export_social_variants`.
+
+</details>
+
+<details>
+<summary>🖨️ Druckdatenaufbereitung (CMYK / PDF/X-4)</summary>
+
+```
+Bereite das aktive Dokument für den Offsetdruck in Deutschland vor:
+RGB nach CMYK konvertieren mit Zielprofil ISO Coated v2 (ECI), 3 mm Beschnitt an allen Seiten, Auflösung 300 dpi im Endformat prüfen.
+Softproof für ISO Coated v2 einrichten und auf Farbverschiebungen hinweisen.
+Tiefschwarze Flächen auf C50 M20 Y20 K100 setzen; schwarzen Text nur mit K100.
+Als PDF/X-4 mit eingebettetem Profil exportieren und eine Vorschau anzeigen.
+```
+
+</details>
+
+<details>
+<summary>📸 E-Commerce-Freisteller-Serie (Packshot)</summary>
+
+```
+Ich habe einen Ordner mit Produktfotos für Amazon.de und Zalando.
+Für jedes Bild: Hintergrund entfernen mit Select Subject, 2 px Kante weichzeichnen, auf reinweiß RGB(255,255,255) legen, auf 2000×2000 px zentrieren.
+Staub und Kratzer auf einer separaten Retusche-Ebene entfernen, sRGB einbetten, als JPEG Qualität 90 nach ~/.photoshop-mcp/exports/packshots/ speichern.
+Starte mit einem Testbild, zeige eine Vorschau, und fahre dann mit dem restlichen Ordner fort.
+```
+
+</details>
+
+<details>
+<summary>👗 Ghost Mannequin / Hollowman (Mode-E-Commerce)</summary>
+
+```
+Ich habe front.jpg (Kleid auf Mannequin) und inner.jpg (Innenkragen) geöffnet.
+Stelle den Mannequin auf front.jpg frei, setze inner.jpg darunter, kaschiere den Übergang am Kragen mit einer weichen Ebenenmaske.
+Hintergrund auf RGB(255,255,255), dezente Faltenretusche ohne unnatürliche Glättung.
+Exportiere transparentes PNG und JPEG 2000×2000 px nach ~/.photoshop-mcp/exports/fashion/.
+Zeige eine Vorschau, bevor der Batch exportiert wird.
+```
+
+</details>
+
+<details>
+<summary>🤖 KI-Key-Visual mit Harmonisierung</summary>
+
+```
+Ich habe ein Produktfreisteller-PNG und ein Lifestyle-Hintergrundbild im aktiven Dokument.
+Platziere das Produkt unten rechts auf 85 % der ursprünglichen Größe.
+Wende photoshop_generative_fill oder Harmonize an, damit Licht, Schatten und Farbtemperatur zur Szene passen.
+Füge einen natürlichen Schlagschatten hinzu (Multiplizieren, ca. 35 % Deckkraft).
+Speichere als Master-PSD und exportiere 1200×627 px JPEG für LinkedIn nach ~/.photoshop-mcp/exports/kv/.
+```
+
+</details>
+
+<details>
+<summary>📦 Verpackungs-Mockup & POS-Visualisierung</summary>
+
+```
+Ich habe ein Verpackungs-Mockup-PSD mit einer Smart-Object-Ebene namens "Screen" geöffnet.
+Ersetze sie mit jedem PNG/JPG aus ~/assets/verpackung/ und exportiere ein JPEG pro Variante — keine flachen Ebenen, Smart Object tauschen, damit Perspektive erhalten bleibt.
+Nutze das batch_mockup_replace recipe und liste alle Ausgabepfade in einer Tabelle für die Kundenfreigabe.
+```
+
+Entsprechendes Template: `ps.batch_mockup_replace`.
 
 </details>
 

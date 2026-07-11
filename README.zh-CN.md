@@ -157,8 +157,9 @@ photoshop-mcp-ui [--port 5174] [--host 127.0.0.1] [--no-open]
 <summary>✂️ 背景移除（配方）</summary>
 
 ```
-移除活动人像图层的背景。
+移除活动人像图层的背景，用于电商白底图交付。
 使用 Select Subject 配合 2px 羽化的图层蒙版，保留蒙版后面的原始像素。
+如果 brief 要求纯白底，填充 RGB(255,255,255)，商品居中并占画面至少 70%。
 主体必须在活动图层上——不能是纯色填充图层。
 ```
 
@@ -195,7 +196,7 @@ photoshop-mcp-ui [--port 5174] [--host 127.0.0.1] [--no-open]
 
 ```
 将活动文档准备好用于网络发布：转换为 sRGB，缩小尺寸，锐化，并将一张优化后的 JPEG 导出到 ~/.photoshop-mcp/exports。
-然后从同一文档中分别将 Instagram 帖子和 X 帖子变体导出为独立的 JPEG 文件。
+然后从同一文档导出淘宝主图 800×800、小红书封面 1080×1440、抖音竖图 1080×1920 和公众号头图 900×383。
 将输出路径以表格形式列出。
 ```
 
@@ -407,6 +408,89 @@ alert('Processing started!');
 如果某个配方返回 version_unsupported 或 generative_unavailable，调用 get_capabilities 并告诉我缺少哪个 Photoshop 功能。
 如果某个工具失败并返回 suggested_next_tool，按照提示操作（例如，在执行仅限栅格的配方之前先执行 rasterize_layer）。
 不要猜测——在失败后读取 get_state，然后提出下一个单一操作步骤。
+```
+
+</details>
+
+<details>
+<summary>🛒 中国电商白底主图工作流（淘宝/天猫）</summary>
+
+```
+打开这张商品原图，先获取当前文档状态。
+用 Select Subject 抠出主体，边缘羽化 1.5px，输出为带蒙版的新图层。
+新建 800×800 画布，背景填充纯白色 RGB(255,255,255)，商品居中并占画面至少 70%。
+检查边缘白边和杂色，必要时用蒙版画笔修复。
+导出 JPG 质量 90 到 ~/.photoshop-mcp/exports/白底图/，不要添加文字、水印或阴影。
+完成后给我预览确认效果。
+```
+
+等效 MCP 提示词模板：`ps.remove_background`，参数为 `{ feather_px: "2", keep_shadow: "false" }`。
+
+</details>
+
+<details>
+<summary>📱 小红书种草封面批量制作</summary>
+
+```
+我有一套 5 张产品实拍图，要做成小红书笔记封面。
+画布尺寸 1242×1656px（3:4），顶部 15% 留空作为安全区。
+主标题用自然口语化文案（9–13 个字），放在画面中上部；整体色调清新、有生活感，避免过度商业化。
+每张封面替换不同标题，产品构图保持一致。
+导出 JPG 到 ~/.photoshop-mcp/exports/xiaohongshu/，单张不超过 5MB。
+```
+
+</details>
+
+<details>
+<summary>🎉 双11 / 618 大促主视觉海报</summary>
+
+```
+制作一张双11大促主视觉 KV，尺寸 1920×800px。
+主标题「双11狂欢节」用立体发光字效果，配色深红到正红，点缀金色光晕。
+右侧放三款主推产品透明 PNG，左下角加「全场5折起」促销信息。
+再导出 1080×1920（抖音竖屏）和 1080×1440（小红书）两个衍生版本，关键信息不要被裁切。
+所有文件保存到 ~/.photoshop-mcp/exports/1111/ 并列表输出路径。
+```
+
+</details>
+
+<details>
+<summary>🎥 抖音直播电商素材包</summary>
+
+```
+为美妆品牌做一套抖音直播视觉素材：
+1. 直播背景贴片 1080×1920px，主播区域保持干净，关键信息集中在 880×1300 安全区内，主文字不小于 60px。
+2. 商品价格牌 400×200px，显示「今日到手价」和直播专属角标。
+3. 预热海报 1080×1920px，包含直播时间和本场爆款产品缩略图。
+导出到 ~/.photoshop-mcp/exports/douyin-live/ 并列出文件清单。
+```
+
+</details>
+
+<details>
+<summary>📐 多平台 SKU 批量适配导出</summary>
+
+```
+基于当前主视觉 PSD，批量适配并导出以下平台版本：
+淘宝主图 800×800、天猫长图 800×1200、小红书封面 1080×1440、抖音方图 1080×1080、抖音竖图 1080×1920、公众号头图 900×383、PC Banner 1920×600。
+文件夹按平台命名（taobao/、xiaohongshu/、douyin/、wechat/、pc/），文件名格式：品牌名_平台_尺寸。
+每个版本重新构图，确保 logo 和核心卖点完整可见，不要简单缩放。
+完成后用表格列出所有输出路径和文件大小。
+```
+
+等效模板：`ps.prepare_for_web`、`ps.export_social_variants`。
+
+</details>
+
+<details>
+<summary>🤖 AIGC 生图 + PS 精修流水线</summary>
+
+```
+这张 AI 生成的产品场景图整体不错，但商品边缘有白边，右下角光影穿帮。
+先 get_state，再精细调整蒙版去掉白边，用图章工具修复光影接缝。
+用曲线统一色调，让商品和背景融合自然。
+如果只需要快速交付，用 prepare-for-web recipe 导出 sRGB 优化 JPEG 到 ~/.photoshop-mcp/exports/aigc/.
+完成后给我预览图确认。
 ```
 
 </details>
