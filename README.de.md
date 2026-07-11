@@ -46,12 +46,12 @@ Das war's. Ein lokaler Server startet auf `127.0.0.1` (zufälliger freier Port) 
 
 Beim ersten Start einen der folgenden Anbieter auswählen – per API-Schlüssel **oder** bestehendem CLI-Abonnementkonto (Anthropic und Google):
 
-|| Anbieter | Modelle | API-Schlüssel | CLI-Konto |
-||---|---|---|---|
-|| **Anthropic** | Claude Sonnet / Opus / Haiku | [console.anthropic.com](https://console.anthropic.com/settings/keys) | `npm i -g @anthropic-ai/claude-code` → `claude auth login` |
-|| **OpenAI** | GPT-5, GPT-4.1, o-series | [platform.openai.com](https://platform.openai.com/api-keys) | — |
-|| **Google** | Gemini 2.5 Pro / Flash / Flash-Lite | [aistudio.google.com](https://aistudio.google.com/apikey) | `npm i -g @google/gemini-cli` → `gemini auth login` |
-|| **OpenRouter** | 100+ Modelle von beliebigen Anbietern | [openrouter.ai](https://openrouter.ai/keys) | — |
+| Anbieter | Modelle | API-Schlüssel | CLI-Konto |
+|---|---|---|---|
+| **Anthropic** | Claude Sonnet / Opus / Haiku | [console.anthropic.com](https://console.anthropic.com/settings/keys) | `npm i -g @anthropic-ai/claude-code` → `claude auth login` |
+| **OpenAI** | GPT-5, GPT-4.1, o-series | [platform.openai.com](https://platform.openai.com/api-keys) | — |
+| **Google** | Gemini 2.5 Pro / Flash / Flash-Lite | [aistudio.google.com](https://aistudio.google.com/apikey) | `npm i -g @google/gemini-cli` → `gemini auth login` |
+| **OpenRouter** | 100+ Modelle von beliebigen Anbietern | [openrouter.ai](https://openrouter.ai/keys) | — |
 
 ### Authentifizierungsmodi
 
@@ -98,12 +98,12 @@ bei denen weniger Modellaufrufe und eine schnellere End-to-End-Ausführung erwü
 
 **Einstellungen** jederzeit über die Seitenleiste öffnen:
 
-|| Aktion | API-Schlüssel-Modus | CLI-Konto-Modus |
-||---|---|---|
-|| Einrichten | Schlüssel einfügen → **Save** | CLI installieren → `auth login` → **Check connection** |
-|| Wechseln | **API key** wählen — gespeicherter Schlüssel bleibt erhalten | **Uses your account** wählen — Schlüssel wird nicht gelöscht |
-|| Benutzerdefinierter Pfad | — | Optionaler **CLI path**, falls `claude` / `gemini` nicht im `PATH` |
-|| Kostenanzeige | Schätzung pro Token in der Statusleiste | **Included in subscription**-Badge |
+| Aktion | API-Schlüssel-Modus | CLI-Konto-Modus |
+|---|---|---|
+| Einrichten | Schlüssel einfügen → **Save** | CLI installieren → `auth login` → **Check connection** |
+| Wechseln | **API key** wählen — gespeicherter Schlüssel bleibt erhalten | **Uses your account** wählen — Schlüssel wird nicht gelöscht |
+| Benutzerdefinierter Pfad | — | Optionaler **CLI path**, falls `claude` / `gemini` nicht im `PATH` |
+| Kostenanzeige | Schätzung pro Token in der Statusleiste | **Included in subscription**-Badge |
 
 Die Authentifizierungsmethode wird pro Anbieter in `~/.photoshop-mcp/data.db` gespeichert (`authMethod`:
 `api_key` oder `cli_account`). Bestehende Konfigurationen ohne `authMethod` verwenden standardmäßig
@@ -175,10 +175,10 @@ nur für feinkörnige Bearbeitungen verwenden, die kein Rezept abdeckt.
 <summary>🧠 Zustandsbewusstes Arbeiten (empfohlener erster Schritt)</summary>
 
 ```
-Ping Photoshop and read capabilities for my installed version.
-Get the current document state before changing anything.
-Open portrait.jpg, get a downscaled preview so you can verify the subject.
-After each major recipe, get another preview to confirm the result.
+Photoshop anpingen und die Fähigkeiten für die installierte Version auslesen.
+Den aktuellen Dokumentzustand abrufen, bevor Änderungen vorgenommen werden.
+portrait.jpg öffnen und eine verkleinerte Vorschau abrufen, um das Motiv zu prüfen.
+Nach jedem wichtigen Rezept eine weitere Vorschau abrufen, um das Ergebnis zu bestätigen.
 ```
 
 </details>
@@ -187,10 +187,10 @@ After each major recipe, get another preview to confirm the result.
 <summary>👤 Porträt-Retusche (Rezept)</summary>
 
 ```
-Enhance the portrait on the active layer at medium intensity with skin smoothing.
-Use the enhance-portrait recipe — I want frequency separation + auto-tone in one undoable step.
-If the active layer is text or a Smart Object, rasterize first or pick a raster layer.
-Show me a preview when done.
+Das Porträt auf der aktiven Ebene mit mittlerer Intensität und Hautglättung aufwerten.
+Das enhance-portrait recipe verwenden — ich möchte Frequenztrennung + Auto-Tonwerte in einem einzigen rückgängig machbaren Schritt.
+Wenn die aktive Ebene Text oder ein Smart Object ist, zuerst rastern oder eine Rasterebene auswählen.
+Nach Abschluss eine Vorschau zeigen.
 ```
 
 Entsprechendes MCP-Prompt-Template: `ps.enhance_portrait` mit `{ intensity: "medium", skin_smoothing: "true" }`.
@@ -201,9 +201,9 @@ Entsprechendes MCP-Prompt-Template: `ps.enhance_portrait` mit `{ intensity: "med
 <summary>✂️ Hintergrundentfernung (Rezept)</summary>
 
 ```
-Remove the background from the active portrait layer.
-Use Select Subject + a layer mask with a 2px feather. Keep the original pixels behind the mask.
-The subject must be on the active layer — not a flat color fill.
+Den Hintergrund von der aktiven Porträtebene entfernen.
+Select Subject + eine Ebenenmaske mit 2 Pixel Weichzeichnung verwenden. Die Originalpixel hinter der Maske beibehalten.
+Das Motiv muss auf der aktiven Ebene liegen — keine einfarbige Füllfläche.
 ```
 
 Entsprechendes MCP-Prompt-Template: `ps.remove_background` mit `{ feather_px: "2", keep_shadow: "false" }`.
@@ -214,9 +214,9 @@ Entsprechendes MCP-Prompt-Template: `ps.remove_background` mit `{ feather_px: "2
 <summary>🎨 Farbkorrektur (Rezept)</summary>
 
 ```
-Apply a warm film color grade to the open document as non-destructive adjustment layers.
-Use the apply-color-grade recipe with preset warm_film.
-Preview the result when finished.
+Eine warme Film-Farbkorrektur auf das geöffnete Dokument als nicht-destruktive Einstellungsebenen anwenden.
+Das apply-color-grade recipe mit dem Preset warm_film verwenden.
+Das Ergebnis nach Abschluss in der Vorschau anzeigen.
 ```
 
 </details>
@@ -225,9 +225,9 @@ Preview the result when finished.
 <summary>🔬 Frequenztrennung einrichten (Rezept)</summary>
 
 ```
-Set up frequency separation on the active raster layer with a 6px blur radius.
-I will paint on the Low and High layers myself — do not apply extra smoothing.
-Tell me which layers to edit when the stack is ready.
+Frequenztrennung auf der aktiven Rasterebene mit einem Weichzeichnungsradius von 6 Pixeln einrichten.
+Ich werde selbst auf den Low- und High-Ebenen malen — keine zusätzliche Glättung anwenden.
+Mir mitteilen, welche Ebenen bearbeitet werden sollen, wenn der Ebenen-Stack bereit ist.
 ```
 
 Entsprechendes MCP-Prompt-Template: `ps.frequency_separation` mit `{ radius_px: "6" }`.
@@ -238,9 +238,9 @@ Entsprechendes MCP-Prompt-Template: `ps.frequency_separation` mit `{ radius_px: 
 <summary>🌐 Für Web vorbereiten + Social-Export (Rezepte)</summary>
 
 ```
-Prepare the active document for web: sRGB, downscale, sharpen, export one optimized JPEG to ~/.photoshop-mcp/exports.
-Then export Instagram post and X post variants as separate JPEGs from the same document.
-List the output paths in a table.
+Das aktive Dokument für das Web vorbereiten: sRGB, verkleinern, schärfen, ein optimiertes JPEG nach ~/.photoshop-mcp/exports exportieren.
+Dann Instagram-Post- und X-Post-Varianten als separate JPEGs aus demselben Dokument exportieren.
+Die Ausgabepfade in einer Tabelle auflisten.
 ```
 
 Entsprechende Templates: `ps.prepare_for_web`, `ps.export_social_variants`.
@@ -251,9 +251,9 @@ Entsprechende Templates: `ps.prepare_for_web`, `ps.export_social_variants`.
 <summary>📦 Batch-Mockup-Ersetzung (Rezept)</summary>
 
 ```
-I have a mockup PSD open with a Smart Object layer named "Screen".
-Replace it with every PNG/JPG in ~/assets/mockups/ and export one JPEG per asset.
-Do not place flat layers — swap the Smart Object so perspective is preserved.
+Ich habe ein Mockup-PSD geöffnet mit einer Smart Object-Ebene namens „Screen".
+Jedes PNG/JPG aus ~/assets/mockups/ ersetzen und ein JPEG pro Asset exportieren.
+Keine flachen Ebenen platzieren — das Smart Object tauschen, damit die Perspektive erhalten bleibt.
 ```
 
 Entsprechendes MCP-Prompt-Template: `ps.batch_mockup_replace`.
@@ -264,8 +264,8 @@ Entsprechendes MCP-Prompt-Template: `ps.batch_mockup_replace`.
 <summary>🗂️ Ebenen organisieren (Rezept)</summary>
 
 ```
-Organize the layer stack: rename by kind, auto-group related layers, preserve originals.
-Run the organize-layers recipe, then list layers so I can review the new structure.
+Den Ebenen-Stack organisieren: nach Typ umbenennen, verwandte Ebenen automatisch gruppieren, Originale beibehalten.
+Das organize-layers recipe ausführen, dann die Ebenen auflisten, damit ich die neue Struktur überprüfen kann.
 ```
 
 </details>
@@ -274,10 +274,10 @@ Run the organize-layers recipe, then list layers so I can review the new structu
 <summary>🎨 Einfaches Design erstellen</summary>
 
 ```
-Create a 1920x1080 Photoshop document with RGB color mode.
-Add a light blue background layer and fill it with RGB(240, 248, 255).
-Add centered text "Welcome" in 64pt font.
-Save as welcome.psd to my Desktop.
+Ein 1920×1080-Photoshop-Dokument im RGB-Farbmodus erstellen.
+Eine hellblaue Hintergrundebene hinzufügen und mit RGB(240, 248, 255) füllen.
+Zentrierten Text „Welcome" in 64pt Schriftgröße hinzufügen.
+Als welcome.psd auf dem Schreibtisch speichern.
 ```
 
 </details>
@@ -286,14 +286,14 @@ Save as welcome.psd to my Desktop.
 <summary>🖼️ Stock-Bild-Design (mit Pexels MCP)</summary>
 
 ```
-Search Pexels for "mountain sunset" images.
-Create a 1920x1080 Photoshop document.
-Place the downloaded image and fit it to fill the entire canvas.
-Apply a subtle Gaussian blur of 3px.
-Increase brightness by 15 and contrast by 10.
-Add white text "Adventure Awaits" centered at the top in 72pt.
-Set the text opacity to 90% and blend mode to OVERLAY.
-Save as adventure.jpg with quality 10.
+Bei Pexels nach „mountain sunset"-Bildern suchen.
+Ein 1920×1080-Photoshop-Dokument erstellen.
+Das heruntergeladene Bild platzieren und so anpassen, dass es die gesamte Leinwand ausfüllt.
+Einen subtilen Gaußschen Weichzeichner von 3 Pixeln anwenden.
+Helligkeit um 15 und Kontrast um 10 erhöhen.
+Weißen Text „Adventure Awaits" in 72pt oben mittig hinzufügen.
+Textdeckkraft auf 90 % und Mischmodus auf OVERLAY setzen.
+Als adventure.jpg mit Qualität 10 speichern.
 ```
 
 </details>
@@ -302,11 +302,11 @@ Save as adventure.jpg with quality 10.
 <summary>✨ Fotobearbeitung</summary>
 
 ```
-Open photo.jpg from my Desktop in Photoshop.
-Get state, then run the enhance-portrait recipe at low intensity.
-If I only need quick tone fixes, apply auto levels, auto contrast, and unsharp mask (120%, 1.5, 0) on the active layer instead.
-Adjust hue +15 and saturation +15, or use prepare-for-web when I'm ready to export.
-Save as enhanced-photo.jpg with quality 12.
+photo.jpg vom Schreibtisch in Photoshop öffnen.
+Zustand abrufen, dann das enhance-portrait recipe mit niedriger Intensität ausführen.
+Falls nur schnelle Tonwertkorrekturen benötigt werden, stattdessen Auto-Tonwerte, Auto-Kontrast und Unschärfemaske (120 %, 1,5, 0) auf die aktive Ebene anwenden.
+Farbton um +15 und Sättigung um +15 anpassen, oder prepare-for-web verwenden, wenn der Export bereit ist.
+Als enhanced-photo.jpg mit Qualität 12 speichern.
 ```
 
 </details>
@@ -315,15 +315,15 @@ Save as enhanced-photo.jpg with quality 12.
 <summary>🎭 Ebeneneffekte & Blending</summary>
 
 ```
-Create a 1200x800 document.
-Add a new layer named "Background" and fill with RGB(50, 50, 50).
-Place logo.png at position (100, 100).
-Fit the logo layer to 50% of its current size.
-Set blend mode to SCREEN and opacity to 85%.
-Add another layer, fill with RGB(255, 100, 50).
-Set this layer's blend mode to MULTIPLY and opacity to 60%.
-Merge all visible layers.
-Save as composite.psd.
+Ein 1200×800-Dokument erstellen.
+Eine neue Ebene namens „Background" hinzufügen und mit RGB(50, 50, 50) füllen.
+logo.png an Position (100, 100) platzieren.
+Die Logo-Ebene auf 50 % ihrer aktuellen Größe skalieren.
+Mischmodus auf SCREEN und Deckkraft auf 85 % setzen.
+Eine weitere Ebene hinzufügen und mit RGB(255, 100, 50) füllen.
+Den Mischmodus dieser Ebene auf MULTIPLY und die Deckkraft auf 60 % setzen.
+Alle sichtbaren Ebenen zusammenführen.
+Als composite.psd speichern.
 ```
 
 </details>
@@ -332,14 +332,14 @@ Save as composite.psd.
 <summary>📝 Textplakat-Design</summary>
 
 ```
-Create a 1080x1350 portrait document (Instagram story size).
-Add a layer and fill with gradient-like color RGB(120, 40, 200).
-Add text "SUMMER" at (540, 300) in 96pt.
-Change text color to white RGB(255, 255, 255).
-Set text alignment to CENTER.
-Add another text "2026" at (540, 450) in 128pt, white color.
-Apply Gaussian blur 2px to the background layer.
-Save as summer-poster.png.
+Ein 1080×1350-Hochformatdokument erstellen (Instagram-Story-Größe).
+Eine Ebene hinzufügen und mit der verlaufsähnlichen Farbe RGB(120, 40, 200) füllen.
+Text „SUMMER" an Position (540, 300) in 96pt hinzufügen.
+Textfarbe auf Weiß RGB(255, 255, 255) ändern.
+Textausrichtung auf CENTER setzen.
+Einen weiteren Text „2026" an Position (540, 450) in 128pt, weiße Farbe, hinzufügen.
+Gaußschen Weichzeichner 2px auf die Hintergrundebene anwenden.
+Als summer-poster.png speichern.
 ```
 
 </details>
@@ -348,14 +348,14 @@ Save as summer-poster.png.
 <summary>🎬 Stapelverarbeitung</summary>
 
 ```
-Open image1.jpg.
-Resize to 1920x1080.
-Apply auto contrast.
-Apply subtle sharpen (amount 80%, radius 1.0).
-Save as processed-1.jpg with quality 10.
-Close without saving changes to original.
+image1.jpg öffnen.
+Auf 1920×1080 skalieren.
+Auto-Kontrast anwenden.
+Subtiles Schärfen anwenden (Stärke 80 %, Radius 1,0).
+Als processed-1.jpg mit Qualität 10 speichern.
+Ohne das Original zu speichern schließen.
 
-Repeat for image2.jpg and image3.jpg.
+Dasselbe für image2.jpg und image3.jpg wiederholen.
 ```
 
 </details>
@@ -364,16 +364,16 @@ Repeat for image2.jpg and image3.jpg.
 <summary>🖌️ Kreative Bildbearbeitung</summary>
 
 ```
-Create a 2000x2000 square document.
-Place abstract-pattern.jpg and fit to fill document.
-Duplicate the layer.
-On the duplicate, apply motion blur at 45 degrees, radius 50px.
-Set blend mode to OVERLAY and opacity to 70%.
-Add centered text "MOTION" in 120pt white.
-Apply a rectangular selection from (200, 200) to (1800, 1800).
-Invert the selection and delete (to create a border effect).
-Flatten the image.
-Save as motion-art.jpg.
+Ein 2000×2000-Quadratdokument erstellen.
+abstract-pattern.jpg platzieren und an das Dokument anpassen.
+Die Ebene duplizieren.
+Auf der Duplikat-Ebene Bewegungsunschärfe bei 45 Grad, Radius 50 Pixel anwenden.
+Mischmodus auf OVERLAY und Deckkraft auf 70 % setzen.
+Zentrierten Text „MOTION" in 120pt Weiß hinzufügen.
+Eine rechteckige Auswahl von (200, 200) bis (1800, 1800) erstellen.
+Die Auswahl umkehren und löschen (um einen Rahmeneffekt zu erzeugen).
+Das Bild reduzieren.
+Als motion-art.jpg speichern.
 ```
 
 </details>
@@ -382,21 +382,21 @@ Save as motion-art.jpg.
 <summary>🎯 Erweiterter Workflow</summary>
 
 ```
-Create a 3000x2000 document at 300 DPI for print.
-Place hero-image.jpg and fit to fill the canvas.
-Duplicate the image layer.
-On the duplicate, desaturate it completely.
-Set blend mode to LUMINOSITY and opacity to 50%.
-Create a new layer named "Overlay".
-Fill with RGB(255, 150, 0) and set blend mode to SOFTLIGHT at 30% opacity.
-Add text "PORTFOLIO" at top center (1500, 200) in 96pt.
-Set text color to white.
-Add subtext "2026 Collection" at (1500, 320) in 36pt.
-Create a rectangular selection around the text area.
-Create a layer mask on the overlay layer.
-Merge visible layers.
-Save as portfolio-cover.psd.
-Export as portfolio-cover.jpg at quality 12.
+Ein 3000×2000-Dokument mit 300 DPI für den Druck erstellen.
+hero-image.jpg platzieren und an die Leinwand anpassen.
+Die Bildebene duplizieren.
+Die Duplikat-Ebene vollständig entsättigen.
+Mischmodus auf LUMINOSITY und Deckkraft auf 50 % setzen.
+Eine neue Ebene namens „Overlay" erstellen.
+Mit RGB(255, 150, 0) füllen und Mischmodus auf SOFTLIGHT bei 30 % Deckkraft setzen.
+Text „PORTFOLIO" oben mittig bei (1500, 200) in 96pt hinzufügen.
+Textfarbe auf Weiß setzen.
+Untertext „2026 Collection" bei (1500, 320) in 36pt hinzufügen.
+Eine rechteckige Auswahl um den Textbereich erstellen.
+Eine Ebenenmaske auf der Overlay-Ebene erstellen.
+Sichtbare Ebenen zusammenführen.
+Als portfolio-cover.psd speichern.
+Als portfolio-cover.jpg mit Qualität 12 exportieren.
 ```
 
 </details>
@@ -405,10 +405,10 @@ Export as portfolio-cover.jpg at quality 12.
 <summary>🔄 Aktionen verwenden</summary>
 
 ```
-Open my-photo.jpg.
-Play the "Vintage Look" action from "My Actions" set.
-Adjust brightness by -10 to darken slightly.
-Save as vintage-photo.jpg.
+my-photo.jpg öffnen.
+Die Aktion „Vintage Look" aus dem Set „My Actions" ausführen.
+Helligkeit um -10 anpassen, um leicht abzudunkeln.
+Als vintage-photo.jpg speichern.
 ```
 
 </details>
@@ -417,7 +417,7 @@ Save as vintage-photo.jpg.
 <summary>⚡ Benutzerdefinierte Skript-Ausführung</summary>
 
 ```
-Execute this custom ExtendScript code:
+Diesen benutzerdefinierten ExtendScript-Code ausführen:
 app.beep();
 alert('Processing started!');
 ```
@@ -428,18 +428,18 @@ alert('Processing started!');
 <summary>⏮️ Rückgängig/Wiederholen-Operationen</summary>
 
 ```
-Apply Gaussian blur 15px to the active layer.
-[Wait for result]
-Actually, that's too much blur. Undo that.
-Apply Gaussian blur 5px instead.
+Gaußschen Weichzeichner 15px auf die aktive Ebene anwenden.
+[Auf Ergebnis warten]
+Das ist eigentlich zu viel Weichzeichnung. Das rückgängig machen.
+Stattdessen Gaußschen Weichzeichner 5px anwenden.
 ```
 
 Oder:
 
 ```
-Get the history states to see what operations were performed.
-Undo the last 3 operations.
-Redo 1 step to bring back one operation.
+Die Verlaufszustände abrufen, um zu sehen, welche Operationen durchgeführt wurden.
+Die letzten 3 Operationen rückgängig machen.
+1 Schritt wiederholen, um eine Operation zurückzubringen.
 ```
 
 </details>
@@ -448,9 +448,9 @@ Redo 1 step to bring back one operation.
 <summary>🔁 Fehlerbehandlung (strukturierte Envelopes)</summary>
 
 ```
-If a recipe returns version_unsupported or generative_unavailable, call get_capabilities and tell me which Photoshop feature is missing.
-If a tool fails with suggested_next_tool, follow that hint (e.g. rasterize_layer before a raster-only recipe).
-Never guess — read get_state after a failure and propose the next single step.
+Falls ein Rezept version_unsupported oder generative_unavailable zurückgibt, get_capabilities aufrufen und mitteilen, welche Photoshop-Funktion fehlt.
+Falls ein Werkzeug mit suggested_next_tool fehlschlägt, diesen Hinweis befolgen (z. B. rasterize_layer vor einem nur für Rasterebenen geeigneten Rezept).
+Niemals raten — nach einem Fehler get_state auslesen und den nächsten einzelnen Schritt vorschlagen.
 ```
 
 </details>
@@ -627,13 +627,13 @@ Häufige Verbindungs-, Skripting- und Protokollierungsprobleme:
 
 ### Eigenständige UI — CLI-Konto-Authentifizierung
 
-|| Symptom | Wahrscheinliche Ursache | Lösung |
-||---|---|---|
-|| `cli_not_found` | Claude Code / Gemini CLI nicht installiert | `npm i -g @anthropic-ai/claude-code` oder `npm i -g @google/gemini-cli` |
-|| `not_authenticated` | Keine OAuth-Sitzung | `claude auth login` oder `gemini auth login` im Terminal ausführen |
-|| `claude` / `gemini` nicht im `PATH` | Benutzerdefinierter Installationsort | Einstellungen → **CLI path** → **Check connection** |
-|| Chat funktioniert in IDE, nicht aber in UI (CLI-Modus) | OAuth-Token sind CLI-exklusiv | **CLI-Konto** in der UI verwenden; API-Schlüssel und CLI-Sitzungen sind getrennt |
-|| Gemini Multi-Turn wirkt vergesslich | Headless-CLI öffnet möglicherweise bei jedem Schritt eine neue Sitzung | Bekannte Einschränkung; Verlauf wird dem Prompt vorangestellt (MVP) |
+| Symptom | Wahrscheinliche Ursache | Lösung |
+|---|---|---|
+| `cli_not_found` | Claude Code / Gemini CLI nicht installiert | `npm i -g @anthropic-ai/claude-code` oder `npm i -g @google/gemini-cli` |
+| `not_authenticated` | Keine OAuth-Sitzung | `claude auth login` oder `gemini auth login` im Terminal ausführen |
+| `claude` / `gemini` nicht im `PATH` | Benutzerdefinierter Installationsort | Einstellungen → **CLI path** → **Check connection** |
+| Chat funktioniert in IDE, nicht aber in UI (CLI-Modus) | OAuth-Token sind CLI-exklusiv | **CLI-Konto** in der UI verwenden; API-Schlüssel und CLI-Sitzungen sind getrennt |
+| Gemini Multi-Turn wirkt vergesslich | Headless-CLI öffnet möglicherweise bei jedem Schritt eine neue Sitzung | Bekannte Einschränkung; Verlauf wird dem Prompt vorangestellt (MVP) |
 
 ## Entwicklung
 
