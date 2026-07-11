@@ -6,6 +6,8 @@
   </a>
 </p>
 
+**Languages:** English · [简体中文](README.zh-CN.md) · [Español](README.es.md)
+
 *v1.1+ — recipe workflows, fewer round-trips, snappier sessions. Standalone UI ships **Action Plan (beta)** for plan-then-execute runs.*
 
 > **Note:** This is an unofficial, community-maintained project and is not affiliated with or endorsed by Adobe Inc.
