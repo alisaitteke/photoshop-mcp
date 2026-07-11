@@ -157,9 +157,9 @@ photoshop-mcp-ui [--port 5174] [--host 127.0.0.1] [--no-open]
 <summary>✂️ 背景移除（配方）</summary>
 
 ```
-移除活动人像图层的背景，用于电商白底图交付。
+移除活动人像图层的背景。
 使用 Select Subject 配合 2px 羽化的图层蒙版，保留蒙版后面的原始像素。
-如果 brief 要求纯白底，填充 RGB(255,255,255)，商品居中并占画面至少 70%。
+如果 brief 要求纯白底，填充 RGB(255,255,255)，主体居中并占画面至少 70%。
 主体必须在活动图层上——不能是纯色填充图层。
 ```
 
@@ -196,7 +196,7 @@ photoshop-mcp-ui [--port 5174] [--host 127.0.0.1] [--no-open]
 
 ```
 将活动文档准备好用于网络发布：转换为 sRGB，缩小尺寸，锐化，并将一张优化后的 JPEG 导出到 ~/.photoshop-mcp/exports。
-然后从同一文档导出淘宝主图 800×800、小红书封面 1080×1440、抖音竖图 1080×1920 和公众号头图 900×383。
+然后从同一文档导出 Instagram 帖子（1080×1080）、竖版 Feed（1080×1350）、Stories/Reels（1080×1920）和 X 帖子（1200×675）变体。
 将输出路径以表格形式列出。
 ```
 
@@ -413,69 +413,15 @@ alert('Processing started!');
 </details>
 
 <details>
-<summary>🛒 中国电商白底主图工作流（淘宝/天猫）</summary>
+<summary>📱 社交媒体格式套件</summary>
 
 ```
-打开这张商品原图，先获取当前文档状态。
-用 Select Subject 抠出主体，边缘羽化 1.5px，输出为带蒙版的新图层。
-新建 800×800 画布，背景填充纯白色 RGB(255,255,255)，商品居中并占画面至少 70%。
-检查边缘白边和杂色，必要时用蒙版画笔修复。
-导出 JPG 质量 90 到 ~/.photoshop-mcp/exports/白底图/，不要添加文字、水印或阴影。
-完成后给我预览确认效果。
-```
-
-等效 MCP 提示词模板：`ps.remove_background`，参数为 `{ feather_px: "2", keep_shadow: "false" }`。
-
-</details>
-
-<details>
-<summary>📱 小红书种草封面批量制作</summary>
-
-```
-我有一套 5 张产品实拍图，要做成小红书笔记封面。
-画布尺寸 1242×1656px（3:4），顶部 15% 留空作为安全区。
-主标题用自然口语化文案（9–13 个字），放在画面中上部；整体色调清新、有生活感，避免过度商业化。
-每张封面替换不同标题，产品构图保持一致。
-导出 JPG 到 ~/.photoshop-mcp/exports/xiaohongshu/，单张不超过 5MB。
-```
-
-</details>
-
-<details>
-<summary>🎉 双11 / 618 大促主视觉海报</summary>
-
-```
-制作一张双11大促主视觉 KV，尺寸 1920×800px。
-主标题「双11狂欢节」用立体发光字效果，配色深红到正红，点缀金色光晕。
-右侧放三款主推产品透明 PNG，左下角加「全场5折起」促销信息。
-再导出 1080×1920（抖音竖屏）和 1080×1440（小红书）两个衍生版本，关键信息不要被裁切。
-所有文件保存到 ~/.photoshop-mcp/exports/1111/ 并列表输出路径。
-```
-
-</details>
-
-<details>
-<summary>🎥 抖音直播电商素材包</summary>
-
-```
-为美妆品牌做一套抖音直播视觉素材：
-1. 直播背景贴片 1080×1920px，主播区域保持干净，关键信息集中在 880×1300 安全区内，主文字不小于 60px。
-2. 商品价格牌 400×200px，显示「今日到手价」和直播专属角标。
-3. 预热海报 1080×1920px，包含直播时间和本场爆款产品缩略图。
-导出到 ~/.photoshop-mcp/exports/douyin-live/ 并列出文件清单。
-```
-
-</details>
-
-<details>
-<summary>📐 多平台 SKU 批量适配导出</summary>
-
-```
-基于当前主视觉 PSD，批量适配并导出以下平台版本：
-淘宝主图 800×800、天猫长图 800×1200、小红书封面 1080×1440、抖音方图 1080×1080、抖音竖图 1080×1920、公众号头图 900×383、PC Banner 1920×600。
-文件夹按平台命名（taobao/、xiaohongshu/、douyin/、wechat/、pc/），文件名格式：品牌名_平台_尺寸。
-每个版本重新构图，确保 logo 和核心卖点完整可见，不要简单缩放。
-完成后用表格列出所有输出路径和文件大小。
+我有一张 1:1 主视觉（2000×2000 px）已打开。
+用 prepare-for-web recipe 将活动文档准备好用于网络发布：转换为 sRGB，裁剪并导出变体。
+然后导出 Instagram Feed（1080×1350）、Stories/Reels（1080×1920，上下安全区）、LinkedIn（1200×628）和横版横幅（1200×628）变体。
+仅在 9:16 格式会裁切主体时使用生成式扩展。
+主体至少占画面 60%；logo 在右上角留 20 px 边距。
+以表格形式列出所有输出路径。
 ```
 
 等效模板：`ps.prepare_for_web`、`ps.export_social_variants`。
@@ -483,14 +429,69 @@ alert('Processing started!');
 </details>
 
 <details>
-<summary>🤖 AIGC 生图 + PS 精修流水线</summary>
+<summary>🖨️ 印刷完稿（CMYK / 出血）</summary>
 
 ```
-这张 AI 生成的产品场景图整体不错，但商品边缘有白边，右下角光影穿帮。
-先 get_state，再精细调整蒙版去掉白边，用图章工具修复光影接缝。
-用曲线统一色调，让商品和背景融合自然。
-如果只需要快速交付，用 prepare-for-web recipe 导出 sRGB 优化 JPEG 到 ~/.photoshop-mcp/exports/aigc/.
-完成后给我预览图确认。
+将活动文档准备好用于胶印：
+转换为 CMYK，使用 ISO Coated v2 配置文件，四边添加 3 mm 出血，检查最终尺寸 300 dpi 分辨率。
+为印刷配置文件设置软打样，并提示色域外颜色。
+大面积深黑使用 C50 M20 Y20 K100；黑色文字仅用 K100。
+导出带嵌入配置文件的 PDF/X-4，关闭前显示预览。
+```
+
+</details>
+
+<details>
+<summary>🛍️ 生成式填充产品场景</summary>
+
+```
+活动图层上有一张已抠图的产品 PNG。
+用 photoshop_generative_fill 创建三个不同场景：暖光室内、日落户外、带水珠的反射表面。
+每个变体用 photoshop_generative_expand 扩展到 1080×1350（4:5），保持产品居中。
+每个场景完成后获取预览，检查阴影和透视。
+如果 generative_unavailable，调用 get_capabilities 并说明缺少什么。
+```
+
+</details>
+
+<details>
+<summary>🎨 统一色彩分级</summary>
+
+```
+同一项目有 30 张照片，光线各不相同。
+用 apply-color-grade recipe 和 warm_film 预设，以非破坏性调整图层应用色彩分级。
+如有需要，调整曲线和色相/饱和度，营造温暖电影感：冷色阴影、金色高光。
+准备一个动作，将每张图以 1080 px 宽、sRGB、JPEG 质量 85 导出到 ~/.photoshop-mcp/exports/grade/。
+在三张代表性图片上显示前后对比预览。
+```
+
+等效 MCP 提示词模板：`ps.apply_color_grade`，参数为 `{ preset: "warm_film" }`。
+
+</details>
+
+<details>
+<summary>🏢 批量品牌样机</summary>
+
+```
+我打开了一个样机 PSD，包含名片、A4 文档、包装和社交资料 Smart Object。
+用 ~/assets/brand/ 中的素材替换每个 Smart Object，不要拼合图层——保留透视和阴影。
+运行 batch_mockup_replace recipe，每个变体导出一张 JPEG 到 ~/.photoshop-mcp/exports/mockups/。
+以表格形式列出所有输出路径。
+```
+
+等效模板：`ps.batch_mockup_replace`。
+
+</details>
+
+<details>
+<summary>🏷️ 从主文件导出多版本</summary>
+
+```
+我有一张 1:1 主创意和 ~/assets/logos/ 中的多个 logo。
+每个变体从同一 PSD 导出 Story 9:16、Feed 4:5 和横幅 1200×628，用 Smart Object 放置 logo 和文字。
+文件命名为 变体_格式.jpg，全部保存到 ~/.photoshop-mcp/exports/variants/。
+如果某步失败，读取 get_state 并只建议下一步。
+完成后用表格列出所有路径。
 ```
 
 </details>
