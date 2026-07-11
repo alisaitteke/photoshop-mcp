@@ -131,7 +131,7 @@ photoshop-mcp-ui [--port 5174] [--host 127.0.0.1] [--no-open]
 <summary>🧠 状态感知会话（推荐的第一步）</summary>
 
 ```
-Ping Photoshop 并读取我安装版本的功能信息。
+连接 Photoshop 并读取我当前安装版本的功能信息。
 在做任何更改之前，先获取当前文档状态。
 打开 portrait.jpg，获取缩小的预览图，以便确认主体对象。
 每执行完一个主要配方后，再次获取预览图以确认效果。
@@ -373,7 +373,7 @@ Ping Photoshop 并读取我安装版本的功能信息。
 <summary>⚡ 自定义脚本执行</summary>
 
 ```
-Execute this custom ExtendScript code:
+执行以下自定义 ExtendScript 代码：
 app.beep();
 alert('Processing started!');
 ```
