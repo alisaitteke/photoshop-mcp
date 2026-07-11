@@ -6,7 +6,7 @@
   </a>
 </p>
 
-**言語：** [English](README.md) · [简体中文](README.zh-CN.md) · [Español](README.es.md) · [Deutsch](README.de.md) · 日本語
+**言語：** [English](README.md) · [简体中文](README.zh-CN.md) · [Español](README.es.md) · [Deutsch](README.de.md) · [日本語](README.ja.md) · [Türkçe](README.tr.md)
 
 *v1.1+ — レシピワークフロー、ラウンドトリップ削減、軽快なセッション。スタンドアロンUIには計画→実行を担う **Action Plan（ベータ）** が付属しています。*
 

@@ -6,7 +6,7 @@
   </a>
 </p>
 
-**Sprachen:** [English](README.md) · [简体中文](README.zh-CN.md) · [Español](README.es.md) · Deutsch · [日本語](README.ja.md)
+**Sprachen:** [English](README.md) · [简体中文](README.zh-CN.md) · [Español](README.es.md) · Deutsch · [日本語](README.ja.md) · [Türkçe](README.tr.md)
 
 *v1.1+ — Rezept-Workflows, weniger Round-Trips, flinkere Sitzungen. Die eigenständige UI liefert **Action Plan (Beta)** für Plan-dann-Ausführen-Abläufe.*
 
