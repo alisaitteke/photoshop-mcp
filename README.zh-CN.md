@@ -61,7 +61,7 @@ npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
 
 ### Action Plan（测试版）
 
-独立 Web UI 中的可选执行模式，**仅适用于 API 密钥认证**（`cli_account` 始终使用默认的代理流程）。在作曲器中的模型选择器旁边，通过 **Action Plan** 开关开启。
+独立 Web UI 中的可选执行模式，**仅适用于 API 密钥认证**（`cli_account` 始终使用默认的代理流程）。在 composer 中的模型选择器旁边，通过 **Action Plan** 开关开启。
 
 与逐步 ReAct 循环（模型 → 工具 → 模型 → 工具……）不同，Action Plan：
 
@@ -71,11 +71,11 @@ npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
 
 计划以实时待办清单的形式显示在工具调用卡片上方，附带每步状态（`pending` → `running` → `done` / `error`）。计划会持久化到聊天历史中，重载后不会丢失。开关默认关闭；禁用 Action Plan 时，现有的代理流程不受影响。
 
-适合多步骤提示词，例如*"移除背景并导出为网络格式"*——可减少模型调用次数，加快端到端执行速度。
+适合多步骤提示词，例如*"移除背景并导出为 Web 格式"*——可减少模型调用次数，加快端到端执行速度。
 
 ### 首次启动时的流程
 
-1. 选择提供商，选择 **API 密钥**或**使用您的账户**。
+1. 选择提供商，选择 **API 密钥**或 **Uses your account**。
 2. 验证密钥或检查 CLI 连接。配置以 `~/.photoshop-mcp/data.db`（SQLite，`chmod 600`）的形式存储在本地。API 密钥永远不会离开您的设备；CLI 模式继承来自 `~/.claude/` 或 `~/.gemini/` 的 OAuth 凭据。
 3. 输入自然语言提示词。UI 实时流式传输模型回复，实时执行 Photoshop 工具调用，并将每次工具调用渲染为可检查的卡片（输入 + 结果）。
 4. 随时从设置/模型选择器切换提供商、认证方式或模型——聊天记录、费用和工具历史会跨会话持久化。
@@ -87,7 +87,7 @@ npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
 | 操作 | API 密钥模式 | CLI 账户模式 |
 |---|---|---|
 | 设置 | 粘贴密钥 → **保存** | 安装 CLI → `auth login` → **检查连接** |
-| 切换 | 选择 **API 密钥** — 已存储的密钥保留 | 选择**使用您的账户** — 密钥不会被删除 |
+| 切换 | 选择 **API 密钥** — 已存储的密钥保留 | 选择 **Uses your account** — 密钥不会被删除 |
 | 自定义二进制路径 | — | 若 `claude` / `gemini` 不在 `PATH` 上，可填写可选的 **CLI 路径** |
 | 费用显示 | 状态栏中的按 token 预估 | **订阅已包含**徽章 |
 
@@ -113,8 +113,8 @@ photoshop-mcp-ui [--port 5174] [--host 127.0.0.1] [--no-open]
 
 - **服务器 `instructions`** — 在 MCP `initialize` 时广播的工作流契约（ping 一次、操作前获取状态、优先使用配方、错误恢复）。参见 [`src/prompts/instructions.ts`](src/prompts/instructions.ts)。
 - **MCP `prompts` 原语** — 19 个预先设计的模板（12 个配方 + 7 个指南：`ps.enhance_portrait`、`ps.remove_background`、`ps.generative_fill`……），通过 `prompts/list` 和 `prompts/get` 获取。
-- **配方工具** — 12 个面向结果的 `photoshop_recipe_*` 工具（移除背景、增强人像、准备网络发布、导出社交媒体变体、色彩分级、频率分离、批量贴图替换、整理图层、渐变淡出、天空混合、减淡与加深、移除干扰物）。每个工具将步骤包装在单一 Photoshop 历史状态中（一次撤销可还原全部）。**共 86 个工具**（74 个原子工具 + 12 个配方工具）。
-- **生成式 AI** — `photoshop_generative_fill`、`photoshop_generative_remove`、`photoshop_generative_expand`、`photoshop_generative_upscale`、`photoshop_sky_replacement`、`photoshop_generate_image`（通过 ExtendScript 调用 Firefly；需要 Adobe 账户和点数）。
+- **配方工具** — 12 个面向结果的 `photoshop_recipe_*` 工具（移除背景、增强人像、准备网络发布、导出社交媒体变体、色彩分级、频率分离、批量样机替换、整理图层、渐变淡出、天空混合、减淡与加深、移除干扰物）。每个工具将步骤包装在单一 Photoshop 历史状态中（一次撤销可还原全部）。**共 86 个工具**（74 个原子工具 + 12 个配方工具）。
+- **生成式 AI** — `photoshop_generative_fill`、`photoshop_generative_remove`、`photoshop_generative_expand`、`photoshop_generative_upscale`、`photoshop_sky_replacement`、`photoshop_generate_image`（通过 ExtendScript 调用 Firefly；需要 Adobe 账户和积分）。
 - **Neural Filters** — 通过可选的 UXP 桥接插件（`uxp-plugin/`）使用 `photoshop_neural_filter`。
 - **状态与预览** — `photoshop_get_state`（轻量快照）、`photoshop_get_preview`（用于视觉验证的 base64 JPEG）、`photoshop_get_capabilities`（版本感知功能标志）。
 - **结构化错误** — 失败时返回包含 `code` 和 `suggested_next_tool` 的 JSON 信封，用于自我纠错。
@@ -204,7 +204,7 @@ List the output paths in a table.
 </details>
 
 <details>
-<summary>📦 批量贴图替换（配方）</summary>
+<summary>📦 批量样机替换（配方）</summary>
 
 ```
 I have a mockup PSD open with a Smart Object layer named "Screen".

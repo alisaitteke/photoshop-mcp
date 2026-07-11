@@ -19,7 +19,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-lightgrey.svg)]()
 
-Un servidor Model Context Protocol (MCP) que permite a asistentes de IA como Claude y Cursor controlar Adobe Photoshop de forma programática. Esto permite crear diseños, manipular imágenes y automatizar flujos de trabajo de Photoshop mediante comandos en lenguaje natural mientras se trabaja en el IDE — o a través de la **interfaz web independiente** incluida, que admite tanto claves de API como cuentas de suscripción CLI (Claude Code / Gemini CLI). La UI también ofrece un modo **Action Plan (beta)** de participación voluntaria que planifica cada paso de Photoshop en una sola llamada al LLM y los ejecuta en un único paso.
+Un servidor Model Context Protocol (MCP) que permite a asistentes de IA como Claude y Cursor controlar Adobe Photoshop de forma programática. Esto permite crear diseños, manipular imágenes y automatizar flujos de trabajo de Photoshop mediante comandos en lenguaje natural mientras se trabaja en el IDE — o a través de la **interfaz web independiente** incluida, que admite tanto claves de API como cuentas de suscripción CLI (Claude Code / Gemini CLI). La UI también ofrece un modo **Action Plan (beta)** opt-in que planifica cada paso de Photoshop en una sola llamada al LLM y los ejecuta en un único paso.
 
 ## Por qué existe esto
 
@@ -61,7 +61,7 @@ Es posible cambiar el método de autenticación por proveedor en Configuración 
 
 ### Action Plan (beta)
 
-Un modo de ejecución opcional en la UI web independiente solo para **autenticación con clave de API** (`cli_account` siempre usa el flujo agéntico predeterminado). Actívelo con el interruptor **Action Plan** junto al selector de modelos en el compositor.
+Un modo de ejecución opcional en la UI web independiente solo para **autenticación con clave de API** (`cli_account` siempre usa el flujo agéntico predeterminado). Actívelo con el interruptor **Action Plan** junto al selector de modelos en el composer.
 
 En lugar de un bucle ReAct por paso (modelo → herramienta → modelo → herramienta …), Action Plan:
 
@@ -75,7 +75,7 @@ Ideal para prompts de varios pasos como *"eliminar el fondo y exportar para web"
 
 ### Qué sucede en el primer inicio
 
-1. Elija un proveedor y seleccione **Clave de API** o **Usar su cuenta**.
+1. Elija un proveedor y seleccione **Clave de API** o **Uses your account**.
 2. Valide la clave o verifique la conexión CLI. La configuración se almacena localmente en `~/.photoshop-mcp/data.db` (SQLite, `chmod 600`). Las claves de API nunca abandonan el equipo; el modo CLI hereda OAuth de `~/.claude/` o `~/.gemini/`.
 3. Escriba prompts en lenguaje natural. La UI transmite la respuesta del modelo, ejecuta llamadas a herramientas de Photoshop en tiempo real y muestra cada llamada a herramienta como una tarjeta inspeccionable (entrada + resultado).
 4. Cambie de proveedor, método de autenticación o modelo en cualquier momento desde Configuración / selector de modelos — los chats, costos e historial de herramientas se persisten entre sesiones.
@@ -87,13 +87,13 @@ Abra **Configuración** desde la barra lateral en cualquier momento:
 | Acción | Modo clave de API | Modo cuenta CLI |
 |---|---|---|
 | Configurar | Pegue la clave → **Guardar** | Instale CLI → `auth login` → **Verificar conexión** |
-| Cambiar | Elija **Clave de API** — la clave almacenada se conserva | Elija **Usar su cuenta** — la clave no se elimina |
+| Cambiar de modo | Elija **Clave de API** — la clave almacenada se conserva | Elija **Uses your account** — la clave no se elimina |
 | Binario personalizado | — | **Ruta de CLI** opcional si `claude` / `gemini` no está en `PATH` |
 | Visualización de costos | Estimación por token en la barra de estado | Insignia **Incluido en la suscripción** |
 
 El método de autenticación se almacena por proveedor en `~/.photoshop-mcp/data.db` (`authMethod`: `api_key` o `cli_account`). Las configuraciones existentes sin `authMethod` toman `api_key` de forma predeterminada y siguen funcionando sin cambios.
 
-### Indicadores CLI
+### Opciones de CLI
 
 ```
 photoshop-mcp-ui [--port 5174] [--host 127.0.0.1] [--no-open]
@@ -113,7 +113,7 @@ Además de las herramientas atómicas `photoshop_*`, el servidor incluye una cap
 
 - **`instructions` del servidor** — contrato de flujo de trabajo anunciado en `initialize` de MCP (ping inicial, estado antes de la acción, preferir recetas, recuperación de errores). Ver [`src/prompts/instructions.ts`](src/prompts/instructions.ts).
 - **Primitiva `prompts` de MCP** — 19 plantillas prediseñadas (12 de recetas + 7 de guía: `ps.enhance_portrait`, `ps.remove_background`, `ps.generative_fill`, …) a través de `prompts/list` y `prompts/get`.
-- **Herramientas de recetas** — 12 herramientas `photoshop_recipe_*` orientadas a resultados (eliminar fondo, mejorar retrato, preparar para web, exportar variantes sociales, gradación de color, separación de frecuencias, mockup por lotes, organizar capas, desvanecimiento con degradado, mezcla de cielo, sobreexponer y subexponer, eliminar distracción). Cada una encapsula los pasos en un único estado de historial de Photoshop (un Deshacer revierte todo). **86 herramientas en total** (74 atómicas + 12 de recetas).
+- **Herramientas de recetas** — 12 herramientas `photoshop_recipe_*` orientadas a resultados (eliminar fondo, mejorar retrato, preparar para web, exportar variantes sociales, gradación de color, separación de frecuencias, mockup por lotes, organizar capas, desvanecimiento con degradado, mezcla de cielo, dodge y burn, eliminar distracción). Cada una encapsula los pasos en un único estado de historial de Photoshop (un Deshacer revierte todo). **86 herramientas en total** (74 atómicas + 12 de recetas).
 - **IA Generativa** — `photoshop_generative_fill`, `photoshop_generative_remove`, `photoshop_generative_expand`, `photoshop_generative_upscale`, `photoshop_sky_replacement`, `photoshop_generate_image` (Firefly mediante ExtendScript; se requiere cuenta de Adobe + créditos).
 - **Filtros neuronales** — `photoshop_neural_filter` mediante el complemento puente UXP opcional (`uxp-plugin/`).
 - **Estado y vista previa** — `photoshop_get_state` (instantánea ligera), `photoshop_get_preview` (JPEG en base64 para verificación visual), `photoshop_get_capabilities` (indicadores de funciones según versión).
@@ -414,7 +414,7 @@ Never guess — read get_state after a failure and propose the next single step.
 ## Características
 
 - **UI web independiente** — interfaz de chat local (`photoshop-mcp-ui`); autenticación con clave de API o suscripción CLI por proveedor (Anthropic, Google)
-- **Action Plan (beta)** — modo de planificar-y-ejecutar de participación voluntaria en la UI web (solo clave de API): una llamada de planificación, ejecución directa de herramientas, reparación acotada en caso de fallo
+- **Action Plan (beta)** — modo opt-in de planificar-y-ejecutar en la UI web (solo clave de API): una llamada de planificación, ejecución directa de herramientas, reparación acotada en caso de fallo
 - **Compatible con Windows y macOS**
 - **Admite Photoshop 2012-2025+**
 - **API ExtendScript**: Compatibilidad universal mediante automatización AppleScript/COM
@@ -490,7 +490,7 @@ Añada a su configuración de Claude Desktop (`~/Library/Application Support/Cla
 - `LOG_LEVEL`: Nivel de registro (0=DEBUG, 1=INFO, 2=WARN, 3=ERROR)
 - `ANALYTICS_DISABLED`: Establezca en `1` o `true` para deshabilitar completamente el análisis de uso anónimo
 - `POSTHOG_DISABLED`: Alias heredado de `ANALYTICS_DISABLED`
-- `ANALYTICS_PROVIDER`: Backend de análisis — `mixpanel` (predeterminado) o `posthog` (retroceso)
+- `ANALYTICS_PROVIDER`: Backend de análisis — `mixpanel` (predeterminado) o `posthog` (rollback)
 - `MIXPANEL_TOKEN`: (Opcional) Anule el token del proyecto Mixpanel
 - `MIXPANEL_API_HOST`: (Opcional) Host de ingesta de Mixpanel (predeterminado: `https://api-eu.mixpanel.com`)
 - `POSTHOG_KEY`: (Opcional, heredado) Clave del proyecto PostHog — se usa solo cuando `ANALYTICS_PROVIDER=posthog`
@@ -587,7 +587,7 @@ Problemas comunes de conexión, scripts y registro:
 | `not_authenticated` | Sin sesión OAuth | Ejecute `claude auth login` o `gemini auth login` en Terminal |
 | `claude` / `gemini` no está en `PATH` | Ubicación de instalación personalizada | Configuración → **Ruta de CLI** → **Verificar conexión** |
 | El chat funciona en el IDE pero no en la UI (modo CLI) | Los tokens OAuth son solo para CLI | Use **Cuenta CLI** en la UI; las claves de API y las sesiones CLI son independientes |
-| Gemini en multiturno parece olvidadizo | El CLI headless puede iniciar una nueva sesión en cada turno | Limitación conocida; el historial se antepone al prompt (MVP) |
+| Gemini en conversaciones de varios turnos parece olvidadizo | El CLI headless puede iniciar una nueva sesión en cada turno | Limitación conocida; el historial se antepone al prompt (MVP) |
 
 ## Desarrollo
 
