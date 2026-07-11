@@ -6,7 +6,7 @@
   </a>
 </p>
 
-**语言：** [English](README.md) · 简体中文 · [Español](README.es.md) · [Deutsch](README.de.md)
+**语言：** [English](README.md) · 简体中文 · [Español](README.es.md) · [Deutsch](README.de.md) · [日本語](README.ja.md)
 
 *v1.1+ — 配方工作流、更少的往返调用、更流畅的会话。独立 UI 附带 **Action Plan（测试版）**，支持先规划后执行的运行模式。*
 
