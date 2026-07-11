@@ -128,7 +128,7 @@ bir yapay zeka/istem katmanı sunar:
 - **Sunucu `instructions`'ları** — MCP `initialize`'da tanıtılan iş akışı sözleşmesi
   (bir kez ping at, eylemden önce durum al, tarifleri tercih et, hata kurtarma). Bkz.
   [`src/prompts/instructions.ts`](src/prompts/instructions.ts).
-- **MCP `prompts` ilkeli** — 19 önceden hazırlanmış şablon (12 tarif + 7 kılavuz:
+- **MCP `prompts` primitifi** — 19 önceden hazırlanmış şablon (12 tarif + 7 kılavuz:
   `ps.enhance_portrait`, `ps.remove_background`, `ps.generative_fill`, …)
   `prompts/list` ve `prompts/get` üzerinden.
 - **Tarif araçları** — 12 sonuç odaklı `photoshop_recipe_*` aracı (arka plan kaldırma,
@@ -456,7 +456,7 @@ Ayrıca şu formatları ayrı JPEG'ler olarak dışa aktar:
 - Instagram Story / Reels: 1080×1920 (üst ve alt 250 piksel güvenli zon)
 - TikTok: 1080×1920, 9:16 dikey
 - X (Twitter): 1200×675
-- LinkedIn Sponsored Content: 1200×627
+- LinkedIn Sponsored Content: 1200×628
 Konu, çerçeve alanının en az %60'ını kapsamalı; logo sağ üstte 20 piksel boşlukla.
 9:16 formatta konu kesilecekse photoshop_generative_expand kullan.
 Tüm çıktı yollarını bir tabloda listele.
@@ -518,7 +518,7 @@ Aktif belgede bir ürün packshot PNG'si ve bir yaşam tarzı arka plan görseli
 Ürünü sağ alta özgün boyutunun %85'inde yerleştir.
 Işık, gölge ve renk sıcaklığının sahneyle uyuşması için photoshop_generative_fill veya harmonizasyon uygula.
 Doğal bir düşen gölge ekle (MULTIPLY, yaklaşık %35 opaklık).
-Master PSD olarak kaydet; LinkedIn için ~/.photoshop-mcp/exports/kv/'e 1200×627 px JPEG dışa aktar.
+Master PSD olarak kaydet; LinkedIn için ~/.photoshop-mcp/exports/kv/'e 1200×628 px JPEG dışa aktar.
 ```
 
 </details>
@@ -546,8 +546,8 @@ Eşdeğer MCP istem şablonu: `ps.batch_mockup_replace`.
 - **Photoshop 2012–2025+ destekler**
 - **ExtendScript API**: AppleScript/COM otomasyonu aracılığıyla evrensel uyumluluk
 - **Otomatik Algılama**: Sisteminizdeki Photoshop kurulumunu otomatik bulur
-- **78 Araç**: 66 atomik `photoshop_*` + 12 tarif `photoshop_recipe_*`
-- **Yapay Zeka/İstem Katmanı**: 16 MCP istem şablonu (12 tarif + 4 kılavuz), sunucu talimatları,
+- **86 Araç**: 74 atomik `photoshop_*` + 12 tarif `photoshop_recipe_*`
+- **Yapay Zeka/İstem Katmanı**: 19 MCP istem şablonu (12 tarif + 7 kılavuz), sunucu talimatları,
   durum/önizleme/yetenek araçları
 - **Belge Yönetimi**: Belge oluşturma, açma, kaydetme, kapatma, kırpma
 - **Katman İşlemleri**: Katman oluşturma, silme, çoğaltma, birleştirme, dönüştürme
