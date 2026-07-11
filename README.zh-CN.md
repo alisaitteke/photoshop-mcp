@@ -131,10 +131,10 @@ photoshop-mcp-ui [--port 5174] [--host 127.0.0.1] [--no-open]
 <summary>🧠 状态感知会话（推荐的第一步）</summary>
 
 ```
-Ping Photoshop and read capabilities for my installed version.
-Get the current document state before changing anything.
-Open portrait.jpg, get a downscaled preview so you can verify the subject.
-After each major recipe, get another preview to confirm the result.
+Ping Photoshop 并读取我安装版本的功能信息。
+在做任何更改之前，先获取当前文档状态。
+打开 portrait.jpg，获取缩小的预览图，以便确认主体对象。
+每执行完一个主要配方后，再次获取预览图以确认效果。
 ```
 
 </details>
@@ -143,10 +143,10 @@ After each major recipe, get another preview to confirm the result.
 <summary>👤 人像修饰（配方）</summary>
 
 ```
-Enhance the portrait on the active layer at medium intensity with skin smoothing.
-Use the enhance-portrait recipe — I want frequency separation + auto-tone in one undoable step.
-If the active layer is text or a Smart Object, rasterize first or pick a raster layer.
-Show me a preview when done.
+以中等强度对活动图层上的人像进行增强，并开启皮肤磨皮。
+使用 enhance-portrait recipe——我希望在一个可撤销的步骤内同时完成频率分离和自动色调调整。
+如果活动图层是文字或 Smart Object，请先栅格化，或选择一个栅格图层。
+完成后给我看一下预览效果。
 ```
 
 等效 MCP 提示词模板：`ps.enhance_portrait`，参数为 `{ intensity: "medium", skin_smoothing: "true" }`。
@@ -157,9 +157,9 @@ Show me a preview when done.
 <summary>✂️ 背景移除（配方）</summary>
 
 ```
-Remove the background from the active portrait layer.
-Use Select Subject + a layer mask with a 2px feather. Keep the original pixels behind the mask.
-The subject must be on the active layer — not a flat color fill.
+移除活动人像图层的背景。
+使用 Select Subject 配合 2px 羽化的图层蒙版，保留蒙版后面的原始像素。
+主体必须在活动图层上——不能是纯色填充图层。
 ```
 
 等效 MCP 提示词模板：`ps.remove_background`，参数为 `{ feather_px: "2", keep_shadow: "false" }`。
@@ -170,9 +170,9 @@ The subject must be on the active layer — not a flat color fill.
 <summary>🎨 色彩分级（配方）</summary>
 
 ```
-Apply a warm film color grade to the open document as non-destructive adjustment layers.
-Use the apply-color-grade recipe with preset warm_film.
-Preview the result when finished.
+以非破坏性调整图层的方式，对打开的文档应用暖色电影色调分级。
+使用 apply-color-grade recipe，预设选择 warm_film。
+完成后预览效果。
 ```
 
 </details>
@@ -181,9 +181,9 @@ Preview the result when finished.
 <summary>🔬 频率分离设置（配方）</summary>
 
 ```
-Set up frequency separation on the active raster layer with a 6px blur radius.
-I will paint on the Low and High layers myself — do not apply extra smoothing.
-Tell me which layers to edit when the stack is ready.
+在活动栅格图层上设置频率分离，模糊半径为 6px。
+我会自己在低频层和高频层上绘制——不要额外添加磨皮处理。
+图层堆栈准备好后，告诉我应该编辑哪些图层。
 ```
 
 等效 MCP 提示词模板：`ps.frequency_separation`，参数为 `{ radius_px: "6" }`。
@@ -194,9 +194,9 @@ Tell me which layers to edit when the stack is ready.
 <summary>🌐 网络准备 + 社交媒体导出（配方）</summary>
 
 ```
-Prepare the active document for web: sRGB, downscale, sharpen, export one optimized JPEG to ~/.photoshop-mcp/exports.
-Then export Instagram post and X post variants as separate JPEGs from the same document.
-List the output paths in a table.
+将活动文档准备好用于网络发布：转换为 sRGB，缩小尺寸，锐化，并将一张优化后的 JPEG 导出到 ~/.photoshop-mcp/exports。
+然后从同一文档中分别将 Instagram 帖子和 X 帖子变体导出为独立的 JPEG 文件。
+将输出路径以表格形式列出。
 ```
 
 等效模板：`ps.prepare_for_web`、`ps.export_social_variants`。
@@ -207,9 +207,9 @@ List the output paths in a table.
 <summary>📦 批量样机替换（配方）</summary>
 
 ```
-I have a mockup PSD open with a Smart Object layer named "Screen".
-Replace it with every PNG/JPG in ~/assets/mockups/ and export one JPEG per asset.
-Do not place flat layers — swap the Smart Object so perspective is preserved.
+我有一个样机 PSD 文件已打开，其中有一个名为"Screen"的 Smart Object 图层。
+将其替换为 ~/assets/mockups/ 中的每个 PNG/JPG 文件，并为每个素材导出一张 JPEG。
+不要放置普通图层——替换 Smart Object 以保留透视效果。
 ```
 
 等效 MCP 提示词模板：`ps.batch_mockup_replace`。
@@ -220,8 +220,8 @@ Do not place flat layers — swap the Smart Object so perspective is preserved.
 <summary>🗂️ 整理图层（配方）</summary>
 
 ```
-Organize the layer stack: rename by kind, auto-group related layers, preserve originals.
-Run the organize-layers recipe, then list layers so I can review the new structure.
+整理图层堆栈：按类型重命名，自动将相关图层分组，保留原始内容。
+执行 organize-layers recipe，然后列出图层，以便我查看新的结构。
 ```
 
 </details>
@@ -230,10 +230,10 @@ Run the organize-layers recipe, then list layers so I can review the new structu
 <summary>🎨 基础设计创建</summary>
 
 ```
-Create a 1920x1080 Photoshop document with RGB color mode.
-Add a light blue background layer and fill it with RGB(240, 248, 255).
-Add centered text "Welcome" in 64pt font.
-Save as welcome.psd to my Desktop.
+创建一个 1920x1080 的 Photoshop 文档，使用 RGB 颜色模式。
+添加一个浅蓝色背景图层，填充 RGB(240, 248, 255)。
+添加居中文字"Welcome"，字号 64pt。
+保存为 welcome.psd 到桌面。
 ```
 
 </details>
@@ -242,14 +242,14 @@ Save as welcome.psd to my Desktop.
 <summary>🖼️ 素材图片设计（配合 Pexels MCP）</summary>
 
 ```
-Search Pexels for "mountain sunset" images.
-Create a 1920x1080 Photoshop document.
-Place the downloaded image and fit it to fill the entire canvas.
-Apply a subtle Gaussian blur of 3px.
-Increase brightness by 15 and contrast by 10.
-Add white text "Adventure Awaits" centered at the top in 72pt.
-Set the text opacity to 90% and blend mode to OVERLAY.
-Save as adventure.jpg with quality 10.
+在 Pexels 上搜索"mountain sunset"图片。
+创建一个 1920x1080 的 Photoshop 文档。
+将下载的图片放置进来，并适配填满整个画布。
+应用 3px 的轻微高斯模糊。
+增加亮度 15，对比度 10。
+在顶部居中添加白色文字"Adventure Awaits"，字号 72pt。
+将文字不透明度设为 90%，混合模式设为 OVERLAY。
+保存为 adventure.jpg，质量 10。
 ```
 
 </details>
@@ -258,11 +258,11 @@ Save as adventure.jpg with quality 10.
 <summary>✨ 照片增强</summary>
 
 ```
-Open photo.jpg from my Desktop in Photoshop.
-Get state, then run the enhance-portrait recipe at low intensity.
-If I only need quick tone fixes, apply auto levels, auto contrast, and unsharp mask (120%, 1.5, 0) on the active layer instead.
-Adjust hue +15 and saturation +15, or use prepare-for-web when I'm ready to export.
-Save as enhanced-photo.jpg with quality 12.
+在 Photoshop 中打开桌面上的 photo.jpg。
+获取状态，然后以低强度运行 enhance-portrait recipe。
+如果只需要快速调整色调，改为对活动图层应用自动色阶、自动对比度和 USM 锐化（120%, 1.5, 0）。
+调整色相 +15、饱和度 +15，或在准备好导出时使用 prepare-for-web。
+保存为 enhanced-photo.jpg，质量 12。
 ```
 
 </details>
@@ -271,15 +271,15 @@ Save as enhanced-photo.jpg with quality 12.
 <summary>🎭 图层效果与混合</summary>
 
 ```
-Create a 1200x800 document.
-Add a new layer named "Background" and fill with RGB(50, 50, 50).
-Place logo.png at position (100, 100).
-Fit the logo layer to 50% of its current size.
-Set blend mode to SCREEN and opacity to 85%.
-Add another layer, fill with RGB(255, 100, 50).
-Set this layer's blend mode to MULTIPLY and opacity to 60%.
-Merge all visible layers.
-Save as composite.psd.
+创建一个 1200x800 的文档。
+添加一个名为"Background"的新图层，填充 RGB(50, 50, 50)。
+将 logo.png 放置在 (100, 100) 位置。
+将 logo 图层缩放至当前尺寸的 50%。
+将混合模式设为 SCREEN，不透明度设为 85%。
+再添加一个图层，填充 RGB(255, 100, 50)。
+将该图层的混合模式设为 MULTIPLY，不透明度设为 60%。
+合并所有可见图层。
+保存为 composite.psd。
 ```
 
 </details>
@@ -288,14 +288,14 @@ Save as composite.psd.
 <summary>📝 文字海报设计</summary>
 
 ```
-Create a 1080x1350 portrait document (Instagram story size).
-Add a layer and fill with gradient-like color RGB(120, 40, 200).
-Add text "SUMMER" at (540, 300) in 96pt.
-Change text color to white RGB(255, 255, 255).
-Set text alignment to CENTER.
-Add another text "2026" at (540, 450) in 128pt, white color.
-Apply Gaussian blur 2px to the background layer.
-Save as summer-poster.png.
+创建一个 1080x1350 的竖版文档（Instagram 故事尺寸）。
+添加一个图层，填充渐变感颜色 RGB(120, 40, 200)。
+在 (540, 300) 处添加文字"SUMMER"，字号 96pt。
+将文字颜色更改为白色 RGB(255, 255, 255)。
+将文字对齐方式设为 CENTER。
+在 (540, 450) 处再添加文字"2026"，字号 128pt，白色。
+对背景图层应用 2px 高斯模糊。
+保存为 summer-poster.png。
 ```
 
 </details>
@@ -304,14 +304,14 @@ Save as summer-poster.png.
 <summary>🎬 批处理</summary>
 
 ```
-Open image1.jpg.
-Resize to 1920x1080.
-Apply auto contrast.
-Apply subtle sharpen (amount 80%, radius 1.0).
-Save as processed-1.jpg with quality 10.
-Close without saving changes to original.
+打开 image1.jpg。
+调整尺寸为 1920x1080。
+应用自动对比度。
+应用轻微锐化（强度 80%，半径 1.0）。
+保存为 processed-1.jpg，质量 10。
+关闭文件，不保存对原文件的修改。
 
-Repeat for image2.jpg and image3.jpg.
+对 image2.jpg 和 image3.jpg 重复以上步骤。
 ```
 
 </details>
@@ -320,16 +320,16 @@ Repeat for image2.jpg and image3.jpg.
 <summary>🖌️ 创意操控</summary>
 
 ```
-Create a 2000x2000 square document.
-Place abstract-pattern.jpg and fit to fill document.
-Duplicate the layer.
-On the duplicate, apply motion blur at 45 degrees, radius 50px.
-Set blend mode to OVERLAY and opacity to 70%.
-Add centered text "MOTION" in 120pt white.
-Apply a rectangular selection from (200, 200) to (1800, 1800).
-Invert the selection and delete (to create a border effect).
-Flatten the image.
-Save as motion-art.jpg.
+创建一个 2000x2000 的正方形文档。
+放入 abstract-pattern.jpg 并适配填满文档。
+复制该图层。
+在副本图层上，应用 45 度方向、半径 50px 的动态模糊。
+将混合模式设为 OVERLAY，不透明度设为 70%。
+居中添加白色文字"MOTION"，字号 120pt。
+创建从 (200, 200) 到 (1800, 1800) 的矩形选区。
+反选并删除（制造边框效果）。
+拼合图像。
+保存为 motion-art.jpg。
 ```
 
 </details>
@@ -338,21 +338,21 @@ Save as motion-art.jpg.
 <summary>🎯 高级工作流</summary>
 
 ```
-Create a 3000x2000 document at 300 DPI for print.
-Place hero-image.jpg and fit to fill the canvas.
-Duplicate the image layer.
-On the duplicate, desaturate it completely.
-Set blend mode to LUMINOSITY and opacity to 50%.
-Create a new layer named "Overlay".
-Fill with RGB(255, 150, 0) and set blend mode to SOFTLIGHT at 30% opacity.
-Add text "PORTFOLIO" at top center (1500, 200) in 96pt.
-Set text color to white.
-Add subtext "2026 Collection" at (1500, 320) in 36pt.
-Create a rectangular selection around the text area.
-Create a layer mask on the overlay layer.
-Merge visible layers.
-Save as portfolio-cover.psd.
-Export as portfolio-cover.jpg at quality 12.
+创建一个用于印刷的 3000x2000、300 DPI 文档。
+放入 hero-image.jpg 并适配填满画布。
+复制图像图层。
+在副本图层上，将其完全去饱和。
+将混合模式设为 LUMINOSITY，不透明度设为 50%。
+创建一个名为"Overlay"的新图层。
+填充 RGB(255, 150, 0)，将混合模式设为 SOFTLIGHT，不透明度 30%。
+在顶部居中 (1500, 200) 处添加文字"PORTFOLIO"，字号 96pt。
+将文字颜色设为白色。
+在 (1500, 320) 处添加副标题"2026 Collection"，字号 36pt。
+在文字区域周围创建矩形选区。
+在叠加图层上创建图层蒙版。
+合并可见图层。
+保存为 portfolio-cover.psd。
+导出为 portfolio-cover.jpg，质量 12。
 ```
 
 </details>
@@ -361,10 +361,10 @@ Export as portfolio-cover.jpg at quality 12.
 <summary>🔄 使用动作</summary>
 
 ```
-Open my-photo.jpg.
-Play the "Vintage Look" action from "My Actions" set.
-Adjust brightness by -10 to darken slightly.
-Save as vintage-photo.jpg.
+打开 my-photo.jpg。
+播放"My Actions"动作组中的"Vintage Look"动作。
+将亮度调低 -10，使其略微变暗。
+保存为 vintage-photo.jpg。
 ```
 
 </details>
@@ -384,18 +384,18 @@ alert('Processing started!');
 <summary>⏮️ 撤销/重做操作</summary>
 
 ```
-Apply Gaussian blur 15px to the active layer.
-[Wait for result]
-Actually, that's too much blur. Undo that.
-Apply Gaussian blur 5px instead.
+对活动图层应用 15px 的高斯模糊。
+[等待结果]
+这个模糊效果太强了，撤销这步操作。
+改为应用 5px 的高斯模糊。
 ```
 
 或：
 
 ```
-Get the history states to see what operations were performed.
-Undo the last 3 operations.
-Redo 1 step to bring back one operation.
+获取历史状态，查看已执行了哪些操作。
+撤销最后 3 步操作。
+重做 1 步，恢复其中一个操作。
 ```
 
 </details>
@@ -404,9 +404,9 @@ Redo 1 step to bring back one operation.
 <summary>🔁 错误恢复（结构化信封）</summary>
 
 ```
-If a recipe returns version_unsupported or generative_unavailable, call get_capabilities and tell me which Photoshop feature is missing.
-If a tool fails with suggested_next_tool, follow that hint (e.g. rasterize_layer before a raster-only recipe).
-Never guess — read get_state after a failure and propose the next single step.
+如果某个配方返回 version_unsupported 或 generative_unavailable，调用 get_capabilities 并告诉我缺少哪个 Photoshop 功能。
+如果某个工具失败并返回 suggested_next_tool，按照提示操作（例如，在执行仅限栅格的配方之前先执行 rasterize_layer）。
+不要猜测——在失败后读取 get_state，然后提出下一个单一操作步骤。
 ```
 
 </details>
