@@ -135,7 +135,9 @@ export function createLayerPropertiesTools(connection: PhotoshopConnection): Too
     {
       tool: {
         name: 'photoshop_duplicate_layer',
-        description: 'Duplicate the active layer',
+        description:
+          'Duplicate the active layer. The duplicate becomes the active layer; ' +
+          'returns its name and, when available, its layer id.',
         inputSchema: {
           type: 'object',
           properties: {
