@@ -131,10 +131,10 @@ A continuación se muestran ejemplos de prompts que puede usar con asistentes de
 <summary>🧠 Sesión con conciencia del estado (primer paso recomendado)</summary>
 
 ```
-Ping Photoshop and read capabilities for my installed version.
-Get the current document state before changing anything.
-Open portrait.jpg, get a downscaled preview so you can verify the subject.
-After each major recipe, get another preview to confirm the result.
+Haz ping a Photoshop y lee las capacidades para mi versión instalada.
+Obtén el estado actual del documento antes de cambiar nada.
+Abre portrait.jpg y obtén una vista previa reducida para verificar el sujeto.
+Después de cada receta principal, obtén otra vista previa para confirmar el resultado.
 ```
 
 </details>
@@ -143,10 +143,10 @@ After each major recipe, get another preview to confirm the result.
 <summary>👤 Retoque de retrato (receta)</summary>
 
 ```
-Enhance the portrait on the active layer at medium intensity with skin smoothing.
-Use the enhance-portrait recipe — I want frequency separation + auto-tone in one undoable step.
-If the active layer is text or a Smart Object, rasterize first or pick a raster layer.
-Show me a preview when done.
+Mejora el retrato en la capa activa con intensidad media y suavizado de piel.
+Usa la receta enhance-portrait — quiero separación de frecuencias + autotonos en un solo paso deshacer.
+Si la capa activa es de texto o un Objeto inteligente, rasteriza primero o elige una capa rasterizada.
+Muéstrame una vista previa al terminar.
 ```
 
 Plantilla de prompt MCP equivalente: `ps.enhance_portrait` con `{ intensity: "medium", skin_smoothing: "true" }`.
@@ -157,9 +157,9 @@ Plantilla de prompt MCP equivalente: `ps.enhance_portrait` con `{ intensity: "me
 <summary>✂️ Eliminación de fondo (receta)</summary>
 
 ```
-Remove the background from the active portrait layer.
-Use Select Subject + a layer mask with a 2px feather. Keep the original pixels behind the mask.
-The subject must be on the active layer — not a flat color fill.
+Elimina el fondo de la capa de retrato activa.
+Usa Seleccionar sujeto + una máscara de capa con difuminado de 2px. Mantén los píxeles originales detrás de la máscara.
+El sujeto debe estar en la capa activa — no en un relleno de color plano.
 ```
 
 Plantilla de prompt MCP equivalente: `ps.remove_background` con `{ feather_px: "2", keep_shadow: "false" }`.
@@ -170,9 +170,9 @@ Plantilla de prompt MCP equivalente: `ps.remove_background` con `{ feather_px: "
 <summary>🎨 Gradación de color (receta)</summary>
 
 ```
-Apply a warm film color grade to the open document as non-destructive adjustment layers.
-Use the apply-color-grade recipe with preset warm_film.
-Preview the result when finished.
+Aplica una gradación de color de película cálida al documento abierto como capas de ajuste no destructivas.
+Usa la receta apply-color-grade con el preset warm_film.
+Previsualiza el resultado al terminar.
 ```
 
 </details>
@@ -181,9 +181,9 @@ Preview the result when finished.
 <summary>🔬 Configuración de separación de frecuencias (receta)</summary>
 
 ```
-Set up frequency separation on the active raster layer with a 6px blur radius.
-I will paint on the Low and High layers myself — do not apply extra smoothing.
-Tell me which layers to edit when the stack is ready.
+Configura la separación de frecuencias en la capa rasterizada activa con un radio de desenfoque de 6px.
+Yo pintaré en las capas Low y High por mi cuenta — no apliques suavizado adicional.
+Dime qué capas editar cuando el stack esté listo.
 ```
 
 Plantilla de prompt MCP equivalente: `ps.frequency_separation` con `{ radius_px: "6" }`.
@@ -194,9 +194,9 @@ Plantilla de prompt MCP equivalente: `ps.frequency_separation` con `{ radius_px:
 <summary>🌐 Preparar para web + exportación social (recetas)</summary>
 
 ```
-Prepare the active document for web: sRGB, downscale, sharpen, export one optimized JPEG to ~/.photoshop-mcp/exports.
-Then export Instagram post and X post variants as separate JPEGs from the same document.
-List the output paths in a table.
+Prepara el documento activo para web: sRGB, reducir tamaño, enfocar, exportar un JPEG optimizado a ~/.photoshop-mcp/exports.
+Después exporta variantes para Instagram y X como JPEGs separados desde el mismo documento.
+Lista las rutas de salida en una tabla.
 ```
 
 Plantillas equivalentes: `ps.prepare_for_web`, `ps.export_social_variants`.
@@ -207,9 +207,9 @@ Plantillas equivalentes: `ps.prepare_for_web`, `ps.export_social_variants`.
 <summary>📦 Reemplazo de mockup por lotes (receta)</summary>
 
 ```
-I have a mockup PSD open with a Smart Object layer named "Screen".
-Replace it with every PNG/JPG in ~/assets/mockups/ and export one JPEG per asset.
-Do not place flat layers — swap the Smart Object so perspective is preserved.
+Tengo un PSD de mockup abierto con una capa de Objeto inteligente llamada "Screen".
+Reemplázala con cada PNG/JPG en ~/assets/mockups/ y exporta un JPEG por recurso.
+No coloques capas planas — intercambia el Objeto inteligente para preservar la perspectiva.
 ```
 
 Plantilla de prompt MCP equivalente: `ps.batch_mockup_replace`.
@@ -220,8 +220,8 @@ Plantilla de prompt MCP equivalente: `ps.batch_mockup_replace`.
 <summary>🗂️ Organizar capas (receta)</summary>
 
 ```
-Organize the layer stack: rename by kind, auto-group related layers, preserve originals.
-Run the organize-layers recipe, then list layers so I can review the new structure.
+Organiza el stack de capas: renombra por tipo, agrupa automáticamente las capas relacionadas y conserva los originales.
+Ejecuta la receta organize-layers y luego lista las capas para que pueda revisar la nueva estructura.
 ```
 
 </details>
@@ -230,10 +230,10 @@ Run the organize-layers recipe, then list layers so I can review the new structu
 <summary>🎨 Creación de diseño básico</summary>
 
 ```
-Create a 1920x1080 Photoshop document with RGB color mode.
-Add a light blue background layer and fill it with RGB(240, 248, 255).
-Add centered text "Welcome" in 64pt font.
-Save as welcome.psd to my Desktop.
+Crea un documento de Photoshop de 1920x1080 en modo de color RGB.
+Añade una capa de fondo azul claro y rellénala con RGB(240, 248, 255).
+Añade texto centrado "Welcome" en fuente de 64pt.
+Guarda como welcome.psd en el Escritorio.
 ```
 
 </details>
@@ -242,14 +242,14 @@ Save as welcome.psd to my Desktop.
 <summary>🖼️ Diseño con imagen de stock (con Pexels MCP)</summary>
 
 ```
-Search Pexels for "mountain sunset" images.
-Create a 1920x1080 Photoshop document.
-Place the downloaded image and fit it to fill the entire canvas.
-Apply a subtle Gaussian blur of 3px.
-Increase brightness by 15 and contrast by 10.
-Add white text "Adventure Awaits" centered at the top in 72pt.
-Set the text opacity to 90% and blend mode to OVERLAY.
-Save as adventure.jpg with quality 10.
+Busca imágenes de "mountain sunset" en Pexels.
+Crea un documento de Photoshop de 1920x1080.
+Coloca la imagen descargada y ajústala para llenar todo el lienzo.
+Aplica un desenfoque gaussiano sutil de 3px.
+Aumenta el brillo en 15 y el contraste en 10.
+Añade texto blanco "Adventure Awaits" centrado en la parte superior en 72pt.
+Establece la opacidad del texto al 90% y el modo de fusión en OVERLAY.
+Guarda como adventure.jpg con calidad 10.
 ```
 
 </details>
@@ -258,11 +258,11 @@ Save as adventure.jpg with quality 10.
 <summary>✨ Mejora de fotografías</summary>
 
 ```
-Open photo.jpg from my Desktop in Photoshop.
-Get state, then run the enhance-portrait recipe at low intensity.
-If I only need quick tone fixes, apply auto levels, auto contrast, and unsharp mask (120%, 1.5, 0) on the active layer instead.
-Adjust hue +15 and saturation +15, or use prepare-for-web when I'm ready to export.
-Save as enhanced-photo.jpg with quality 12.
+Abre photo.jpg desde el Escritorio en Photoshop.
+Obtén el estado y luego ejecuta la receta enhance-portrait con intensidad baja.
+Si solo necesito ajustes de tono rápidos, aplica niveles automáticos, contraste automático y máscara de enfoque (120%, 1.5, 0) en la capa activa.
+Ajusta el tono +15 y la saturación +15, o usa prepare-for-web cuando esté listo para exportar.
+Guarda como enhanced-photo.jpg con calidad 12.
 ```
 
 </details>
@@ -271,15 +271,15 @@ Save as enhanced-photo.jpg with quality 12.
 <summary>🎭 Efectos de capa y mezcla</summary>
 
 ```
-Create a 1200x800 document.
-Add a new layer named "Background" and fill with RGB(50, 50, 50).
-Place logo.png at position (100, 100).
-Fit the logo layer to 50% of its current size.
-Set blend mode to SCREEN and opacity to 85%.
-Add another layer, fill with RGB(255, 100, 50).
-Set this layer's blend mode to MULTIPLY and opacity to 60%.
-Merge all visible layers.
-Save as composite.psd.
+Crea un documento de 1200x800.
+Añade una nueva capa llamada "Background" y rellena con RGB(50, 50, 50).
+Coloca logo.png en la posición (100, 100).
+Ajusta la capa del logo al 50% de su tamaño actual.
+Establece el modo de fusión en SCREEN y la opacidad al 85%.
+Añade otra capa y rellena con RGB(255, 100, 50).
+Establece el modo de fusión de esta capa en MULTIPLY y la opacidad al 60%.
+Combina todas las capas visibles.
+Guarda como composite.psd.
 ```
 
 </details>
@@ -288,14 +288,14 @@ Save as composite.psd.
 <summary>📝 Diseño de cartel de texto</summary>
 
 ```
-Create a 1080x1350 portrait document (Instagram story size).
-Add a layer and fill with gradient-like color RGB(120, 40, 200).
-Add text "SUMMER" at (540, 300) in 96pt.
-Change text color to white RGB(255, 255, 255).
-Set text alignment to CENTER.
-Add another text "2026" at (540, 450) in 128pt, white color.
-Apply Gaussian blur 2px to the background layer.
-Save as summer-poster.png.
+Crea un documento vertical de 1080x1350 (tamaño de historia de Instagram).
+Añade una capa y rellena con el color RGB(120, 40, 200) similar a un degradado.
+Añade texto "SUMMER" en la posición (540, 300) en 96pt.
+Cambia el color del texto a blanco RGB(255, 255, 255).
+Establece la alineación del texto en CENTER.
+Añade otro texto "2026" en (540, 450) en 128pt, color blanco.
+Aplica desenfoque gaussiano de 2px a la capa de fondo.
+Guarda como summer-poster.png.
 ```
 
 </details>
@@ -304,14 +304,14 @@ Save as summer-poster.png.
 <summary>🎬 Procesamiento por lotes</summary>
 
 ```
-Open image1.jpg.
-Resize to 1920x1080.
-Apply auto contrast.
-Apply subtle sharpen (amount 80%, radius 1.0).
-Save as processed-1.jpg with quality 10.
-Close without saving changes to original.
+Abre image1.jpg.
+Redimensiona a 1920x1080.
+Aplica contraste automático.
+Aplica enfoque sutil (cantidad 80%, radio 1.0).
+Guarda como processed-1.jpg con calidad 10.
+Cierra sin guardar cambios en el original.
 
-Repeat for image2.jpg and image3.jpg.
+Repite para image2.jpg e image3.jpg.
 ```
 
 </details>
@@ -320,16 +320,16 @@ Repeat for image2.jpg and image3.jpg.
 <summary>🖌️ Manipulación creativa</summary>
 
 ```
-Create a 2000x2000 square document.
-Place abstract-pattern.jpg and fit to fill document.
-Duplicate the layer.
-On the duplicate, apply motion blur at 45 degrees, radius 50px.
-Set blend mode to OVERLAY and opacity to 70%.
-Add centered text "MOTION" in 120pt white.
-Apply a rectangular selection from (200, 200) to (1800, 1800).
-Invert the selection and delete (to create a border effect).
-Flatten the image.
-Save as motion-art.jpg.
+Crea un documento cuadrado de 2000x2000.
+Coloca abstract-pattern.jpg y ajústalo para llenar el documento.
+Duplica la capa.
+En el duplicado, aplica desenfoque de movimiento a 45 grados, radio 50px.
+Establece el modo de fusión en OVERLAY y la opacidad al 70%.
+Añade texto centrado "MOTION" en blanco de 120pt.
+Aplica una selección rectangular de (200, 200) a (1800, 1800).
+Invierte la selección y elimínala (para crear un efecto de borde).
+Aplana la imagen.
+Guarda como motion-art.jpg.
 ```
 
 </details>
@@ -338,21 +338,21 @@ Save as motion-art.jpg.
 <summary>🎯 Flujo de trabajo avanzado</summary>
 
 ```
-Create a 3000x2000 document at 300 DPI for print.
-Place hero-image.jpg and fit to fill the canvas.
-Duplicate the image layer.
-On the duplicate, desaturate it completely.
-Set blend mode to LUMINOSITY and opacity to 50%.
-Create a new layer named "Overlay".
-Fill with RGB(255, 150, 0) and set blend mode to SOFTLIGHT at 30% opacity.
-Add text "PORTFOLIO" at top center (1500, 200) in 96pt.
-Set text color to white.
-Add subtext "2026 Collection" at (1500, 320) in 36pt.
-Create a rectangular selection around the text area.
-Create a layer mask on the overlay layer.
-Merge visible layers.
-Save as portfolio-cover.psd.
-Export as portfolio-cover.jpg at quality 12.
+Crea un documento de 3000x2000 a 300 DPI para impresión.
+Coloca hero-image.jpg y ajústalo para llenar el lienzo.
+Duplica la capa de imagen.
+En el duplicado, desatura completamente.
+Establece el modo de fusión en LUMINOSITY y la opacidad al 50%.
+Crea una nueva capa llamada "Overlay".
+Rellena con RGB(255, 150, 0) y establece el modo de fusión en SOFTLIGHT con opacidad al 30%.
+Añade texto "PORTFOLIO" en la parte superior centrado en (1500, 200) en 96pt.
+Establece el color del texto en blanco.
+Añade subtexto "2026 Collection" en (1500, 320) en 36pt.
+Crea una selección rectangular alrededor del área de texto.
+Crea una máscara de capa en la capa overlay.
+Combina las capas visibles.
+Guarda como portfolio-cover.psd.
+Exporta como portfolio-cover.jpg con calidad 12.
 ```
 
 </details>
@@ -361,10 +361,10 @@ Export as portfolio-cover.jpg at quality 12.
 <summary>🔄 Uso de acciones</summary>
 
 ```
-Open my-photo.jpg.
-Play the "Vintage Look" action from "My Actions" set.
-Adjust brightness by -10 to darken slightly.
-Save as vintage-photo.jpg.
+Abre my-photo.jpg.
+Ejecuta la acción "Vintage Look" del conjunto "My Actions".
+Ajusta el brillo en -10 para oscurecer ligeramente.
+Guarda como vintage-photo.jpg.
 ```
 
 </details>
@@ -373,7 +373,7 @@ Save as vintage-photo.jpg.
 <summary>⚡ Ejecución de scripts personalizados</summary>
 
 ```
-Execute this custom ExtendScript code:
+Ejecuta este código ExtendScript personalizado:
 app.beep();
 alert('Processing started!');
 ```
@@ -384,18 +384,18 @@ alert('Processing started!');
 <summary>⏮️ Operaciones de deshacer/rehacer</summary>
 
 ```
-Apply Gaussian blur 15px to the active layer.
-[Wait for result]
-Actually, that's too much blur. Undo that.
-Apply Gaussian blur 5px instead.
+Aplica desenfoque gaussiano de 15px a la capa activa.
+[Esperar resultado]
+En realidad, es demasiado desenfoque. Deshaz eso.
+Aplica desenfoque gaussiano de 5px en su lugar.
 ```
 
 O bien:
 
 ```
-Get the history states to see what operations were performed.
-Undo the last 3 operations.
-Redo 1 step to bring back one operation.
+Obtén los estados del historial para ver qué operaciones se realizaron.
+Deshaz las últimas 3 operaciones.
+Rehaz 1 paso para recuperar una operación.
 ```
 
 </details>
@@ -404,9 +404,9 @@ Redo 1 step to bring back one operation.
 <summary>🔁 Recuperación de errores (envelopes estructurados)</summary>
 
 ```
-If a recipe returns version_unsupported or generative_unavailable, call get_capabilities and tell me which Photoshop feature is missing.
-If a tool fails with suggested_next_tool, follow that hint (e.g. rasterize_layer before a raster-only recipe).
-Never guess — read get_state after a failure and propose the next single step.
+Si una receta devuelve version_unsupported o generative_unavailable, llama a get_capabilities y dime qué función de Photoshop falta.
+Si una herramienta falla con suggested_next_tool, sigue esa sugerencia (p. ej. rasterize_layer antes de una receta solo para capas rasterizadas).
+Nunca adivines — lee get_state después de un fallo y propón el siguiente paso único.
 ```
 
 </details>
