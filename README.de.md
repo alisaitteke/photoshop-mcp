@@ -1,0 +1,681 @@
+# Photoshop MCP Server
+
+<p align="center">
+  <a href="https://github.com/alisaitteke/photoshop-mcp">
+    <img src="./images/readme-hero.png" alt="Photoshop MCP — KI-gesteuerte Photoshop-Automatisierung" width="100%" />
+  </a>
+</p>
+
+**Sprachen:** [English](README.md) · [简体中文](README.zh-CN.md) · [Español](README.es.md) · Deutsch
+
+*v1.1+ — Rezept-Workflows, weniger Round-Trips, flinkere Sitzungen. Die eigenständige UI liefert **Action Plan (Beta)** für Plan-dann-Ausführen-Abläufe.*
+
+> **Hinweis:** Dies ist ein inoffizielles, von der Community gepflegtes Projekt und steht in keiner Verbindung zu Adobe Inc. und wird von Adobe Inc. nicht unterstützt.
+
+[![npm-Version](https://img.shields.io/npm/v/@alisaitteke/photoshop-mcp.svg)](https://www.npmjs.com/package/@alisaitteke/photoshop-mcp)
+[![GitHub-Release](https://img.shields.io/github/v/release/alisaitteke/photoshop-mcp?include_prereleases)](https://github.com/alisaitteke/photoshop-mcp/releases)
+[![Action Plan](https://img.shields.io/badge/Action%20Plan-beta-amber.svg)](#action-plan-beta)
+[![Lizenz: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
+[![Plattform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-lightgrey.svg)]()
+
+Ein Model Context Protocol (MCP)-Server, der KI-Assistenten wie Claude und Cursor ermöglicht, Adobe Photoshop programmatisch zu steuern. Damit lassen sich Designs erstellen, Bilder bearbeiten und Photoshop-Workflows mit natürlicher Sprache automatisieren – direkt aus der IDE heraus oder über die mitgelieferte **eigenständige Web-UI**, die sowohl API-Schlüssel als auch CLI-Abonnementkonten (Claude Code / Gemini CLI) unterstützt. Die UI bietet außerdem einen opt-in **Action Plan (Beta)**-Modus, der alle Photoshop-Schritte in einem einzigen LLM-Aufruf plant und dann in einem einzigen Durchgang ausführt.
+
+## Warum dieses Projekt existiert
+
+Designerinnen, Designer und Entwicklerinnen und Entwickler möchten Photoshop über KI-Assistenten steuern, aber rohe ExtendScript-Aufrufe sind fehleranfällig: Agenten verschwenden Token durch Trial-and-Error, Ebenentypen brechen Filter, und ein fehlgeschlagener Befehl hinterlässt das Dokument in einem unbekannten Zustand.
+
+Photoshop MCP ergänzt **State-Awareness** (`get_state`, `get_preview`, `get_capabilities`), **Rezept-Werkzeuge**, die mehrstufige Ergebnisse in einem einzigen Undo-Schritt kapseln, sowie **strukturierte Fehler-Envelopes**, sodass Agenten wissen, was als Nächstes zu versuchen ist. Die optionale eigenständige UI und der Action-Plan-Modus reduzieren Round-Trips bei längeren Workflows – sodass natürliche Sprache tatsächlich Pixel erzeugt, anstatt sie nur vorzuschlagen.
+
+Technische Vertiefung: [`docs/architecture.md`](docs/architecture.md).
+
+## 🖥️ Eigenständige UI (kein IDE erforderlich)
+
+Keine Lust, dies in Claude Desktop oder Cursor einzubinden? Dasselbe Paket enthält eine vollständig lokale Web-UI, mit der sich ein KI-Modell anschreiben und Photoshop über diesen MCP-Server steuern lässt. Verbindung per Anbieter-API-Schlüssel **oder**, für Anthropic und Google, Wiederverwendung der OAuth-Sitzung von **Claude Code** oder **Gemini
+CLI** – kein separater API-Schlüssel erforderlich.
+
+![Screenshot der eigenständigen UI](./images/frame_generic_light.png)
+
+```bash
+npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
+```
+
+Das war's. Ein lokaler Server startet auf `127.0.0.1` (zufälliger freier Port) und der Standard-Browser öffnet die Chat-UI automatisch.
+
+### Unterstützte Anbieter
+
+Beim ersten Start einen der folgenden Anbieter auswählen – per API-Schlüssel **oder** bestehendem CLI-Abonnementkonto (Anthropic und Google):
+
+|| Anbieter | Modelle | API-Schlüssel | CLI-Konto |
+||---|---|---|---|
+|| **Anthropic** | Claude Sonnet / Opus / Haiku | [console.anthropic.com](https://console.anthropic.com/settings/keys) | `npm i -g @anthropic-ai/claude-code` → `claude auth login` |
+|| **OpenAI** | GPT-5, GPT-4.1, o-series | [platform.openai.com](https://platform.openai.com/api-keys) | — |
+|| **Google** | Gemini 2.5 Pro / Flash / Flash-Lite | [aistudio.google.com](https://aistudio.google.com/apikey) | `npm i -g @google/gemini-cli` → `gemini auth login` |
+|| **OpenRouter** | 100+ Modelle von beliebigen Anbietern | [openrouter.ai](https://openrouter.ai/keys) | — |
+
+### Authentifizierungsmodi
+
+- **`api_key` (Standard)** — Vercel AI SDK + eigener Anbieter-API-Schlüssel. Die Nutzung wird pro Token zu API-Tarifen abgerechnet; die UI zeigt die geschätzten Kosten pro Chat.
+- **`cli_account`** — Verwendet die lokale OAuth-Sitzung von Claude Code oder Gemini CLI.
+  Es wird kein API-Schlüssel gespeichert; die UI prüft `claude auth status` / `gemini` headless,
+  um die Anmeldung zu verifizieren. Die Nutzung wird dem **Abonnementkontingent** angerechnet, nicht der API-Abrechnung — die Statusleiste zeigt "Included in subscription".
+
+Die Authentifizierungsmethode kann pro Anbieter in den Einstellungen gewechselt werden, ohne das andere Credential zu verlieren (z. B. API-Schlüssel behalten, während das CLI-Konto ausprobiert wird, und dann zurückwechseln).
+
+### Action Plan (Beta)
+
+Ein optionaler Ausführungsmodus in der eigenständigen Web-UI **nur für API-Schlüssel-Authentifizierung**
+(`cli_account` verwendet immer den Standard-Agenten-Fluss). Aktivieren über den
+**Action Plan**-Schalter neben der Modellauswahl im composer.
+
+Statt einer schrittweisen ReAct-Schleife (Modell → Werkzeug → Modell → Werkzeug …) führt Action Plan Folgendes durch:
+
+1. **Einen** Planungs-LLM-Aufruf, der eine geordnete Aufgabenliste mit
+   Photoshop-MCP-Tool-Aufrufen und Parametern ausgibt.
+2. Führt diese Werkzeuge **direkt** nacheinander aus – keine zusätzlichen Modell-Round-Trips
+   zwischen den Schritten.
+3. Bei einem fehlgeschlagenen Schritt oder einer ungelösten Abhängigkeit läuft eine begrenzte **Reparatur**-Schleife
+   (plant nur die verbleibenden Schritte neu, bis zu 3 Mal).
+
+Der Plan erscheint als Live-Aufgabenliste über den Tool-Aufruf-Karten mit schrittweisem
+Status (`pending` → `running` → `done` / `error`). Pläne werden im Chatverlauf gespeichert und überleben Seitenneuladungen. Der Schalter ist standardmäßig deaktiviert; der bestehende
+Agenten-Fluss bleibt unverändert, wenn Action Plan deaktiviert ist.
+
+Geeignet für mehrstufige Prompts wie *„Hintergrund entfernen und für Web exportieren"*,
+bei denen weniger Modellaufrufe und eine schnellere End-to-End-Ausführung erwünscht sind.
+
+### Was beim ersten Start passiert
+
+1. Anbieter wählen und **API key** oder **Uses your account** auswählen.
+2. Schlüssel validieren oder CLI-Verbindung prüfen. Die Konfiguration wird lokal unter
+   `~/.photoshop-mcp/data.db` gespeichert (SQLite, `chmod 600`). API-Schlüssel verlassen die eigene Maschine nie; der CLI-Modus erbt OAuth von `~/.claude/` oder `~/.gemini/`.
+3. Prompts in natürlicher Sprache eingeben. Die UI streamt die Modellantwort, führt
+   Photoshop-Tool-Aufrufe in Echtzeit aus und rendert jeden Tool-Aufruf als überprüfbare Karte (Eingabe + Ergebnis).
+4. Anbieter, Authentifizierungsmethode oder Modell jederzeit über Einstellungen / Modellauswahl wechseln
+   — Chats, Kosten und Werkzeugverlauf werden sitzungsübergreifend gespeichert.
+
+### Authentifizierungsmethode später wechseln
+
+**Einstellungen** jederzeit über die Seitenleiste öffnen:
+
+|| Aktion | API-Schlüssel-Modus | CLI-Konto-Modus |
+||---|---|---|
+|| Einrichten | Schlüssel einfügen → **Save** | CLI installieren → `auth login` → **Check connection** |
+|| Wechseln | **API key** wählen — gespeicherter Schlüssel bleibt erhalten | **Uses your account** wählen — Schlüssel wird nicht gelöscht |
+|| Benutzerdefinierter Pfad | — | Optionaler **CLI path**, falls `claude` / `gemini` nicht im `PATH` |
+|| Kostenanzeige | Schätzung pro Token in der Statusleiste | **Included in subscription**-Badge |
+
+Die Authentifizierungsmethode wird pro Anbieter in `~/.photoshop-mcp/data.db` gespeichert (`authMethod`:
+`api_key` oder `cli_account`). Bestehende Konfigurationen ohne `authMethod` verwenden standardmäßig
+`api_key` und funktionieren unverändert weiter.
+
+### CLI-Optionen
+
+```
+photoshop-mcp-ui [--port 5174] [--host 127.0.0.1] [--no-open]
+```
+
+### Hinweise
+
+- Der Agent ist auf Photoshop-MCP-Werkzeuge beschränkt – integrierte Shell-, Datei-
+  und Web-Werkzeuge sind deaktiviert.
+- Tech-Stack: Vue 3 + Tailwind v4 + [shadcn-vue](https://www.shadcn-vue.com/)
+  im Frontend; [Hono](https://hono.dev/) im Backend. Der API-Schlüssel-Modus verwendet
+  das [Vercel AI SDK](https://sdk.vercel.ai/); der CLI-Konto-Modus verwendet das
+  [Claude Agent SDK](https://code.claude.com/docs/en/agent-sdk/mcp) (Anthropic)
+  oder Gemini CLI headless `stream-json` (Google). Alle Pfade kommunizieren mit diesem
+  Photoshop-MCP-Server über STDIO.
+- **CLI-Konto-Einschränkungen:** Gemini headless öffnet möglicherweise bei jedem Schritt eine neue Sitzung
+  (der Verlauf wird dem Prompt vorangestellt). Das Anthropic-CLI-Konto verbraucht
+  Abonnementkontingent. OAuth-Login ist vorrangig für macOS (`claude auth login` /
+  `gemini auth login` im Terminal).
+
+---
+
+## KI/Prompt-Schicht für Photoshop
+
+Über die atomaren `photoshop_*`-Werkzeuge hinaus liefert der Server eine KI/Prompt-Schicht,
+die Host-LLMs (Cursor, Claude Desktop usw.) dabei unterstützt, vage Benutzeranfragen in
+zuverlässige Photoshop-Aktionen zu übersetzen:
+
+- **Server-`instructions`** — Workflow-Vertrag, der beim MCP-`initialize` bekannt gegeben wird
+  (einmalig pingen, Zustand vor Aktion, Rezepte bevorzugen, Fehlerbehandlung). Siehe
+  [`src/prompts/instructions.ts`](src/prompts/instructions.ts).
+- **MCP-`prompts`-Primitiv** — 19 vorgefertigte Templates (12 Rezept + 7 Leitfaden:
+  `ps.enhance_portrait`, `ps.remove_background`, `ps.generative_fill`, …)
+  über `prompts/list` und `prompts/get`.
+- **Rezept-Werkzeuge** — 12 ergebnisorientierte `photoshop_recipe_*`-Werkzeuge (Hintergrund entfernen,
+  Porträt aufwerten, für Web vorbereiten, Social-Varianten exportieren, Farbkorrektur,
+  Frequenztrennung, Batch-Mockup, Ebenen organisieren, Verlaufsüberblendung,
+  Himmelaustausch, Dodge & Burn, Störobjekt entfernen). Jedes fasst Schritte in einem einzigen
+  Photoshop-Verlaufsstatus zusammen (ein Rückgängig macht alles rückgängig). **86 Werkzeuge insgesamt** (74 atomar + 12 Rezept).
+- **Generative KI** — `photoshop_generative_fill`, `photoshop_generative_remove`,
+  `photoshop_generative_expand`, `photoshop_generative_upscale`, `photoshop_sky_replacement`,
+  `photoshop_generate_image` (Firefly über ExtendScript; Adobe-Konto + Credits erforderlich).
+- **Neuronale Filter** — `photoshop_neural_filter` über optionales UXP-Bridge-Plugin (`uxp-plugin/`).
+- **Status & Vorschau** — `photoshop_get_state` (günstige Momentaufnahme),
+  `photoshop_get_preview` (Base64-JPEG zur visuellen Überprüfung),
+  `photoshop_get_capabilities` (versionsabhängige Feature-Flags).
+- **Strukturierte Fehler** — Fehler geben JSON-Envelopes mit `code` und
+  `suggested_next_tool` zur Selbstkorrektur zurück.
+
+Vollständige Referenz: [`docs/prompt-layer.md`](docs/prompt-layer.md).
+
+Parität prüfen: `npm run verify:photoshop-prompts`. Aktuelle Ergebnisse:
+[`docs/development.md#integration-test-results`](docs/development.md#integration-test-results).
+
+## Beispiel-Prompts
+
+Nachfolgend finden sich Beispiel-Prompts zur Verwendung mit KI-Assistenten (Claude, Cursor usw.),
+wenn dieser MCP-Server konfiguriert ist. Für mehrstufige Ergebnisse **Rezept-Werkzeuge** (`photoshop_recipe_*`)
+bevorzugen — jedes Rezept ist ein einziger Undo-Schritt. Atomare `photoshop_*`-Werkzeuge
+nur für feinkörnige Bearbeitungen verwenden, die kein Rezept abdeckt.
+
+<details>
+<summary>🧠 Zustandsbewusstes Arbeiten (empfohlener erster Schritt)</summary>
+
+```
+Ping Photoshop and read capabilities for my installed version.
+Get the current document state before changing anything.
+Open portrait.jpg, get a downscaled preview so you can verify the subject.
+After each major recipe, get another preview to confirm the result.
+```
+
+</details>
+
+<details>
+<summary>👤 Porträt-Retusche (Rezept)</summary>
+
+```
+Enhance the portrait on the active layer at medium intensity with skin smoothing.
+Use the enhance-portrait recipe — I want frequency separation + auto-tone in one undoable step.
+If the active layer is text or a Smart Object, rasterize first or pick a raster layer.
+Show me a preview when done.
+```
+
+Entsprechendes MCP-Prompt-Template: `ps.enhance_portrait` mit `{ intensity: "medium", skin_smoothing: "true" }`.
+
+</details>
+
+<details>
+<summary>✂️ Hintergrundentfernung (Rezept)</summary>
+
+```
+Remove the background from the active portrait layer.
+Use Select Subject + a layer mask with a 2px feather. Keep the original pixels behind the mask.
+The subject must be on the active layer — not a flat color fill.
+```
+
+Entsprechendes MCP-Prompt-Template: `ps.remove_background` mit `{ feather_px: "2", keep_shadow: "false" }`.
+
+</details>
+
+<details>
+<summary>🎨 Farbkorrektur (Rezept)</summary>
+
+```
+Apply a warm film color grade to the open document as non-destructive adjustment layers.
+Use the apply-color-grade recipe with preset warm_film.
+Preview the result when finished.
+```
+
+</details>
+
+<details>
+<summary>🔬 Frequenztrennung einrichten (Rezept)</summary>
+
+```
+Set up frequency separation on the active raster layer with a 6px blur radius.
+I will paint on the Low and High layers myself — do not apply extra smoothing.
+Tell me which layers to edit when the stack is ready.
+```
+
+Entsprechendes MCP-Prompt-Template: `ps.frequency_separation` mit `{ radius_px: "6" }`.
+
+</details>
+
+<details>
+<summary>🌐 Für Web vorbereiten + Social-Export (Rezepte)</summary>
+
+```
+Prepare the active document for web: sRGB, downscale, sharpen, export one optimized JPEG to ~/.photoshop-mcp/exports.
+Then export Instagram post and X post variants as separate JPEGs from the same document.
+List the output paths in a table.
+```
+
+Entsprechende Templates: `ps.prepare_for_web`, `ps.export_social_variants`.
+
+</details>
+
+<details>
+<summary>📦 Batch-Mockup-Ersetzung (Rezept)</summary>
+
+```
+I have a mockup PSD open with a Smart Object layer named "Screen".
+Replace it with every PNG/JPG in ~/assets/mockups/ and export one JPEG per asset.
+Do not place flat layers — swap the Smart Object so perspective is preserved.
+```
+
+Entsprechendes MCP-Prompt-Template: `ps.batch_mockup_replace`.
+
+</details>
+
+<details>
+<summary>🗂️ Ebenen organisieren (Rezept)</summary>
+
+```
+Organize the layer stack: rename by kind, auto-group related layers, preserve originals.
+Run the organize-layers recipe, then list layers so I can review the new structure.
+```
+
+</details>
+
+<details>
+<summary>🎨 Einfaches Design erstellen</summary>
+
+```
+Create a 1920x1080 Photoshop document with RGB color mode.
+Add a light blue background layer and fill it with RGB(240, 248, 255).
+Add centered text "Welcome" in 64pt font.
+Save as welcome.psd to my Desktop.
+```
+
+</details>
+
+<details>
+<summary>🖼️ Stock-Bild-Design (mit Pexels MCP)</summary>
+
+```
+Search Pexels for "mountain sunset" images.
+Create a 1920x1080 Photoshop document.
+Place the downloaded image and fit it to fill the entire canvas.
+Apply a subtle Gaussian blur of 3px.
+Increase brightness by 15 and contrast by 10.
+Add white text "Adventure Awaits" centered at the top in 72pt.
+Set the text opacity to 90% and blend mode to OVERLAY.
+Save as adventure.jpg with quality 10.
+```
+
+</details>
+
+<details>
+<summary>✨ Fotobearbeitung</summary>
+
+```
+Open photo.jpg from my Desktop in Photoshop.
+Get state, then run the enhance-portrait recipe at low intensity.
+If I only need quick tone fixes, apply auto levels, auto contrast, and unsharp mask (120%, 1.5, 0) on the active layer instead.
+Adjust hue +15 and saturation +15, or use prepare-for-web when I'm ready to export.
+Save as enhanced-photo.jpg with quality 12.
+```
+
+</details>
+
+<details>
+<summary>🎭 Ebeneneffekte & Blending</summary>
+
+```
+Create a 1200x800 document.
+Add a new layer named "Background" and fill with RGB(50, 50, 50).
+Place logo.png at position (100, 100).
+Fit the logo layer to 50% of its current size.
+Set blend mode to SCREEN and opacity to 85%.
+Add another layer, fill with RGB(255, 100, 50).
+Set this layer's blend mode to MULTIPLY and opacity to 60%.
+Merge all visible layers.
+Save as composite.psd.
+```
+
+</details>
+
+<details>
+<summary>📝 Textplakat-Design</summary>
+
+```
+Create a 1080x1350 portrait document (Instagram story size).
+Add a layer and fill with gradient-like color RGB(120, 40, 200).
+Add text "SUMMER" at (540, 300) in 96pt.
+Change text color to white RGB(255, 255, 255).
+Set text alignment to CENTER.
+Add another text "2026" at (540, 450) in 128pt, white color.
+Apply Gaussian blur 2px to the background layer.
+Save as summer-poster.png.
+```
+
+</details>
+
+<details>
+<summary>🎬 Stapelverarbeitung</summary>
+
+```
+Open image1.jpg.
+Resize to 1920x1080.
+Apply auto contrast.
+Apply subtle sharpen (amount 80%, radius 1.0).
+Save as processed-1.jpg with quality 10.
+Close without saving changes to original.
+
+Repeat for image2.jpg and image3.jpg.
+```
+
+</details>
+
+<details>
+<summary>🖌️ Kreative Bildbearbeitung</summary>
+
+```
+Create a 2000x2000 square document.
+Place abstract-pattern.jpg and fit to fill document.
+Duplicate the layer.
+On the duplicate, apply motion blur at 45 degrees, radius 50px.
+Set blend mode to OVERLAY and opacity to 70%.
+Add centered text "MOTION" in 120pt white.
+Apply a rectangular selection from (200, 200) to (1800, 1800).
+Invert the selection and delete (to create a border effect).
+Flatten the image.
+Save as motion-art.jpg.
+```
+
+</details>
+
+<details>
+<summary>🎯 Erweiterter Workflow</summary>
+
+```
+Create a 3000x2000 document at 300 DPI for print.
+Place hero-image.jpg and fit to fill the canvas.
+Duplicate the image layer.
+On the duplicate, desaturate it completely.
+Set blend mode to LUMINOSITY and opacity to 50%.
+Create a new layer named "Overlay".
+Fill with RGB(255, 150, 0) and set blend mode to SOFTLIGHT at 30% opacity.
+Add text "PORTFOLIO" at top center (1500, 200) in 96pt.
+Set text color to white.
+Add subtext "2026 Collection" at (1500, 320) in 36pt.
+Create a rectangular selection around the text area.
+Create a layer mask on the overlay layer.
+Merge visible layers.
+Save as portfolio-cover.psd.
+Export as portfolio-cover.jpg at quality 12.
+```
+
+</details>
+
+<details>
+<summary>🔄 Aktionen verwenden</summary>
+
+```
+Open my-photo.jpg.
+Play the "Vintage Look" action from "My Actions" set.
+Adjust brightness by -10 to darken slightly.
+Save as vintage-photo.jpg.
+```
+
+</details>
+
+<details>
+<summary>⚡ Benutzerdefinierte Skript-Ausführung</summary>
+
+```
+Execute this custom ExtendScript code:
+app.beep();
+alert('Processing started!');
+```
+
+</details>
+
+<details>
+<summary>⏮️ Rückgängig/Wiederholen-Operationen</summary>
+
+```
+Apply Gaussian blur 15px to the active layer.
+[Wait for result]
+Actually, that's too much blur. Undo that.
+Apply Gaussian blur 5px instead.
+```
+
+Oder:
+
+```
+Get the history states to see what operations were performed.
+Undo the last 3 operations.
+Redo 1 step to bring back one operation.
+```
+
+</details>
+
+<details>
+<summary>🔁 Fehlerbehandlung (strukturierte Envelopes)</summary>
+
+```
+If a recipe returns version_unsupported or generative_unavailable, call get_capabilities and tell me which Photoshop feature is missing.
+If a tool fails with suggested_next_tool, follow that hint (e.g. rasterize_layer before a raster-only recipe).
+Never guess — read get_state after a failure and propose the next single step.
+```
+
+</details>
+
+## Funktionen
+
+- **Eigenständige Web-UI** — lokale Chat-Oberfläche (`photoshop-mcp-ui`); API-Schlüssel oder CLI-Abonnement-Authentifizierung pro Anbieter (Anthropic, Google)
+- **Action Plan (Beta)** — opt-in Plan-dann-Ausführen-Modus in der Web-UI (nur API-Schlüssel): ein Planungsaufruf, direkte Werkzeugausführung, begrenzte Reparatur bei Fehler
+- **Funktioniert auf Windows und macOS**
+- **Unterstützt Photoshop 2012–2025+**
+- **ExtendScript-API**: Universelle Kompatibilität über AppleScript/COM-Automatisierung
+- **Automatische Erkennung**: Findet die Photoshop-Installation automatisch
+- **78 Werkzeuge**: 66 atomare `photoshop_*` + 12 Rezept `photoshop_recipe_*`
+- **KI/Prompt-Schicht**: 16 MCP-Prompt-Templates (12 Rezept + 4 Leitfaden), Server-Instructions, Zustand-/Vorschau-/Fähigkeits-Werkzeuge
+- **Dokumentenverwaltung**: Dokumente erstellen, öffnen, speichern, schließen, beschneiden
+- **Ebenenoperationen**: Ebenen erstellen, löschen, duplizieren, zusammenführen, transformieren
+- **Ebeneneigenschaften**: Deckkraft, Mischmodi, Sichtbarkeit, Sperren
+- **Textformatierung**: Schrift, Größe, Farbe, Ausrichtung
+- **Bildplatzierung**: Bilder platzieren, Dateien öffnen, an Dokument anpassen
+- **Filter**: Gaußsche Unschärfe, Schärfen, Rauschen, Bewegungsunschärfe
+- **Farbanpassungen**: Helligkeit/Kontrast, Farbton/Sättigung, Kurven, Automatische Tonwerte/Kontrast
+- **Auswahlen & Masken**: Rechteckige Auswahlen, Motiv auswählen, inhaltsbewusstes Füllen, Verlaufsmaske, Ebenenmasken
+- **Verlaufssteuerung**: Rückgängig/Wiederholen-Operationen, Verlaufszustände anzeigen
+- **Aktionen**: Aufgezeichnete Aktionen ausführen, benutzerdefinierte Skripte ausführen
+- **Automatisches Rastern**: Konvertiert Ebenen automatisch, wenn für Filter erforderlich
+- **Kontext-Tracking**: Gibt nach jeder Operation den Dokument-/Ebenenstatus zurück, damit KI-Assistenten den Überblick behalten
+
+## Installation
+
+### Mit NPX (Empfohlen)
+
+Keine Installation erforderlich! Einfach den MCP-Client konfigurieren:
+
+```bash
+npx @alisaitteke/photoshop-mcp
+```
+
+Für die lokale Entwicklung am Repository: [Aus dem Quellcode](docs/development.md#from-source) im Entwicklungshandbuch.
+
+## Konfiguration
+
+### Für Cursor
+
+Zu den Cursor-Einstellungen (`.cursor/config.json` oder Workspace-Einstellungen) hinzufügen:
+
+```json
+{
+  "mcpServers": {
+    "photoshop": {
+      "command": "npx",
+      "args": ["-y", "@alisaitteke/photoshop-mcp"],
+      "env": {
+        "LOG_LEVEL": "1"
+      }
+    }
+  }
+}
+```
+
+### Für Claude Desktop
+
+Zur Claude Desktop-Konfiguration hinzufügen (`~/Library/Application Support/Claude/claude_desktop_config.json` unter macOS oder `%APPDATA%\Claude\claude_desktop_config.json` unter Windows):
+
+```json
+{
+  "mcpServers": {
+    "photoshop": {
+      "command": "npx",
+      "args": ["-y", "@alisaitteke/photoshop-mcp"],
+      "env": {
+        "LOG_LEVEL": "1"
+      }
+    }
+  }
+}
+```
+
+### Umgebungsvariablen
+
+- `PHOTOSHOP_PATH`: (Optional) Benutzerdefinierten Photoshop-Installationspfad angeben
+- `LOG_LEVEL`: Protokollierungsstufe (0=DEBUG, 1=INFO, 2=WARN, 3=ERROR)
+- `ANALYTICS_DISABLED`: Auf `1` oder `true` setzen, um anonyme Nutzungsanalysen vollständig zu deaktivieren
+- `POSTHOG_DISABLED`: Veralteter Alias für `ANALYTICS_DISABLED`
+- `ANALYTICS_PROVIDER`: Analytics-Backend — `mixpanel` (Standard) oder `posthog` (rollback)
+- `MIXPANEL_TOKEN`: (Optional) Mixpanel-Projekt-Token überschreiben
+- `MIXPANEL_API_HOST`: (Optional) Mixpanel-Ingest-Host (Standard: `https://api-eu.mixpanel.com`)
+- `POSTHOG_KEY`: (Optional, veraltet) PostHog-Projekt-Schlüssel — nur verwendet, wenn `ANALYTICS_PROVIDER=posthog`
+- `POSTHOG_API_HOST`: (Optional, veraltet) PostHog-Ingest-Host (Standard: `https://a.alisait.com`)
+- `POSTHOG_UI_HOST`: (Optional, veraltet) PostHog-UI-Host (Standard: `https://eu.posthog.com`)
+
+## Verfügbare Werkzeuge
+
+Vollständige Referenz aller atomaren `photoshop_*`-Werkzeuge (Parameter, Beispiele und Verwendung):
+[`docs/available-tools.md`](docs/available-tools.md).
+
+
+## Kontext-Tracking
+
+Jedes Werkzeug gibt umfassende Kontextinformationen über den aktuellen Photoshop-Zustand zurück, darunter:
+
+- **Dokumentinfo**: Name, Abmessungen, Auflösung, Farbmodus, Ebenenanzahl
+- **Aktive Ebene**: Name, Typ, Deckkraft, Mischmodus, Sichtbarkeit, Sperrzustand
+- **Auswahlstatus**: Ob eine Auswahl aktiv ist
+- **Operationsergebnis**: Details zu den vorgenommenen Änderungen
+
+Dadurch können KI-Assistenten den Überblick behalten über:
+- Welches Dokument aktiv ist
+- An welcher Ebene gearbeitet wird
+- Aktuelle Ebeneneigenschaften (Deckkraft, Mischmodus usw.)
+- Dokumentabmessungen und -einstellungen
+
+**Beispielantwort:**
+```javascript
+{
+  "applied": true,
+  "filter": "Gaussian Blur",
+  "radius": 10,
+  "wasRasterized": true,
+  "context": {
+    "hasDocument": true,
+    "document": {
+      "name": "design.psd",
+      "width": 1920,
+      "height": 1080,
+      "resolution": 72,
+      "colorMode": "RGBColorMode",
+      "layerCount": 3,
+      "hasSelection": false
+    },
+    "activeLayer": {
+      "name": "Background",
+      "kind": "NORMAL",
+      "opacity": 100,
+      "blendMode": "NORMAL",
+      "visible": true,
+      "locked": false,
+      "isBackground": false
+    }
+  }
+}
+```
+
+Dieser Kontext hilft KI-Assistenten, sich über mehrere Befehle hinweg zu merken, mit welchem Dokument und welcher Ebene sie arbeiten.
+
+---
+
+## Plattformspezifische Hinweise
+
+### Windows
+
+- Verwendet COM-Automatisierung zur Kommunikation mit Photoshop
+- Registrierungsbasierte automatische Erkennung von Installationspfaden
+- Unterstützt sowohl 32-Bit- als auch 64-Bit-Versionen
+
+### macOS
+
+- Verwendet AppleScript/OSA für die Photoshop-Kommunikation
+- Spotlight-basierte automatische Erkennung
+- Unterstützt mehrere gleichzeitig installierte Photoshop-Versionen
+- **CLI-Konto-Authentifizierung** (eigenständige UI) ist vorrangig für macOS: `claude auth login` /
+  `gemini auth login` im Terminal ausführen; Zugangsdaten werden unter `~/.claude/` und
+  `~/.gemini/` gespeichert
+
+## Unterstützte Photoshop-Versionen
+
+- **Alle Photoshop-Versionen** (2012–2025+): Verwendet die ExtendScript-API über AppleScript (macOS) oder COM (Windows)
+
+**Wichtiger Hinweis**: Obwohl Photoshop 2022+ UXP für Plugins unterstützt, kann externe Automatisierung über AppleScript/COM nur ExtendScript verwenden. UXP ist für interne Plugins ausgelegt und kann nicht von externen Skripten aufgerufen werden. Daher verwendet dieser MCP-Server ExtendScript für maximale Kompatibilität mit allen Photoshop-Versionen.
+
+## Fehlerbehebung
+
+Häufige Verbindungs-, Skripting- und Protokollierungsprobleme:
+[`docs/troubleshooting.md`](docs/troubleshooting.md).
+
+### Eigenständige UI — CLI-Konto-Authentifizierung
+
+|| Symptom | Wahrscheinliche Ursache | Lösung |
+||---|---|---|
+|| `cli_not_found` | Claude Code / Gemini CLI nicht installiert | `npm i -g @anthropic-ai/claude-code` oder `npm i -g @google/gemini-cli` |
+|| `not_authenticated` | Keine OAuth-Sitzung | `claude auth login` oder `gemini auth login` im Terminal ausführen |
+|| `claude` / `gemini` nicht im `PATH` | Benutzerdefinierter Installationsort | Einstellungen → **CLI path** → **Check connection** |
+|| Chat funktioniert in IDE, nicht aber in UI (CLI-Modus) | OAuth-Token sind CLI-exklusiv | **CLI-Konto** in der UI verwenden; API-Schlüssel und CLI-Sitzungen sind getrennt |
+|| Gemini Multi-Turn wirkt vergesslich | Headless-CLI öffnet möglicherweise bei jedem Schritt eine neue Sitzung | Bekannte Einschränkung; Verlauf wird dem Prompt vorangestellt (MVP) |
+
+## Entwicklung
+
+Einrichtung aus dem Quellcode, Build, Lint, Integrationstests (mit aktuellen Ergebnissen) und Nutzungsbeispiele:
+[`docs/development.md`](docs/development.md).
+
+## Architektur
+
+Systemdesign, Datenfluss, Plattformabstraktion und UI-Agent-Modi:
+[`docs/architecture.md`](docs/architecture.md).
+
+Teilen auf LinkedIn oder in sozialen Medien? [`images/og-social.png`](images/og-social.png) und
+[`docs/social-preview.md`](docs/social-preview.md) für OG-Einrichtung und Post-Text verwenden.
+
+## Mitwirken
+
+Beiträge sind willkommen! Bitte [CONTRIBUTING.md](CONTRIBUTING.md) lesen, bevor eine PR geöffnet wird.
+
+## Über den Maintainer
+
+**[Ali Sait Teke](https://alisait.com)** — Full-Stack-Ingenieur & Softwarearchitekt des KI-Zeitalters
+(Python, Go, Node.js, React, Next.js, Vue).
+
+Dieses Projekt entstand aus einer praktischen Frage: *Wie lässt sich Photoshop zuverlässig durch LLMs steuern, ohne fragile Einzelskripte?* Es wuchs zu einem MCP-Server mit 80 Werkzeugen, einer Rezept-/Prompt-Schicht für zuverlässige Mehrschritt-Workflows und einer lokalen Web-UI heran, damit kreative Arbeit kein IDE erfordert.
+
+**Was dieser Quellcode demonstriert:** TypeScript-Systemdesign, MCP-Protokollintegration,
+plattformübergreifende Desktop-Automatisierung (macOS AppleScript / Windows COM),
+strukturierte Fehlerwiederherstellung für agentische Schleifen und eine produktionsorientierte local-first-UI
+(Vue 3 + Hono + SQLite).
+
+- [Portfolio](https://alisait.com) · [GitHub](https://github.com/alisaitteke) · [LinkedIn](https://www.linkedin.com/in/alisait/)
+
+## Lizenz
+
+MIT
+
+## Anonyme Nutzungsanalyse
+
+Standardmäßig werden anonymisierte, aggregierte Nutzungsereignisse erfasst, um das Produkt zu verbessern. Eine opt-out-Option steht jederzeit zur Verfügung. Vollständige Details:
+[`docs/anonymous-usage-analytics.md`](docs/anonymous-usage-analytics.md).
+
+## Danksagungen
+
+- Entwickelt mit dem [Model Context Protocol SDK](https://github.com/modelcontextprotocol/sdk)
+- Inspiriert von der Adobe-Photoshop-Scripting-Community
