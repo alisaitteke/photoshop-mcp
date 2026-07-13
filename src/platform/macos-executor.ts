@@ -10,6 +10,16 @@ import { ScriptExecutor } from './script-executor.js';
 
 const execAsync = promisify(exec);
 
+/** Escape a string for use as a pgrep -f pattern (extended regex). */
+export function escapeForPgrep(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function envTruthy(name: string): boolean {
+  const value = process.env[name]?.trim().toLowerCase();
+  return value === '1' || value === 'true' || value === 'yes';
+}
+
 export class MacOSExecutor implements ScriptExecutor {
   private logger: Logger;
   private scriptQueue: Array<() => Promise<unknown>> = [];
@@ -33,7 +43,7 @@ export class MacOSExecutor implements ScriptExecutor {
 
       this.scriptQueue.push(async () => {
         try {
-          const result = await this.executeScript(script);
+          const result = await this.executeScript(script, timeout);
           clearTimeout(timeoutId);
           resolve(result);
           return result;
@@ -69,7 +79,7 @@ export class MacOSExecutor implements ScriptExecutor {
     this.isProcessing = false;
   }
 
-  private async executeScript(script: string): Promise<unknown> {
+  private async executeScript(script: string, timeout: number = 30000): Promise<unknown> {
     // For macOS, we'll use AppleScript to execute JavaScript in Photoshop
     const tempScriptPath = join(tmpdir(), `photoshop-script-${Date.now()}.jsx`);
     const tempAppleScriptPath = join(tmpdir(), `photoshop-applescript-${Date.now()}.scpt`);
@@ -82,8 +92,12 @@ export class MacOSExecutor implements ScriptExecutor {
       await writeFile(tempAppleScriptPath, appleScript, 'utf8');
 
       try {
-        // Execute AppleScript via osascript
-        const { stdout, stderr } = await execAsync(`osascript "${tempAppleScriptPath}"`);
+        // Execute AppleScript via osascript; the timeout must kill the child,
+        // otherwise abandoned osascript processes pile up behind long calls
+        const { stdout, stderr } = await execAsync(`osascript "${tempAppleScriptPath}"`, {
+          timeout,
+          killSignal: 'SIGKILL',
+        });
 
         if (stderr) {
           this.logger.warn('Script execution warning:', stderr);
@@ -107,10 +121,14 @@ export class MacOSExecutor implements ScriptExecutor {
   private createAppleScriptWrapper(jsxPath: string): string {
     // Use POSIX file path for AppleScript
     const posixPath = jsxPath.replace(/\\/g, '/');
-    
+
+    // 'activate' steals window focus on every tool call, which makes the
+    // machine unusable while an agent drives Photoshop. Apple events reach
+    // background apps fine, so only activate when explicitly requested.
+    const activateLine = envTruthy('PHOTOSHOP_ACTIVATE') ? '\tactivate\n' : '';
+
     return `tell application "${this.appName}"
-\tactivate
-\tset jsxFile to POSIX file "${posixPath}"
+${activateLine}\tset jsxFile to POSIX file "${posixPath}"
 \tdo javascript "$.evalFile(decodeURI('${encodeURI(posixPath)}'))"
 end tell`;
   }
@@ -127,7 +145,11 @@ end tell`;
 
   async isPhotoshopRunning(): Promise<boolean> {
     try {
-      const { stdout } = await execAsync('pgrep -f "Adobe Photoshop"');
+      // Match the specific app we drive, not any Photoshop — with 2025/2026/
+      // Beta installed side by side, a generic match reports "running" while
+      // the target version is not.
+      const pattern = escapeForPgrep(this.appName);
+      const { stdout } = await execAsync(`pgrep -f "${pattern}"`);
       return stdout.trim().length > 0;
     } catch {
       // pgrep returns non-zero exit code if no process found
