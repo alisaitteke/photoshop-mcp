@@ -20,9 +20,44 @@ function envTruthy(name: string): boolean {
   return value === '1' || value === 'true' || value === 'yes';
 }
 
+/** Slack added to the AppleScript-side timeout beyond the tool timeout, so the
+ * JSX gets its full advertised budget plus Apple-event overhead. */
+const APPLESCRIPT_TIMEOUT_MARGIN_SECONDS = 5;
+
+/** Extra grace before Node SIGKILLs osascript, beyond the AppleScript timeout.
+ * Keeps the AppleScript timeout strictly below the hard kill so Photoshop gets
+ * a clean AppleEvent timeout error instead of a dead pipe. */
+const KILL_GRACE_MS = 5000;
+
+/** Extra time a task may sit in the serial queue behind other scripts before
+ * its caller gives up, on top of the task's own execution timeout. */
+const QUEUE_WAIT_ALLOWANCE_MS = 60_000;
+
+/**
+ * AppleScript `with timeout of N seconds` value for a given tool timeout.
+ * Without this block AppleScript's default ~120s Apple-event reply timeout
+ * silently caps every `do javascript` call regardless of the tool timeout.
+ */
+export function appleScriptTimeoutSeconds(timeoutMs: number): number {
+  return Math.ceil(timeoutMs / 1000) + APPLESCRIPT_TIMEOUT_MARGIN_SECONDS;
+}
+
+/** Hard outer bound: osascript is SIGKILLed after this many ms. Always strictly
+ * above the AppleScript timeout so the clean AppleEvent error fires first. */
+export function killTimeoutMs(timeoutMs: number): number {
+  return appleScriptTimeoutSeconds(timeoutMs) * 1000 + KILL_GRACE_MS;
+}
+
+interface QueuedScript {
+  /** Set when the caller's promise was already rejected (timed out while
+   * queued); processQueue must skip these — they must never execute. */
+  cancelled: boolean;
+  run: () => Promise<void>;
+}
+
 export class MacOSExecutor implements ScriptExecutor {
   private logger: Logger;
-  private scriptQueue: Array<() => Promise<unknown>> = [];
+  private scriptQueue: QueuedScript[] = [];
   private isProcessing = false;
   private appName: string = 'Adobe Photoshop 2025';
 
@@ -37,23 +72,47 @@ export class MacOSExecutor implements ScriptExecutor {
 
   async execute(script: string, timeout: number = 30000): Promise<unknown> {
     return new Promise((resolve, reject) => {
-      const timeoutId = setTimeout(() => {
-        reject(new Error('Script execution timeout'));
-      }, timeout);
+      // Two-phase timeout. While QUEUED: a generous wait timer (timeout +
+      // queue allowance) rejects the caller AND marks the entry cancelled so
+      // it never executes later. While RUNNING: the real execution timer,
+      // started at dequeue so queue wait does not eat into script run time.
+      const entry: QueuedScript = {
+        cancelled: false,
+        run: async () => {
+          clearTimeout(waitTimer);
 
-      this.scriptQueue.push(async () => {
-        try {
-          const result = await this.executeScript(script, timeout);
-          clearTimeout(timeoutId);
-          resolve(result);
-          return result;
-        } catch (error) {
-          clearTimeout(timeoutId);
-          reject(error);
-          throw error;
-        }
-      });
+          let timedOut = false;
+          const execTimer = setTimeout(() => {
+            timedOut = true;
+            reject(new Error('Script execution timeout'));
+          }, timeout);
 
+          try {
+            const result = await this.executeScript(script, timeout);
+            clearTimeout(execTimer);
+            if (!timedOut) {
+              resolve(result);
+            }
+          } catch (error) {
+            clearTimeout(execTimer);
+            if (!timedOut) {
+              reject(error);
+            }
+            throw error;
+          }
+        },
+      };
+
+      const waitTimer = setTimeout(() => {
+        entry.cancelled = true;
+        reject(
+          new Error(
+            `Script timed out after ${timeout + QUEUE_WAIT_ALLOWANCE_MS}ms waiting in the execution queue`
+          )
+        );
+      }, timeout + QUEUE_WAIT_ALLOWANCE_MS);
+
+      this.scriptQueue.push(entry);
       this.processQueue();
     });
   }
@@ -67,12 +126,15 @@ export class MacOSExecutor implements ScriptExecutor {
 
     while (this.scriptQueue.length > 0) {
       const task = this.scriptQueue.shift();
-      if (task) {
-        try {
-          await task();
-        } catch (error) {
-          this.logger.error('Script execution failed:', error);
-        }
+      if (!task || task.cancelled) {
+        // Caller already saw a timeout for this task; running it now would
+        // mutate Photoshop state after the caller gave up.
+        continue;
+      }
+      try {
+        await task.run();
+      } catch (error) {
+        this.logger.error('Script execution failed:', error);
       }
     }
 
@@ -88,14 +150,16 @@ export class MacOSExecutor implements ScriptExecutor {
       await writeFile(tempScriptPath, prefixExtendScriptBom(script), 'utf8');
 
       // Create AppleScript that tells Photoshop to execute the JSX
-      const appleScript = this.createAppleScriptWrapper(tempScriptPath);
+      const appleScript = this.createAppleScriptWrapper(tempScriptPath, timeout);
       await writeFile(tempAppleScriptPath, appleScript, 'utf8');
 
       try {
         // Execute AppleScript via osascript; the timeout must kill the child,
-        // otherwise abandoned osascript processes pile up behind long calls
+        // otherwise abandoned osascript processes pile up behind long calls.
+        // The kill fires after the AppleScript-side timeout (see
+        // killTimeoutMs) so a clean AppleEvent timeout error comes first.
         const { stdout, stderr } = await execAsync(`osascript "${tempAppleScriptPath}"`, {
-          timeout,
+          timeout: killTimeoutMs(timeout),
           killSignal: 'SIGKILL',
         });
 
@@ -118,7 +182,7 @@ export class MacOSExecutor implements ScriptExecutor {
     }
   }
 
-  private createAppleScriptWrapper(jsxPath: string): string {
+  private createAppleScriptWrapper(jsxPath: string, timeoutMs: number = 30000): string {
     // Use POSIX file path for AppleScript
     const posixPath = jsxPath.replace(/\\/g, '/');
 
@@ -127,9 +191,16 @@ export class MacOSExecutor implements ScriptExecutor {
     // background apps fine, so only activate when explicitly requested.
     const activateLine = envTruthy('PHOTOSHOP_ACTIVATE') ? '\tactivate\n' : '';
 
+    // Without an explicit `with timeout` block, AppleScript's default ~120s
+    // Apple-event reply timeout caps every synchronous `do javascript` call,
+    // silently defeating per-tool timeouts above 120s (batch tools use 600s).
+    const timeoutSeconds = appleScriptTimeoutSeconds(timeoutMs);
+
     return `tell application "${this.appName}"
 ${activateLine}\tset jsxFile to POSIX file "${posixPath}"
-\tdo javascript "$.evalFile(decodeURI('${encodeURI(posixPath)}'))"
+\twith timeout of ${timeoutSeconds} seconds
+\t\tdo javascript "$.evalFile(decodeURI('${encodeURI(posixPath)}'))"
+\tend timeout
 end tell`;
   }
 
