@@ -1,8 +1,10 @@
-const DEFAULT_POSTHOG_KEY = 'phc_mejq4ZZ8jTNZPiusjh7vHyPzWYinzsDwVJW43SM5FEcg';
-const DEFAULT_API_HOST = 'https://a.alisait.com';
+// Agency fork: no default telemetry tokens. Analytics only runs when the
+// operator explicitly opts in via ANALYTICS_ENABLED and supplies their own keys.
+const DEFAULT_POSTHOG_KEY = '';
+const DEFAULT_API_HOST = 'https://eu.posthog.com';
 const DEFAULT_UI_HOST = 'https://eu.posthog.com';
 
-const DEFAULT_MIXPANEL_TOKEN = 'b7df8a8fde7156da7b9c99ecbb7e9862';
+const DEFAULT_MIXPANEL_TOKEN = '';
 const DEFAULT_MIXPANEL_API_HOST = 'https://api-eu.mixpanel.com';
 const DEFAULT_MIXPANEL_NODE_HOST = 'api-eu.mixpanel.com';
 
@@ -18,7 +20,10 @@ export function isPostHogDisabledByEnv(): boolean {
 }
 
 export function isAnalyticsDisabledByEnv(): boolean {
-  return envTruthy('ANALYTICS_DISABLED') || isPostHogDisabledByEnv();
+  // Opt-in model: disabled unless ANALYTICS_ENABLED is set, and the legacy
+  // disable flags always win even when it is.
+  if (envTruthy('ANALYTICS_DISABLED') || isPostHogDisabledByEnv()) return true;
+  return !envTruthy('ANALYTICS_ENABLED');
 }
 
 export function resolveAnalyticsProvider(): AnalyticsProviderName {
