@@ -197,8 +197,37 @@ After each major recipe, get another preview to confirm the result.
 
 </details>
 
-<details>
-<summary>👤 Portrait retouch (recipe)</summary>
+### Recipes
+
+Every recipe wraps a multi-step outcome in a **single undo step** and maps 1:1 to a `ps.*` prompt template.
+
+#### ✂️ Background removal
+
+<img src="./images/recipe-remove-bg.svg" alt="Remove background: subject isolated on transparency via Select Subject + layer mask" width="640" />
+
+```
+Remove the background from the active portrait layer.
+Use Select Subject + a layer mask with a 2px feather. Keep the original pixels behind the mask.
+The subject must be on the active layer — not a flat color fill.
+```
+
+Equivalent MCP prompt template: `ps.remove_background` with `{ feather_px: "2", keep_shadow: "false" }`.
+
+#### 🧹 Remove distraction
+
+<img src="./images/recipe-remove-distraction.svg" alt="Remove distraction: content-aware fill on the current selection" width="640" />
+
+```
+There's a tourist photobombing my landscape on the active layer.
+I'll rough-select him with the lasso — then run the remove-distraction recipe with a 1px feather.
+Content-aware fill only; don't touch anything outside the selection.
+```
+
+Equivalent MCP prompt template: `ps.remove_distraction` with `{ feather_px: "1" }`.
+
+#### 👤 Portrait retouch
+
+<img src="./images/recipe-enhance-portrait.svg" alt="Enhance portrait: skin smoothing + auto tone in one undoable step" width="640" />
 
 ```
 Enhance the portrait on the active layer at medium intensity with skin smoothing.
@@ -209,34 +238,20 @@ Show me a preview when done.
 
 Equivalent MCP prompt template: `ps.enhance_portrait` with `{ intensity: "medium", skin_smoothing: "true" }`.
 
-</details>
+#### 🔥 Dodge & burn
 
-<details>
-<summary>✂️ Background removal (recipe)</summary>
-
-```
-Remove the background from the active portrait layer.
-Use Select Subject + a layer mask with a 2px feather. Keep the original pixels behind the mask.
-The subject must be on the active layer — not a flat color fill.
-```
-
-Equivalent MCP prompt template: `ps.remove_background` with `{ feather_px: "2", keep_shadow: "false" }`.
-
-</details>
-
-<details>
-<summary>🎨 Color grade (recipe)</summary>
+<img src="./images/recipe-dodge-burn.svg" alt="Dodge and burn: 50% gray overlay for non-destructive light sculpting" width="640" />
 
 ```
-Apply a warm film color grade to the open document as non-destructive adjustment layers.
-Use the apply-color-grade recipe with preset warm_film.
-Preview the result when finished.
+Set up dodge & burn on the active portrait layer: a 50% gray layer in overlay blend mode.
+I'll paint with a white/black brush myself — just prepare the non-destructive setup.
 ```
 
-</details>
+Equivalent MCP prompt template: `ps.dodge_burn` with `{ blend_mode: "overlay" }`.
 
-<details>
-<summary>🔬 Frequency separation setup (recipe)</summary>
+#### 🔬 Frequency separation setup
+
+<img src="./images/recipe-frequency-separation.svg" alt="Frequency separation: split texture from color into Low and High layers" width="640" />
 
 ```
 Set up frequency separation on the active raster layer with a 6px blur radius.
@@ -246,10 +261,45 @@ Tell me which layers to edit when the stack is ready.
 
 Equivalent MCP prompt template: `ps.frequency_separation` with `{ radius_px: "6" }`.
 
-</details>
+#### 🌗 Gradient fade
 
-<details>
-<summary>🌐 Prepare for web + social export (recipes)</summary>
+<img src="./images/recipe-gradient-fade.svg" alt="Gradient fade: melt the subject into the background via a mask gradient" width="640" />
+
+```
+Fade the isolated subject into the background from the bottom up.
+Apply a bottom_to_top gradient on the layer mask, 0 to 100%. Keep the mask editable.
+```
+
+Equivalent MCP prompt template: `ps.gradient_fade` with `{ direction: "bottom_to_top" }`.
+
+#### 🌤️ Sky blend
+
+<img src="./images/recipe-sky-blend.svg" alt="Sky blend: replace a blown sky with your own sky image at the horizon" width="640" />
+
+```
+The sky in my landscape is blown out. Blend ~/skies/sunset.jpg in as the new sky,
+horizon at 45% of the frame height, feathered so the treeline stays natural.
+```
+
+Equivalent MCP prompt template: `ps.sky_blend` with `{ sky_image_path: "~/skies/sunset.jpg", horizon_pct: "45" }`.
+
+#### 🎨 Color grade
+
+<img src="./images/recipe-color-grade.svg" alt="Apply color grade: flat image to teal-orange via adjustment layers" width="640" />
+
+```
+Apply a warm film color grade to the open document as non-destructive adjustment layers.
+Use the apply-color-grade recipe with preset warm_film.
+Preview the result when finished.
+```
+
+Equivalent MCP prompt template: `ps.apply_color_grade` with `{ preset: "warm_film" }`.
+
+#### 🌐 Prepare for web + social export
+
+<img src="./images/recipe-prepare-web.svg" alt="Prepare for web: sRGB, downscale, sharpen, optimized JPEG" width="640" />
+
+<img src="./images/recipe-social-variants.svg" alt="Export social variants: one JPEG per platform at spec dimensions" width="640" />
 
 ```
 Prepare the active document for web: sRGB, downscale, sharpen, export one optimized JPEG to ~/.photoshop-mcp/exports.
@@ -259,10 +309,9 @@ List the output paths in a table.
 
 Equivalent templates: `ps.prepare_for_web`, `ps.export_social_variants`.
 
-</details>
+#### 📦 Batch mockup replace
 
-<details>
-<summary>📦 Batch mockup replace (recipe)</summary>
+<img src="./images/recipe-mockup.svg" alt="Batch mockup replace: swap a Smart Object per asset, one render each" width="640" />
 
 ```
 I have a mockup PSD open with a Smart Object layer named "Screen".
@@ -272,20 +321,18 @@ Do not place flat layers — swap the Smart Object so perspective is preserved.
 
 Equivalent MCP prompt template: `ps.batch_mockup_replace`.
 
-</details>
+#### 🗂️ Organize layers
 
-<details>
-<summary>🗂️ Organize layers (recipe)</summary>
+<img src="./images/recipe-organize-layers.svg" alt="Organize layers: messy stack renamed by kind and grouped into folders" width="640" />
 
 ```
 Organize the layer stack: rename by kind, auto-group related layers, preserve originals.
 Run the organize-layers recipe, then list layers so I can review the new structure.
 ```
 
-</details>
+Equivalent MCP prompt template: `ps.organize_layers`.
 
-<details>
-<summary>🎞️ Seamless carousel split (recipe)</summary>
+#### 🎞️ Seamless carousel split
 
 <img src="./images/recipe-carousel.svg" alt="Split one wide document into numbered carousel slides" width="640" />
 
@@ -297,10 +344,7 @@ Give me the exported file paths in swipe order so I can upload them as-is.
 
 Equivalent MCP prompt template: `ps.split_carousel` with `{ slides: "5", size: "1080x1350" }`.
 
-</details>
-
-<details>
-<summary>💧 Batch watermark (recipe)</summary>
+#### 💧 Batch watermark
 
 <img src="./images/recipe-watermark.svg" alt="Watermark every image in a folder" width="640" />
 
@@ -312,10 +356,7 @@ Export watermarked JPEGs — never touch the originals.
 
 Equivalent MCP prompt template: `ps.batch_watermark` with `{ assets_dir: "~/photos/portfolio", text: "© Jane Doe 2026", position: "bottom_right", opacity: "40" }`.
 
-</details>
-
-<details>
-<summary>🛂 Passport / ID photo (recipe)</summary>
+#### 🛂 Passport / ID photo
 
 <img src="./images/recipe-passport.svg" alt="Turn a portrait into a passport photo at official size" width="640" />
 
@@ -327,7 +368,7 @@ Note: framing is approximated from subject bounds — official acceptance is not
 
 Equivalent MCP prompt template: `ps.passport_photo` with `{ spec: "us_2x2", make_sheet: "true" }`.
 
-</details>
+### More examples
 
 <details>
 <summary>🎨 Basic Design Creation</summary>

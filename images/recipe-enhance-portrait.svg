@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="260" viewBox="0 0 640 260" font-family="Helvetica, Arial, sans-serif">
+  <rect width="640" height="260" rx="12" fill="#f6f8fa"/>
+  <text x="320" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#1f2328">photoshop_recipe_enhance_portrait</text>
+  <text x="320" y="48" text-anchor="middle" font-size="11" fill="#57606a">skin smoothing + auto tone in one undoable step</text>
+
+  <!-- face card -->
+  <rect x="40" y="64" width="360" height="112" rx="8" fill="#ffffff" stroke="#d0d7de" stroke-width="1.5"/>
+  <!-- before half -->
+  <clipPath id="beforeClip"><rect x="40" y="64" width="180" height="112"/></clipPath>
+  <g clip-path="url(#beforeClip)">
+    <circle cx="130" cy="112" r="34" fill="#d9b8a3"/>
+    <circle cx="118" cy="104" r="2.4" fill="#a9765c"/>
+    <circle cx="141" cy="112" r="2.2" fill="#a9765c"/>
+    <circle cx="126" cy="122" r="2.0" fill="#a9765c"/>
+    <circle cx="136" cy="98" r="1.8" fill="#a9765c"/>
+    <path d="M 96 176 Q 96 138 130 138 Q 164 138 164 176 Z" fill="#b08570"/>
+    <rect x="40" y="64" width="180" height="112" fill="#57606a" opacity="0.08"/>
+  </g>
+  <!-- after half -->
+  <clipPath id="afterClip"><rect x="220" y="64" width="180" height="112"/></clipPath>
+  <g clip-path="url(#afterClip)">
+    <circle cx="310" cy="112" r="34" fill="#e8c4ab"/>
+    <path d="M 276 176 Q 276 138 310 138 Q 344 138 344 176 Z" fill="#c09377"/>
+    <g fill="#f9b24e">
+      <path d="M 356 82 l2.2 5.4 5.4 2.2 -5.4 2.2 -2.2 5.4 -2.2 -5.4 -5.4 -2.2 5.4 -2.2 Z"/>
+      <path d="M 372 108 l1.6 4 4 1.6 -4 1.6 -1.6 4 -1.6 -4 -4 -1.6 4 -1.6 Z"/>
+      <path d="M 350 134 l1.4 3.4 3.4 1.4 -3.4 1.4 -1.4 3.4 -1.4 -3.4 -3.4 -1.4 3.4 -1.4 Z"/>
+    </g>
+  </g>
+  <line x1="220" y1="64" x2="220" y2="176" stroke="#d0d7de" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="130" y="192" text-anchor="middle" font-size="11" fill="#57606a">before</text>
+  <text x="310" y="192" text-anchor="middle" font-size="11" fill="#57606a">after</text>
+
+  <!-- pipeline chips -->
+  <g font-size="10.5" font-weight="600" fill="#1f2328">
+    <rect x="430" y="72" width="170" height="26" rx="13" fill="#eaeef2"/>
+    <text x="515" y="89" text-anchor="middle">1 · skin smoothing</text>
+    <rect x="430" y="106" width="170" height="26" rx="13" fill="#eaeef2"/>
+    <text x="515" y="123" text-anchor="middle">2 · auto tone (curves)</text>
+    <rect x="430" y="140" width="170" height="26" rx="13" fill="#eaeef2"/>
+    <text x="515" y="157" text-anchor="middle">3 · subtle sharpen</text>
+  </g>
+
+  <rect x="30" y="200" width="580" height="46" rx="8" fill="#eaeef2"/>
+  <text x="44" y="220" font-size="11.5" fill="#1f2328" font-weight="600">intensity low / medium / high · raster layer required</text>
+  <text x="44" y="237" font-size="11" fill="#57606a">text or smart object? rasterize first — recipe tells you</text>
+</svg>

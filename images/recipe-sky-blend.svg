@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="260" viewBox="0 0 640 260" font-family="Helvetica, Arial, sans-serif">
+  <rect width="640" height="260" rx="12" fill="#f6f8fa"/>
+  <text x="320" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#1f2328">photoshop_recipe_sky_blend</text>
+  <text x="320" y="48" text-anchor="middle" font-size="11" fill="#57606a">replace a dull sky with your own sky image, blended at the horizon</text>
+
+  <defs>
+    <linearGradient id="dullsky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b9c0c8"/>
+      <stop offset="1" stop-color="#8d949c"/>
+    </linearGradient>
+    <linearGradient id="sunset" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4158d0"/>
+      <stop offset="0.55" stop-color="#e2607a"/>
+      <stop offset="1" stop-color="#f9b24e"/>
+    </linearGradient>
+    <g id="ground">
+      <polygon points="0,120 60,84 130,120" fill="#2f3b52" opacity="0.85"/>
+      <polygon points="90,120 170,76 240,120" fill="#232c40" opacity="0.9"/>
+    </g>
+  </defs>
+
+  <!-- dull -->
+  <rect x="40" y="66" width="240" height="120" rx="6" fill="url(#dullsky)"/>
+  <use href="#ground" x="40" y="66"/>
+  <rect x="40" y="66" width="240" height="120" rx="6" fill="none" stroke="#d0d7de" stroke-width="1.5"/>
+  <text x="160" y="202" text-anchor="middle" font-size="11" fill="#57606a">blown sky</text>
+
+  <!-- arrow -->
+  <line x1="294" y1="126" x2="330" y2="126" stroke="#57606a" stroke-width="2"/>
+  <polygon points="330,120 342,126 330,132" fill="#57606a"/>
+
+  <!-- replaced -->
+  <rect x="356" y="66" width="240" height="120" rx="6" fill="url(#sunset)"/>
+  <use href="#ground" x="356" y="66"/>
+  <line x1="356" y1="121" x2="596" y2="121" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.85"/>
+  <rect x="356" y="66" width="240" height="120" rx="6" fill="none" stroke="#d0d7de" stroke-width="1.5"/>
+  <rect x="500" y="98" width="92" height="18" rx="9" fill="#ffffff" opacity="0.85"/>
+  <text x="546" y="111" text-anchor="middle" font-size="9.5" font-weight="600" fill="#1f2328">horizon 45%</text>
+  <text x="476" y="202" text-anchor="middle" font-size="11" fill="#57606a">your sunset.jpg</text>
+
+  <rect x="30" y="212" width="580" height="36" rx="8" fill="#eaeef2"/>
+  <text x="44" y="234" font-size="11.5" fill="#1f2328" font-weight="600">feathered mask at horizon_pct · sky file path required</text>
+</svg>

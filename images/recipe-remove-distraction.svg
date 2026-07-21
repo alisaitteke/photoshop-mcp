@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="260" viewBox="0 0 640 260" font-family="Helvetica, Arial, sans-serif">
+  <rect width="640" height="260" rx="12" fill="#f6f8fa"/>
+  <text x="320" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#1f2328">photoshop_recipe_remove_distraction</text>
+  <text x="320" y="48" text-anchor="middle" font-size="11" fill="#57606a">content-aware fill on the current selection — bye, photobomber</text>
+
+  <defs>
+    <linearGradient id="scenebg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7fb2e5"/>
+      <stop offset="0.6" stop-color="#8fce9a"/>
+      <stop offset="1" stop-color="#3e7d4e"/>
+    </linearGradient>
+    <g id="couple">
+      <circle cx="-14" cy="-26" r="10" fill="#8b4a3a"/>
+      <path d="M -26 8 Q -26 -14 -14 -14 Q -2 -14 -2 8 Z" fill="#8b4a3a"/>
+      <circle cx="12" cy="-24" r="9" fill="#5c4033"/>
+      <path d="M 1 8 Q 1 -13 12 -13 Q 23 -13 23 8 Z" fill="#5c4033"/>
+    </g>
+    <g id="bomber">
+      <circle cx="0" cy="-16" r="9" fill="#1f2328"/>
+      <path d="M -13 10 Q -13 -8 0 -8 Q 13 -8 13 10 Z" fill="#1f2328"/>
+    </g>
+  </defs>
+
+  <!-- before -->
+  <rect x="40" y="66" width="250" height="110" rx="6" fill="url(#scenebg)"/>
+  <use href="#couple" x="120" y="146"/>
+  <use href="#bomber" x="235" y="146"/>
+  <rect x="212" y="106" width="48" height="62" rx="4" fill="none" stroke="#cf222e" stroke-width="2" stroke-dasharray="5 4"/>
+  <line x1="216" y1="110" x2="256" y2="164" stroke="#cf222e" stroke-width="2.5"/>
+  <line x1="256" y1="110" x2="216" y2="164" stroke="#cf222e" stroke-width="2.5"/>
+  <rect x="40" y="66" width="250" height="110" rx="6" fill="none" stroke="#d0d7de" stroke-width="1.5"/>
+  <text x="165" y="192" text-anchor="middle" font-size="11" fill="#57606a">selection active</text>
+
+  <!-- arrow -->
+  <line x1="304" y1="121" x2="340" y2="121" stroke="#57606a" stroke-width="2"/>
+  <polygon points="340,115 352,121 340,127" fill="#57606a"/>
+
+  <!-- after -->
+  <rect x="366" y="66" width="250" height="110" rx="6" fill="url(#scenebg)"/>
+  <use href="#couple" x="450" y="146"/>
+  <rect x="366" y="66" width="250" height="110" rx="6" fill="none" stroke="#d0d7de" stroke-width="1.5"/>
+  <text x="491" y="192" text-anchor="middle" font-size="11" fill="#57606a">filled</text>
+
+  <rect x="30" y="200" width="580" height="46" rx="8" fill="#eaeef2"/>
+  <text x="44" y="220" font-size="11.5" fill="#1f2328" font-weight="600">select first (rectangle / lasso / select-subject + invert)</text>
+  <text x="44" y="237" font-size="11" fill="#57606a">prefer photoshop_generative_remove when Firefly is available</text>
+</svg>

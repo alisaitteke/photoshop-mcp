@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="260" viewBox="0 0 640 260" font-family="Helvetica, Arial, sans-serif">
+  <rect width="640" height="260" rx="12" fill="#f6f8fa"/>
+  <text x="320" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#1f2328">photoshop_recipe_batch_mockup_replace</text>
+  <text x="320" y="48" text-anchor="middle" font-size="11" fill="#57606a">swap a Smart Object per asset · perspective preserved</text>
+
+  <defs>
+    <g id="laptop">
+      <rect x="0" y="0" width="120" height="78" rx="6" fill="#1f2328"/>
+      <rect x="7" y="7" width="106" height="64" rx="3" fill="#3d6db5"/>
+      <path d="M -10 78 h140 l6 10 h-152 Z" fill="#57606a"/>
+    </g>
+    <linearGradient id="scr1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f9b24e"/>
+      <stop offset="1" stop-color="#e2607a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- mockup psd -->
+  <use href="#laptop" x="40" y="70"/>
+  <text x="100" y="170" text-anchor="middle" font-size="11" fill="#57606a">mockup.psd</text>
+  <text x="100" y="184" text-anchor="middle" font-size="9.5" fill="#57606a">Smart Object: "Screen"</text>
+
+  <!-- assets -->
+  <g>
+    <rect x="196" y="66" width="34" height="26" rx="4" fill="#f9b24e"/>
+    <rect x="204" y="80" width="34" height="26" rx="4" fill="#e2607a"/>
+    <rect x="212" y="94" width="34" height="26" rx="4" fill="#4158d0"/>
+    <text x="229" y="140" text-anchor="middle" font-size="10" fill="#57606a">assets/</text>
+  </g>
+
+  <!-- arrow -->
+  <line x1="262" y1="112" x2="296" y2="112" stroke="#57606a" stroke-width="2"/>
+  <polygon points="296,106 308,112 296,118" fill="#57606a"/>
+
+  <!-- renders -->
+  <g>
+    <g transform="translate(322,72) scale(0.6)">
+      <use href="#laptop"/>
+      <rect x="7" y="7" width="106" height="64" rx="3" fill="url(#scr1)"/>
+    </g>
+    <g transform="translate(420,72) scale(0.6)">
+      <use href="#laptop"/>
+      <rect x="7" y="7" width="106" height="64" rx="3" fill="#4158d0"/>
+    </g>
+    <g transform="translate(518,72) scale(0.6)">
+      <use href="#laptop"/>
+      <rect x="7" y="7" width="106" height="64" rx="3" fill="#3e7d4e"/>
+    </g>
+    <text x="460" y="170" text-anchor="middle" font-size="11" fill="#57606a">1 JPEG per asset</text>
+  </g>
+
+  <rect x="30" y="208" width="580" height="40" rx="8" fill="#eaeef2"/>
+  <text x="44" y="226" font-size="11.5" fill="#1f2328" font-weight="600">folder of designs in → rendered mockups out</text>
+  <text x="44" y="242" font-size="11" fill="#57606a">jpg / png / tif / webp assets · mockup keeps the last swap</text>
+</svg>
