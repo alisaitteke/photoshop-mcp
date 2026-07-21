@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="260" viewBox="0 0 640 260" font-family="Helvetica, Arial, sans-serif">
+  <rect width="640" height="260" rx="12" fill="#f6f8fa"/>
+  <text x="320" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#1f2328">photoshop_recipe_passport_photo</text>
+  <text x="320" y="48" text-anchor="middle" font-size="11" fill="#57606a">portrait → white background + ICAO-style framing + exact size @300 DPI</text>
+
+  <defs>
+    <g id="person">
+      <circle cx="0" cy="-14" r="13" fill="#8b949e"/>
+      <path d="M -22 18 Q -22 -2 0 -2 Q 22 -2 22 18 Z" fill="#8b949e"/>
+    </g>
+    <g id="specframe">
+      <rect x="-32" y="-42" width="64" height="84" rx="4" fill="#ffffff" stroke="#d0d7de" stroke-width="1.5"/>
+    </g>
+  </defs>
+
+  <!-- spec cards -->
+  <g transform="translate(90,128)">
+    <rect x="-40" y="-46" width="80" height="80" rx="4" fill="#ffffff" stroke="#d0d7de" stroke-width="1.5"/>
+    <use href="#person" y="4"/>
+    <text x="0" y="58" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2328">us_2x2</text>
+    <text x="0" y="72" text-anchor="middle" font-size="10" fill="#57606a">600×600 px</text>
+  </g>
+  <g transform="translate(215,128)">
+    <rect x="-32" y="-52" width="64" height="82" rx="4" fill="#ffffff" stroke="#d0d7de" stroke-width="1.5"/>
+    <use href="#person" y="0"/>
+    <text x="0" y="58" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2328">eu_35x45</text>
+    <text x="0" y="72" text-anchor="middle" font-size="10" fill="#57606a">413×531 px</text>
+  </g>
+  <g transform="translate(340,128)">
+    <rect x="-34" y="-50" width="68" height="82" rx="4" fill="#ffffff" stroke="#d0d7de" stroke-width="1.5"/>
+    <use href="#person" y="0"/>
+    <text x="0" y="58" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2328">tr_50x60</text>
+    <text x="0" y="72" text-anchor="middle" font-size="10" fill="#57606a">591×709 px</text>
+  </g>
+
+  <!-- print sheet -->
+  <g transform="translate(465,78)">
+    <rect width="100" height="150" rx="4" fill="#ffffff" stroke="#d0d7de" stroke-width="1.5"/>
+    <g fill="#eaeef2" stroke="#d0d7de" stroke-width="1">
+      <rect x="8" y="8" width="40" height="40" rx="3"/>
+      <rect x="52" y="8" width="40" height="40" rx="3"/>
+      <rect x="8" y="55" width="40" height="40" rx="3"/>
+      <rect x="52" y="55" width="40" height="40" rx="3"/>
+      <rect x="8" y="102" width="40" height="40" rx="3"/>
+      <rect x="52" y="102" width="40" height="40" rx="3"/>
+    </g>
+    <text x="50" y="166" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1f2328">make_sheet</text>
+  </g>
+
+  <text x="90" y="240" text-anchor="middle" font-size="10" fill="#57606a">headroom ≈10%</text>
+  <text x="215" y="240" text-anchor="middle" font-size="10" fill="#57606a">subject ≈72% of frame</text>
+  <text x="340" y="240" text-anchor="middle" font-size="10" fill="#57606a">300 DPI JPEG</text>
+</svg>

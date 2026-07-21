@@ -62,6 +62,15 @@ function neuralDescriptors(filter, params) {
           },
         },
       ];
+    case 'colorize':
+      return [
+        {
+          _obj: 'neuralGalleryFilters',
+          neuralGalleryFilters: {
+            _obj: 'colorize',
+          },
+        },
+      ];
     default:
       throw new Error(`Unknown neural filter: ${filter}`);
   }

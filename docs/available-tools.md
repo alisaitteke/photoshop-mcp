@@ -819,4 +819,4 @@ Text-to-image. **Parameters:** `prompt`, `width`, `height`
 Requires `uxp-plugin/` — see [development.md](development.md).
 
 #### `photoshop_neural_filter`
-**Parameters:** `filter` (skin_smoothing|harmonize|depth_blur|super_zoom), `smoothness`, `blur`
+**Parameters:** `filter` (skin_smoothing|harmonize|depth_blur|super_zoom|colorize), `smoothness`, `blur`

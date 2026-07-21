@@ -77,7 +77,7 @@ Local MCP integration tests run against a live Photoshop instance over stdio
 | Prompt-layer smoke | `npm run test:mcp-local` | 16 prompt templates + core recipes |
 | Prompt ↔ recipe parity | `npm run verify:photoshop-prompts` | 12↔12 strict match + 4 guides |
 
-**Tool coverage:** 80 total tools (68 atomic `photoshop_*` + 12 recipe
+**Tool coverage:** 89 total tools (74 atomic `photoshop_*` + 15 recipe
 `photoshop_recipe_*`) — re-run `npm run test:mcp-all` for a fresh pass count.
 
 **Intentional skips** (environment-dependent, not regressions):

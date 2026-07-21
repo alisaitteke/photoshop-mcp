@@ -202,6 +202,31 @@ export function wrapInSuspendHistory(historyName: string, body: string): string 
   `;
 }
 
+/**
+ * Standalone wrapper for recipes that do NOT operate on the active document
+ * (e.g. batch jobs that open/close their own documents). No suspendHistory,
+ * no active-document precondition.
+ */
+export function wrapInStandaloneScript(body: string): string {
+  return `
+    ${RECIPE_ACTION_HELPERS}
+    ${EXTENDSCRIPT_JSON_HELPER}
+    var __mcp_recipe_result = null;
+    var __mcp_recipe_fn = function() {
+      ${body}
+    };
+    try {
+      __mcp_recipe_result = __mcp_recipe_fn();
+    } catch (eRecipe) {
+      __mcp_recipe_result = { ok: false, code: 'recipe_runtime_error', message: eRecipe.message || String(eRecipe) };
+    }
+    if (!__mcp_recipe_result) {
+      __mcp_recipe_result = { ok: false, code: 'recipe_no_result', message: 'Recipe produced no result' };
+    }
+    return __mcp_json_stringify(__mcp_recipe_result);
+  `;
+}
+
 export function parseRecipeResult(raw: unknown): RecipeSuccess | RecipeFailure | null {
   const payload = parseExtendScriptPayload(raw);
   if (payload === null || typeof payload !== 'object') return null;
@@ -263,6 +288,30 @@ export async function executeRecipe(
     const apiFactory = new PhotoshopAPIFactory(connection);
     const api = await apiFactory.createAPI();
     const script = wrapInSuspendHistory(historyName, body);
+    const raw = await api.executeScript(script);
+    const parsed = parseRecipeResult(raw);
+    if (!parsed) {
+      return toolFailure({
+        ok: false,
+        code: 'recipe_no_result',
+        message: `Recipe returned an unparseable payload: ${typeof raw === 'string' ? raw : JSON.stringify(raw)}`,
+      });
+    }
+    return parsed.ok ? toolSuccess(parsed) : toolFailure(parsed);
+  } catch (error) {
+    return toolException(error);
+  }
+}
+
+/** Like executeRecipe but without suspendHistory or an active-document requirement. */
+export async function executeStandaloneRecipe(
+  connection: PhotoshopConnection,
+  body: string
+): Promise<ToolResult> {
+  try {
+    const apiFactory = new PhotoshopAPIFactory(connection);
+    const api = await apiFactory.createAPI();
+    const script = wrapInStandaloneScript(body);
     const raw = await api.executeScript(script);
     const parsed = parseRecipeResult(raw);
     if (!parsed) {

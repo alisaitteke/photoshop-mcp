@@ -152,19 +152,21 @@ requests into reliable Photoshop actions:
 - **Server `instructions`** — workflow contract advertised on MCP `initialize`
   (ping once, state-before-action, prefer recipes, error recovery). See
   [`src/prompts/instructions.ts`](src/prompts/instructions.ts).
-- **MCP `prompts` primitive** — 19 pre-engineered templates (12 recipe + 7 guide:
+- **MCP `prompts` primitive** — 22 pre-engineered templates (15 recipe + 7 guide:
   `ps.enhance_portrait`, `ps.remove_background`, `ps.generative_fill`, …)
   via `prompts/list` and `prompts/get`.
-- **Recipe tools** — 12 outcome-oriented `photoshop_recipe_*` tools (remove
+- **Recipe tools** — 15 outcome-oriented `photoshop_recipe_*` tools (remove
   background, enhance portrait, prepare for web, export social variants, color
   grade, frequency separation, batch mockup, organize layers, gradient fade,
-  sky blend, dodge & burn, remove distraction). Each wraps steps in a single
-  Photoshop history state (one Undo reverts all). **86 tools total** (74 atomic
-  + 12 recipe).
+  sky blend, dodge & burn, remove distraction, split carousel, batch watermark,
+  passport photo). Each wraps steps in a single
+  Photoshop history state (one Undo reverts all). **89 tools total** (74 atomic
+  + 15 recipe).
 - **Generative AI** — `photoshop_generative_fill`, `photoshop_generative_remove`,
   `photoshop_generative_expand`, `photoshop_generative_upscale`, `photoshop_sky_replacement`,
   `photoshop_generate_image` (Firefly via ExtendScript; Adobe account + credits required).
-- **Neural Filters** — `photoshop_neural_filter` via optional UXP bridge plugin (`uxp-plugin/`).
+- **Neural Filters** — `photoshop_neural_filter` via optional UXP bridge plugin (`uxp-plugin/`):
+  skin smoothing, harmonize, depth blur, super zoom, and colorize (B&W → color).
 - **State & preview** — `photoshop_get_state` (cheap snapshot),
   `photoshop_get_preview` (base64 JPEG for vision verification),
   `photoshop_get_capabilities` (version-aware feature flags).
@@ -283,6 +285,51 @@ Run the organize-layers recipe, then list layers so I can review the new structu
 </details>
 
 <details>
+<summary>🎞️ Seamless carousel split (recipe)</summary>
+
+<img src="./images/recipe-carousel.svg" alt="Split one wide document into numbered carousel slides" width="640" />
+
+```
+Split the active document into a 5-slide seamless Instagram carousel.
+Each slide should be 1080x1350 — crop the slices, don't letterbox them.
+Give me the exported file paths in swipe order so I can upload them as-is.
+```
+
+Equivalent MCP prompt template: `ps.split_carousel` with `{ slides: "5", size: "1080x1350" }`.
+
+</details>
+
+<details>
+<summary>💧 Batch watermark (recipe)</summary>
+
+<img src="./images/recipe-watermark.svg" alt="Watermark every image in a folder" width="640" />
+
+```
+Watermark every photo in ~/photos/portfolio with the text "© Jane Doe 2026".
+Bottom-right corner, 40% opacity, small margin from the edges.
+Export watermarked JPEGs — never touch the originals.
+```
+
+Equivalent MCP prompt template: `ps.batch_watermark` with `{ assets_dir: "~/photos/portfolio", text: "© Jane Doe 2026", position: "bottom_right", opacity: "40" }`.
+
+</details>
+
+<details>
+<summary>🛂 Passport / ID photo (recipe)</summary>
+
+<img src="./images/recipe-passport.svg" alt="Turn a portrait into a passport photo at official size" width="640" />
+
+```
+Turn the open portrait into a US passport photo: white background, proper headroom,
+exact 600x600 px at 300 DPI. Also give me a 10x15 cm print sheet with copies.
+Note: framing is approximated from subject bounds — official acceptance is not guaranteed.
+```
+
+Equivalent MCP prompt template: `ps.passport_photo` with `{ spec: "us_2x2", make_sheet: "true" }`.
+
+</details>
+
+<details>
 <summary>🎨 Basic Design Creation</summary>
 
 ```
@@ -318,6 +365,7 @@ Open photo.jpg from my Desktop in Photoshop.
 Get state, then run the enhance-portrait recipe at low intensity.
 If I only need quick tone fixes, apply auto levels, auto contrast, and unsharp mask (120%, 1.5, 0) on the active layer instead.
 Adjust hue +15 and saturation +15, or use prepare-for-web when I'm ready to export.
+For old black-and-white scans, run the colorize neural filter first (requires the UXP bridge plugin).
 Save as enhanced-photo.jpg with quality 12.
 ```
 
@@ -477,8 +525,8 @@ Never guess — read get_state after a failure and propose the next single step.
 - **Supports Photoshop 2012-2025+**
 - **ExtendScript API**: Universal compatibility via AppleScript/COM automation
 - **Auto-Detection**: Automatically finds Photoshop installation on your system
-- **78 Tools**: 66 atomic `photoshop_*` + 12 recipe `photoshop_recipe_*`
-- **AI/Prompt Layer**: 16 MCP prompt templates (12 recipe + 4 guide), server instructions, state/preview/capabilities tools
+- **89 Tools**: 74 atomic `photoshop_*` + 15 recipe `photoshop_recipe_*`
+- **AI/Prompt Layer**: 22 MCP prompt templates (15 recipe + 7 guide), server instructions, state/preview/capabilities tools
 - **Document Management**: Create, open, save, close, crop documents
 - **Layer Operations**: Create, delete, duplicate, merge, transform layers
 - **Layer Properties**: Opacity, blend modes, visibility, locking
