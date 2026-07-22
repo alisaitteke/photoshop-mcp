@@ -439,7 +439,7 @@ async function main(): Promise<void> {
   console.log('\n=== Phase 17: Cleanup ===');
   await t.run('photoshop_close_document', { save: false });
 
-  console.log('\n=== Phase 18: Prompt templates (12 recipes) ===');
+  console.log('\n=== Phase 18: Prompt templates (15 recipes) ===');
   const prompts = [
     ['ps.remove_background', { feather_px: '1', keep_shadow: 'false' }],
     ['ps.enhance_portrait', { intensity: 'medium', skin_smoothing: 'true' }],
@@ -453,6 +453,9 @@ async function main(): Promise<void> {
     ['ps.sky_blend', { sky_image_path: '/tmp/photoshop-mcp-test.png', horizon_pct: '45' }],
     ['ps.dodge_burn', { blend_mode: 'overlay' }],
     ['ps.remove_distraction', { feather_px: '1' }],
+    ['ps.split_carousel', { slides: '3' }],
+    ['ps.batch_watermark', { assets_dir: assetsDir, text: '© photoshop-mcp test' }],
+    ['ps.passport_photo', { spec: 'us_2x2' }],
   ] as const;
 
   for (const [name, args] of prompts) {
@@ -477,7 +480,7 @@ async function main(): Promise<void> {
   await transport.close();
 
   const failed = t.getResults().filter((r) => r.outcome === 'fail').length;
-  const requiredTools = 79;
+  const requiredTools = 82;
   const passedTools = t.getResults().filter((r) => r.outcome === 'pass' && r.name.startsWith('photoshop_')).length;
   console.log(`\nTool coverage: ${passedTools}/${requiredTools} atomic+recipe tools passed.`);
   process.exit(failed > 0 ? 1 : 0);

@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="260" viewBox="0 0 640 260" font-family="Helvetica, Arial, sans-serif">
+  <rect width="640" height="260" rx="12" fill="#f6f8fa"/>
+  <text x="320" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#1f2328">photoshop_recipe_frequency_separation</text>
+  <text x="320" y="48" text-anchor="middle" font-size="11" fill="#57606a">split texture from color — retouch each independently</text>
+
+  <!-- source layer -->
+  <rect x="40" y="86" width="150" height="56" rx="6" fill="#3d6db5"/>
+  <circle cx="76" cy="114" r="16" fill="#e8c4ab"/>
+  <text x="140" y="118" text-anchor="middle" font-size="11" font-weight="600" fill="#ffffff">portrait layer</text>
+  <text x="115" y="160" text-anchor="middle" font-size="11" fill="#57606a">before</text>
+
+  <!-- split arrows -->
+  <line x1="196" y1="106" x2="240" y2="86" stroke="#57606a" stroke-width="2"/>
+  <polygon points="238,80 251,83 242,93" fill="#57606a"/>
+  <line x1="196" y1="122" x2="240" y2="142" stroke="#57606a" stroke-width="2"/>
+  <polygon points="242,135 251,145 238,148" fill="#57606a"/>
+
+  <!-- Low layer -->
+  <rect x="256" y="64" width="180" height="56" rx="6" fill="#eaeef2" stroke="#d0d7de" stroke-width="1.5"/>
+  <circle cx="292" cy="92" r="16" fill="#e8c4ab" opacity="0.55"/>
+  <text x="352" y="88" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2328">Low</text>
+  <text x="352" y="103" text-anchor="middle" font-size="9.5" fill="#57606a">color · blurred</text>
+
+  <!-- High layer -->
+  <rect x="256" y="130" width="180" height="56" rx="6" fill="#eaeef2" stroke="#d0d7de" stroke-width="1.5"/>
+  <g stroke="#8b949e" stroke-width="1" opacity="0.9">
+    <line x1="278" y1="152" x2="288" y2="164"/>
+    <line x1="288" y1="152" x2="278" y2="164"/>
+    <line x1="294" y1="152" x2="304" y2="164"/>
+    <line x1="304" y1="152" x2="294" y2="164"/>
+  </g>
+  <text x="358" y="154" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2328">High</text>
+  <text x="358" y="169" text-anchor="middle" font-size="9.5" fill="#57606a">texture · linear light</text>
+
+  <!-- usage chips -->
+  <g font-size="10" font-weight="600" fill="#1f2328">
+    <rect x="462" y="72" width="140" height="26" rx="13" fill="#eaeef2"/>
+    <text x="532" y="89" text-anchor="middle">paint on Low</text>
+    <rect x="462" y="106" width="140" height="26" rx="13" fill="#eaeef2"/>
+    <text x="532" y="123" text-anchor="middle">heal on High</text>
+    <rect x="462" y="140" width="140" height="26" rx="13" fill="#eaeef2"/>
+    <text x="532" y="157" text-anchor="middle">radius 2–20 px</text>
+  </g>
+
+  <rect x="30" y="200" width="580" height="46" rx="8" fill="#eaeef2"/>
+  <text x="44" y="220" font-size="11.5" fill="#1f2328" font-weight="600">classic retouch setup without the 8-step manual dance</text>
+  <text x="44" y="237" font-size="11" fill="#57606a">apply image (subtract, scale 2, offset 128) handled for you</text>
+</svg>

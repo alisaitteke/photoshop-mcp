@@ -39,7 +39,7 @@ When LLMs call Photoshop one command at a time, they burn tokens, guess layer ty
 
 **What I built (open source)**
 
-- **Photoshop MCP** — 80 tools + 12 recipe workflows (single-undo outcomes)
+- **Photoshop MCP** — 89 tools incl. 15 recipe workflows (single-undo outcomes)
 - Cross-platform: macOS (AppleScript) + Windows (COM)
 - Bundled **standalone web UI** — chat with Claude, GPT, or Gemini; drive Photoshop without an IDE
 - **Action Plan (beta)** — plan all steps in one LLM call, execute without per-step round-trips

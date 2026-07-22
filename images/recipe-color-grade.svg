@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="260" viewBox="0 0 640 260" font-family="Helvetica, Arial, sans-serif">
+  <rect width="640" height="260" rx="12" fill="#f6f8fa"/>
+  <text x="320" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#1f2328">photoshop_recipe_apply_color_grade</text>
+  <text x="320" y="48" text-anchor="middle" font-size="11" fill="#57606a">non-destructive adjustment layers · 6 presets</text>
+
+  <defs>
+    <linearGradient id="flatimg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#aeb6bf"/>
+      <stop offset="1" stop-color="#7d858e"/>
+    </linearGradient>
+    <linearGradient id="gradedimg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1f6f78"/>
+      <stop offset="1" stop-color="#e2607a"/>
+    </linearGradient>
+    <g id="gradeland">
+      <circle cx="34" cy="26" r="11" fill="#fff3d6" opacity="0.85"/>
+      <polygon points="0,110 64,54 112,110" fill="#2f3b52" opacity="0.75"/>
+      <polygon points="72,110 128,64 170,110" fill="#232c40" opacity="0.8"/>
+    </g>
+  </defs>
+
+  <!-- flat -->
+  <rect x="40" y="66" width="170" height="110" rx="6" fill="url(#flatimg)"/>
+  <use href="#gradeland" x="40" y="66"/>
+  <rect x="40" y="66" width="170" height="110" rx="6" fill="none" stroke="#d0d7de" stroke-width="1.5"/>
+  <text x="125" y="192" text-anchor="middle" font-size="11" fill="#57606a">flat</text>
+
+  <!-- arrow -->
+  <line x1="224" y1="121" x2="258" y2="121" stroke="#57606a" stroke-width="2"/>
+  <polygon points="258,115 270,121 258,127" fill="#57606a"/>
+
+  <!-- graded -->
+  <rect x="284" y="66" width="170" height="110" rx="6" fill="url(#gradedimg)"/>
+  <use href="#gradeland" x="284" y="66"/>
+  <rect x="284" y="66" width="170" height="110" rx="6" fill="none" stroke="#d0d7de" stroke-width="1.5"/>
+  <text x="369" y="192" text-anchor="middle" font-size="11" fill="#57606a">teal_orange</text>
+
+  <!-- preset chips -->
+  <g font-size="10" font-weight="600" fill="#1f2328">
+    <rect x="478" y="68" width="126" height="22" rx="11" fill="#eaeef2"/>
+    <text x="541" y="83" text-anchor="middle">cinematic</text>
+    <rect x="478" y="96" width="126" height="22" rx="11" fill="#eaeef2"/>
+    <text x="541" y="111" text-anchor="middle">vintage</text>
+    <rect x="478" y="124" width="126" height="22" rx="11" fill="#ddeab5"/>
+    <text x="541" y="139" text-anchor="middle">teal_orange</text>
+    <rect x="478" y="152" width="126" height="22" rx="11" fill="#eaeef2"/>
+    <text x="541" y="167" text-anchor="middle">bw · warm · cool</text>
+  </g>
+
+  <rect x="30" y="206" width="580" height="40" rx="8" fill="#eaeef2"/>
+  <text x="44" y="230" font-size="11.5" fill="#1f2328" font-weight="600">curves + hue/sat as adjustment layers — tweak or delete afterwards</text>
+</svg>

@@ -1,7 +1,7 @@
 # AI / Prompt Layer for Photoshop
 
-The photoshop-mcp server exposes 74 atomic `photoshop_*` tools plus 12 recipe
-`photoshop_recipe_*` tools (86 total), along with a thin
+The photoshop-mcp server exposes 74 atomic `photoshop_*` tools plus 15 recipe
+`photoshop_recipe_*` tools (89 total), along with a thin
 AI/prompt layer ported from TTT: server-level instructions, MCP prompt templates,
 recipe tools, state/preview tools, version-aware capabilities, and structured
 error envelopes.
@@ -16,10 +16,10 @@ prompt discovery, `~/.photoshop-mcp/exports` conventions, and error recovery con
 
 ## 2. MCP `prompts` primitive
 
-Sixteen templates in [`src/prompts/templates/`](../src/prompts/templates/), registered via
+Twenty-two templates in [`src/prompts/templates/`](../src/prompts/templates/), registered via
 [`src/prompts/registry.ts`](../src/prompts/registry.ts).
 
-### Recipe prompts (12 — 1:1 with `photoshop_recipe_*`)
+### Recipe prompts (15 — 1:1 with `photoshop_recipe_*`)
 
 | Prompt | Recipe tool |
 |--------|-------------|
@@ -35,6 +35,9 @@ Sixteen templates in [`src/prompts/templates/`](../src/prompts/templates/), regi
 | `ps.sky_blend` | `photoshop_recipe_sky_blend` |
 | `ps.dodge_burn` | `photoshop_recipe_dodge_burn` |
 | `ps.remove_distraction` | `photoshop_recipe_remove_distraction` |
+| `ps.split_carousel` | `photoshop_recipe_split_carousel` |
+| `ps.batch_watermark` | `photoshop_recipe_batch_watermark` |
+| `ps.passport_photo` | `photoshop_recipe_passport_photo` |
 
 ### Guide prompts (7 — no recipe pair)
 
@@ -54,9 +57,9 @@ and returns a `GetPromptResult` with `description` + structured Goal/Plan/End st
 
 ## 3. Recipe tools
 
-Twelve recipes in [`src/tools/recipes/`](../src/tools/recipes/), sharing
+Fifteen recipes in [`src/tools/recipes/`](../src/tools/recipes/), sharing
 [`src/tools/recipes/_shared.ts`](../src/tools/recipes/_shared.ts) (`executeRecipe`,
-`suspendHistory`, uniform `{ ok, summary, ... }` envelope).
+`executeStandaloneRecipe`, `suspendHistory`, uniform `{ ok, summary, ... }` envelope).
 
 Export recipes write to `~/.photoshop-mcp/exports` (or `~/.photoshop-mcp/exports/<chat-id>`
 when the standalone UI passes `PHOTOSHOP_EXPORT_CHAT_ID` to the MCP child).
@@ -75,7 +78,7 @@ when the standalone UI passes `PHOTOSHOP_EXPORT_CHAT_ID` to the MCP child).
 npm run verify:photoshop-prompts
 ```
 
-Strict **12↔12** recipe/prompt parity plus separate guide prompt registration check.
+Strict **15↔15** recipe/prompt parity plus separate guide prompt registration check.
 
 ## Backwards compatibility
 

@@ -19,6 +19,9 @@ import { compositeBlendTemplate } from './templates/composite-blend.js';
 import { generativeFillTemplate } from './templates/generative-fill.js';
 import { generativeRemoveTemplate } from './templates/generative-remove.js';
 import { generativeExpandTemplate } from './templates/generative-expand.js';
+import { splitCarouselTemplate } from './templates/split-carousel.js';
+import { batchWatermarkTemplate } from './templates/batch-watermark.js';
+import { passportPhotoTemplate } from './templates/passport-photo.js';
 
 export const PHOTOSHOP_GUIDE_PROMPT_NAMES = [
   'ps.gradient_blend',
@@ -50,6 +53,9 @@ export const PHOTOSHOP_PROMPT_TEMPLATES = [
   generativeFillTemplate,
   generativeRemoveTemplate,
   generativeExpandTemplate,
+  splitCarouselTemplate,
+  batchWatermarkTemplate,
+  passportPhotoTemplate,
 ] as const;
 
 export function registerPhotoshopPrompts(registry: PromptRegistry): void {
