@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="260" viewBox="0 0 640 260" font-family="Helvetica, Arial, sans-serif">
+  <rect width="640" height="260" rx="12" fill="#f6f8fa"/>
+  <text x="320" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#1f2328">photoshop_recipe_remove_background</text>
+  <text x="320" y="48" text-anchor="middle" font-size="11" fill="#57606a">Select Subject + layer mask · original pixels preserved</text>
+
+  <defs>
+    <pattern id="checker" width="16" height="16" patternUnits="userSpaceOnUse">
+      <rect width="16" height="16" fill="#ffffff"/>
+      <rect width="8" height="8" fill="#d0d7de"/>
+      <rect x="8" y="8" width="8" height="8" fill="#d0d7de"/>
+    </pattern>
+    <linearGradient id="busybg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b85c38"/>
+      <stop offset="0.5" stop-color="#3e7d4e"/>
+      <stop offset="1" stop-color="#3d6db5"/>
+    </linearGradient>
+    <g id="person2">
+      <circle cx="0" cy="-18" r="16" fill="#8b4a3a"/>
+      <path d="M -26 22 Q -26 -4 0 -4 Q 26 -4 26 22 Z" fill="#8b4a3a"/>
+    </g>
+  </defs>
+
+  <!-- before: busy background, crossed -->
+  <g>
+    <rect x="40" y="66" width="150" height="100" rx="6" fill="url(#busybg)"/>
+    <use href="#person2" x="115" y="118"/>
+    <rect x="40" y="66" width="150" height="100" rx="6" fill="none" stroke="#d0d7de" stroke-width="1.5"/>
+    <line x1="40" y1="66" x2="190" y2="166" stroke="#cf222e" stroke-width="3" opacity="0.85"/>
+    <line x1="190" y1="66" x2="40" y2="166" stroke="#cf222e" stroke-width="3" opacity="0.85"/>
+    <text x="115" y="182" text-anchor="middle" font-size="11" fill="#57606a">before</text>
+  </g>
+
+  <!-- arrow -->
+  <line x1="205" y1="116" x2="245" y2="116" stroke="#57606a" stroke-width="2"/>
+  <polygon points="245,110 257,116 245,122" fill="#57606a"/>
+
+  <!-- after: subject on transparency -->
+  <g>
+    <rect x="272" y="66" width="150" height="100" rx="6" fill="url(#checker)"/>
+    <use href="#person2" x="347" y="118"/>
+    <rect x="272" y="66" width="150" height="100" rx="6" fill="none" stroke="#d0d7de" stroke-width="1.5"/>
+    <text x="347" y="182" text-anchor="middle" font-size="11" fill="#57606a">after · mask</text>
+  </g>
+
+  <!-- mask chip -->
+  <rect x="448" y="66" width="152" height="100" rx="6" fill="#eaeef2"/>
+  <rect x="462" y="80" width="56" height="72" rx="4" fill="#1f2328"/>
+  <use href="#person2" x="490" y="118" opacity="1"/>
+  <circle cx="490" cy="100" r="16" fill="#ffffff"/>
+  <path d="M 464 152 Q 464 114 490 114 Q 516 114 516 152 Z" fill="#ffffff"/>
+  <text x="528" y="92" font-size="10.5" font-weight="700" fill="#1f2328">layer mask</text>
+  <text x="528" y="107" font-size="10" fill="#57606a">non-</text>
+  <text x="528" y="119" font-size="10" fill="#57606a">destructive</text>
+  <text x="524" y="152" font-size="10" fill="#57606a">undo: 1 step</text>
+
+  <rect x="30" y="200" width="580" height="46" rx="8" fill="#eaeef2"/>
+  <text x="44" y="220" font-size="11.5" fill="#1f2328" font-weight="600">feather 0–20 px · PS 23+ (Select Subject v2)</text>
+  <text x="44" y="237" font-size="11" fill="#57606a">fails safely on text/smart objects — rasterize hint included</text>
+</svg>

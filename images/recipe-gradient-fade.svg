@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="260" viewBox="0 0 640 260" font-family="Helvetica, Arial, sans-serif">
+  <rect width="640" height="260" rx="12" fill="#f6f8fa"/>
+  <text x="320" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#1f2328">photoshop_recipe_gradient_fade</text>
+  <text x="320" y="48" text-anchor="middle" font-size="11" fill="#57606a">linear gradient on the layer mask — subject melts into the background</text>
+
+  <defs>
+    <linearGradient id="fadeout" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8b4a3a" stop-opacity="1"/>
+      <stop offset="1" stop-color="#8b4a3a" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="bgscene" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7fb2e5"/>
+      <stop offset="1" stop-color="#3e7d4e"/>
+    </linearGradient>
+    <linearGradient id="maskgrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#1f2328"/>
+    </linearGradient>
+  </defs>
+
+  <!-- scene with fading subject -->
+  <rect x="40" y="64" width="300" height="120" rx="6" fill="url(#bgscene)"/>
+  <circle cx="100" cy="96" r="14" fill="#fff3d6" opacity="0.9"/>
+  <g>
+    <circle cx="220" cy="106" r="20" fill="url(#fadeout)"/>
+    <path d="M 188 184 Q 188 126 220 126 Q 252 126 252 184 Z" fill="url(#fadeout)"/>
+  </g>
+  <rect x="40" y="64" width="300" height="120" rx="6" fill="none" stroke="#d0d7de" stroke-width="1.5"/>
+  <text x="190" y="200" text-anchor="middle" font-size="11" fill="#57606a">bottom_to_top fade</text>
+
+  <!-- mask thumbnail -->
+  <rect x="370" y="64" width="90" height="120" rx="6" fill="url(#maskgrad)"/>
+  <rect x="370" y="64" width="90" height="120" rx="6" fill="none" stroke="#d0d7de" stroke-width="1.5"/>
+  <text x="415" y="200" text-anchor="middle" font-size="11" fill="#57606a">mask</text>
+
+  <!-- direction chips -->
+  <g font-size="10" font-weight="600" fill="#1f2328">
+    <rect x="486" y="72" width="118" height="22" rx="11" fill="#ddeab5"/>
+    <text x="545" y="87" text-anchor="middle">bottom_to_top</text>
+    <rect x="486" y="100" width="118" height="22" rx="11" fill="#eaeef2"/>
+    <text x="545" y="115" text-anchor="middle">top_to_bottom</text>
+    <rect x="486" y="128" width="118" height="22" rx="11" fill="#eaeef2"/>
+    <text x="545" y="143" text-anchor="middle">left_to_right</text>
+    <rect x="486" y="156" width="118" height="22" rx="11" fill="#eaeef2"/>
+    <text x="545" y="171" text-anchor="middle">right_to_left</text>
+  </g>
+
+  <rect x="30" y="212" width="580" height="36" rx="8" fill="#eaeef2"/>
+  <text x="44" y="234" font-size="11.5" fill="#1f2328" font-weight="600">start/end % + angle override · mask stays editable</text>
+</svg>

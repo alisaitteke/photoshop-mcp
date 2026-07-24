@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="260" viewBox="0 0 640 260" font-family="Helvetica, Arial, sans-serif">
+  <rect width="640" height="260" rx="12" fill="#f6f8fa"/>
+  <text x="320" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#1f2328">photoshop_recipe_dodge_burn</text>
+  <text x="320" y="48" text-anchor="middle" font-size="11" fill="#57606a">50% gray overlay layer — paint light and shadow where you want them</text>
+
+  <!-- face card -->
+  <rect x="40" y="62" width="300" height="124" rx="8" fill="#ffffff" stroke="#d0d7de" stroke-width="1.5"/>
+  <circle cx="150" cy="118" r="40" fill="#e8c4ab"/>
+  <path d="M 104 186 Q 104 146 150 146 Q 196 146 196 186 Z" fill="#c09377"/>
+  <!-- dodge highlight -->
+  <ellipse cx="136" cy="106" rx="14" ry="9" fill="#ffffff" opacity="0.55"/>
+  <!-- burn shadow -->
+  <ellipse cx="168" cy="128" rx="10" ry="16" fill="#57606a" opacity="0.35"/>
+
+  <!-- arrows legend -->
+  <g>
+    <line x1="230" y1="92" x2="262" y2="78" stroke="#f9b24e" stroke-width="2.5"/>
+    <polygon points="260,72 272,76 263,85" fill="#f9b24e"/>
+    <text x="238" y="70" font-size="10" font-weight="700" fill="#1f2328">dodge</text>
+    <line x1="230" y1="152" x2="262" y2="166" stroke="#57606a" stroke-width="2.5"/>
+    <polygon points="263,159 272,168 260,171" fill="#57606a"/>
+    <text x="238" y="186" font-size="10" font-weight="700" fill="#1f2328">burn</text>
+  </g>
+
+  <!-- 50% gray layer chip -->
+  <rect x="370" y="62" width="230" height="124" rx="8" fill="#eaeef2"/>
+  <rect x="386" y="76" width="90" height="66" rx="5" fill="#808080"/>
+  <text x="431" y="113" text-anchor="middle" font-size="10.5" font-weight="700" fill="#ffffff">50% gray</text>
+  <text x="386" y="160" font-size="10" fill="#57606a">blend: overlay / soft light</text>
+  <text x="386" y="175" font-size="10" fill="#57606a">paint white = dodge · black = burn</text>
+
+  <rect x="30" y="200" width="580" height="46" rx="8" fill="#eaeef2"/>
+  <text x="44" y="220" font-size="11.5" fill="#1f2328" font-weight="600">non-destructive sculpting — overlay layer, no pixels touched</text>
+  <text x="44" y="237" font-size="11" fill="#57606a">guide prompt ps.dodge_burn_guide walks the manual setup</text>
+</svg>

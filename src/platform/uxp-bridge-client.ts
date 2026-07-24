@@ -22,7 +22,8 @@ export async function isUxpBridgeReachable(): Promise<boolean> {
   }
 }
 
-export type NeuralFilterKind = 'skin_smoothing' | 'harmonize' | 'depth_blur' | 'super_zoom';
+export type NeuralFilterKind =
+  'skin_smoothing' | 'harmonize' | 'depth_blur' | 'super_zoom' | 'colorize';
 
 export interface NeuralFilterParams {
   smoothness?: number;

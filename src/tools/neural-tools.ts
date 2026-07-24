@@ -16,6 +16,7 @@ const FILTER_KINDS: NeuralFilterKind[] = [
   'harmonize',
   'depth_blur',
   'super_zoom',
+  'colorize',
 ];
 
 function clampPct(value: unknown, fallback: number): number {
@@ -31,7 +32,7 @@ export function createNeuralTools(connection: PhotoshopConnection): ToolDefiniti
         name: 'photoshop_neural_filter',
         description:
           'Apply a Photoshop Neural Filter via the companion UXP bridge plugin.\n\n' +
-          'Use when: skin smoothing, harmonize composite layers, depth blur, or super zoom.\n' +
+          'Use when: skin smoothing, harmonize composite layers, depth blur, super zoom, or colorizing B&W photos.\n' +
           'Do NOT use when: uxp_bridge_reachable is false — install uxp-plugin per docs/development.md.\n\n' +
           'Returns: { ok, summary, details }.\n' +
           'Preconditions: UXP bridge plugin running in Photoshop; PS 22+.',

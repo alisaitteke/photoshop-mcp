@@ -55,15 +55,18 @@ const RECIPE_TO_PROMPT: Record<string, string> = {
   photoshop_recipe_sky_blend: 'ps.sky_blend',
   photoshop_recipe_dodge_burn: 'ps.dodge_burn',
   photoshop_recipe_remove_distraction: 'ps.remove_distraction',
+  photoshop_recipe_split_carousel: 'ps.split_carousel',
+  photoshop_recipe_batch_watermark: 'ps.batch_watermark',
+  photoshop_recipe_passport_photo: 'ps.passport_photo',
 };
 
 const promptNames = new Set(PHOTOSHOP_PROMPT_TEMPLATES.map((p) => p.name));
 const guidePromptNames = new Set<string>(PHOTOSHOP_GUIDE_PROMPT_NAMES);
 
-assert.equal(PHOTOSHOP_RECIPE_TOOL_NAMES.length, 12);
-assert.equal(Object.keys(RECIPE_TO_PROMPT).length, 12);
+assert.equal(PHOTOSHOP_RECIPE_TOOL_NAMES.length, 15);
+assert.equal(Object.keys(RECIPE_TO_PROMPT).length, 15);
 assert.equal(PHOTOSHOP_GUIDE_PROMPT_NAMES.length, 7);
-assert.equal(PHOTOSHOP_PROMPT_TEMPLATES.length, 19);
+assert.equal(PHOTOSHOP_PROMPT_TEMPLATES.length, 22);
 
 for (const recipeName of PHOTOSHOP_RECIPE_TOOL_NAMES) {
   const promptName = RECIPE_TO_PROMPT[recipeName];

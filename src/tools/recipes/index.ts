@@ -12,6 +12,9 @@ import { bindGradientFade } from './gradient-fade.js';
 import { bindSkyBlend } from './sky-blend.js';
 import { bindDodgeBurn } from './dodge-burn.js';
 import { bindRemoveDistraction } from './remove-distraction.js';
+import { bindSplitCarousel } from './split-carousel.js';
+import { bindBatchWatermark } from './batch-watermark.js';
+import { bindPassportPhoto } from './passport-photo.js';
 
 export function createRecipeTools(connection: PhotoshopConnection): ToolDefinition[] {
   return [
@@ -27,6 +30,9 @@ export function createRecipeTools(connection: PhotoshopConnection): ToolDefiniti
     bindSkyBlend(connection),
     bindDodgeBurn(connection),
     bindRemoveDistraction(connection),
+    bindSplitCarousel(connection),
+    bindBatchWatermark(connection),
+    bindPassportPhoto(connection),
   ];
 }
 
@@ -43,4 +49,7 @@ export const PHOTOSHOP_RECIPE_TOOL_NAMES = [
   'photoshop_recipe_sky_blend',
   'photoshop_recipe_dodge_burn',
   'photoshop_recipe_remove_distraction',
+  'photoshop_recipe_split_carousel',
+  'photoshop_recipe_batch_watermark',
+  'photoshop_recipe_passport_photo',
 ] as const;

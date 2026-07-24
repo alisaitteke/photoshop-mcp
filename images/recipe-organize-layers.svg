@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="260" viewBox="0 0 640 260" font-family="Helvetica, Arial, sans-serif">
+  <rect width="640" height="260" rx="12" fill="#f6f8fa"/>
+  <text x="320" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#1f2328">photoshop_recipe_organize_layers</text>
+  <text x="320" y="48" text-anchor="middle" font-size="11" fill="#57606a">rename by kind · group related layers · originals preserved</text>
+
+  <!-- before stack -->
+  <rect x="40" y="62" width="230" height="126" rx="8" fill="#ffffff" stroke="#d0d7de" stroke-width="1.5"/>
+  <g font-size="10.5" fill="#57606a">
+    <rect x="52" y="72" width="206" height="18" rx="4" fill="#eaeef2"/>
+    <text x="62" y="85">Layer 1</text>
+    <rect x="52" y="94" width="206" height="18" rx="4" fill="#eaeef2"/>
+    <text x="62" y="107">Layer 1 copy</text>
+    <rect x="52" y="116" width="206" height="18" rx="4" fill="#eaeef2"/>
+    <text x="62" y="129">Layer 1 copy 2</text>
+    <rect x="52" y="138" width="206" height="18" rx="4" fill="#eaeef2"/>
+    <text x="62" y="151">untitled-3</text>
+    <rect x="52" y="160" width="206" height="18" rx="4" fill="#eaeef2"/>
+    <text x="62" y="173">asdf</text>
+  </g>
+  <text x="155" y="202" text-anchor="middle" font-size="11" fill="#57606a">before</text>
+
+  <!-- arrow -->
+  <line x1="286" y1="125" x2="320" y2="125" stroke="#57606a" stroke-width="2"/>
+  <polygon points="320,119 332,125 320,131" fill="#57606a"/>
+
+  <!-- after stack -->
+  <rect x="346" y="62" width="254" height="126" rx="8" fill="#ffffff" stroke="#d0d7de" stroke-width="1.5"/>
+  <g font-size="10.5" fill="#1f2328">
+    <rect x="358" y="72" width="230" height="20" rx="4" fill="#ddeab5"/>
+    <text x="368" y="86" font-weight="700">▸ text/</text>
+    <rect x="358" y="96" width="230" height="18" rx="4" fill="#eaeef2"/>
+    <text x="378" y="109" font-size="10">headline · caption</text>
+    <rect x="358" y="118" width="230" height="20" rx="4" fill="#ddeab5"/>
+    <text x="368" y="132" font-weight="700">▸ images/</text>
+    <rect x="358" y="142" width="230" height="18" rx="4" fill="#eaeef2"/>
+    <text x="378" y="155" font-size="10">hero · texture</text>
+    <rect x="358" y="164" width="230" height="18" rx="4" fill="#f6e3a1"/>
+    <text x="368" y="177">background</text>
+  </g>
+  <text x="473" y="202" text-anchor="middle" font-size="11" fill="#57606a">after</text>
+
+  <rect x="30" y="212" width="580" height="36" rx="8" fill="#eaeef2"/>
+  <text x="44" y="234" font-size="11.5" fill="#1f2328" font-weight="600">deterministic names — future prompts can target layers reliably</text>
+</svg>

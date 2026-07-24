@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="260" viewBox="0 0 640 260" font-family="Helvetica, Arial, sans-serif">
+  <rect width="640" height="260" rx="12" fill="#f6f8fa"/>
+  <text x="320" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#1f2328">photoshop_recipe_batch_watermark</text>
+  <text x="320" y="48" text-anchor="middle" font-size="11" fill="#57606a">every image in a folder → watermarked JPEG out · originals untouched</text>
+
+  <defs>
+    <linearGradient id="ph1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7fb2e5"/>
+      <stop offset="1" stop-color="#3d6db5"/>
+    </linearGradient>
+    <linearGradient id="ph2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8a15c"/>
+      <stop offset="1" stop-color="#b85c38"/>
+    </linearGradient>
+    <linearGradient id="ph3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fce9a"/>
+      <stop offset="1" stop-color="#3e7d4e"/>
+    </linearGradient>
+    <g id="thumb">
+      <rect width="150" height="86" rx="6" fill="url(#ph1)"/>
+      <circle cx="34" cy="26" r="10" fill="#fff3d6" opacity="0.9"/>
+      <polygon points="0,86 58,42 104,86" fill="#2f3b52" opacity="0.8"/>
+      <polygon points="70,86 118,50 150,86" fill="#232c40" opacity="0.85"/>
+      <rect width="150" height="86" rx="6" fill="none" stroke="#d0d7de" stroke-width="1.5"/>
+      <g opacity="0.75">
+        <rect x="96" y="60" width="46" height="18" rx="9" fill="#ffffff"/>
+        <text x="119" y="73" text-anchor="middle" font-size="10" font-weight="700" fill="#57606a">©</text>
+      </g>
+    </g>
+  </defs>
+
+  <use href="#thumb" x="40" y="66"/>
+  <use href="#thumb" x="40" y="162"/>
+  <use href="#thumb" x="205" y="66"/>
+  <use href="#thumb" x="205" y="162"/>
+  <use href="#thumb" x="370" y="66"/>
+  <use href="#thumb" x="370" y="162"/>
+
+  <!-- side panel -->
+  <rect x="540" y="66" width="80" height="182" rx="8" fill="#eaeef2"/>
+  <text x="580" y="92" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1f2328">position</text>
+  <g fill="#9fa7ae">
+    <rect x="552" y="104" width="14" height="10" rx="2"/>
+    <rect x="594" y="104" width="14" height="10" rx="2"/>
+    <rect x="552" y="150" width="14" height="10" rx="2"/>
+  </g>
+  <rect x="594" y="150" width="14" height="10" rx="2" fill="#1f883d"/>
+  <text x="580" y="184" text-anchor="middle" font-size="10" fill="#57606a">bottom_right</text>
+  <text x="580" y="200" text-anchor="middle" font-size="10" fill="#57606a">opacity 40%</text>
+  <text x="580" y="228" text-anchor="middle" font-size="10" fill="#57606a">text or logo</text>
+</svg>

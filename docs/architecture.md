@@ -44,8 +44,8 @@ flowchart TB
 | ----- | -------------- | --------- |
 | **MCP core** | Tool/prompt registry, session, MCP protocol | `src/core/` |
 | **Platform** | Photoshop detection, script execution | `src/platform/` |
-| **Tools** | 74 atomic + 12 recipe MCP tools (+ generative & neural) | `src/tools/` |
-| **Prompt layer** | Server instructions, 19 MCP prompt templates | `src/prompts/` |
+| **Tools** | 74 atomic + 15 recipe MCP tools (+ generative & neural) | `src/tools/` |
+| **Prompt layer** | Server instructions, 22 MCP prompt templates | `src/prompts/` |
 | **Errors** | Structured envelopes for agent self-correction | `src/errors/envelope.ts` |
 | **Standalone UI** | Hono API, multi-provider agent, chat persistence | `src/ui/`, `web/` |
 | **Analytics** | Opt-out anonymous usage (Mixpanel / PostHog) | `src/analytics/` |
@@ -56,8 +56,8 @@ flowchart TB
 
 `PhotoshopMCPServer` wires the official MCP SDK with:
 
-- **86 tools** registered via `ToolRegistry` (atomic operations + outcome-oriented recipes + generative/neural AI).
-- **19 prompts** via `PromptRegistry` (`prompts/list`, `prompts/get`).
+- **89 tools** registered via `ToolRegistry` (atomic operations + outcome-oriented recipes + generative/neural AI).
+- **22 prompts** via `PromptRegistry` (`prompts/list`, `prompts/get`).
 - **Server instructions** on `initialize` — workflow contract for host LLMs (state-before-action, prefer recipes, error recovery). See [`src/prompts/instructions.ts`](../src/prompts/instructions.ts).
 - **Structured error wrapping** — every tool handler passes through `wrapToolHandler` so failures return JSON with `code` and `suggested_next_tool` for agentic repair loops.
 

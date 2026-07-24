@@ -94,6 +94,12 @@ User intent glossary
 - export.social — "for Instagram", "web export" →
   \`photoshop_recipe_export_social_variants\` or \`photoshop_recipe_prepare_for_web\`
 - layers.organize — "organize layers", "rename mess" → \`photoshop_recipe_organize_layers\`
+- carousel.split — "seamless carousel", "split panorama", "swipe post", "slayt"
+  → \`photoshop_recipe_split_carousel\`
+- batch.watermark — "watermark these photos", "add logo to all", "toplu filigran"
+  → \`photoshop_recipe_batch_watermark\`
+- id.passport — "passport photo", "visa photo", "ID photo", "vesikalık", "biyometrik"
+  → \`photoshop_recipe_passport_photo\`
 
 Degrade paths
 - Generative remove / distraction — prefer \`photoshop_generative_remove\`; degrade to
@@ -124,7 +130,8 @@ Guide prompts (MCP prompts/get)
   \`ps.enhance_portrait\`, \`ps.prepare_for_web\`, \`ps.export_social_variants\`,
   \`ps.apply_color_grade\`, \`ps.frequency_separation\`, \`ps.batch_mockup_replace\`,
   \`ps.organize_layers\`, \`ps.gradient_fade\`, \`ps.sky_blend\`, \`ps.dodge_burn\`,
-  \`ps.remove_distraction\`
+  \`ps.remove_distraction\`, \`ps.split_carousel\`, \`ps.batch_watermark\`,
+  \`ps.passport_photo\`
 - Guide prompts (no recipe pair): \`ps.gradient_blend\` — fade via mask gradient;
   \`ps.color_correct\` — tone / contrast fix chain; \`ps.dodge_burn_guide\` — 50% gray
   overlay setup; \`ps.composite_blend\` — place asset + mask + blend mode;
