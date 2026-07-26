@@ -5,24 +5,42 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
 ## [1.4.0] - 2026-07-03
 
 [v1.3.13...v1.4.0](https://github.com/alisaitteke/photoshop-mcp/compare/v1.3.13...v1.4.0)
 
-### Features
+### Other
 
-- **Generative AI tools** — `photoshop_generative_fill`, `photoshop_generative_remove`, `photoshop_generative_expand`, `photoshop_generative_upscale`, `photoshop_sky_replacement`, `photoshop_generate_image` (Firefly via ExtendScript, 120s timeout).
-- **Neural Filters** — `photoshop_neural_filter` via optional UXP bridge (`uxp-plugin/` + MCP poll server on port 38452).
-- **Capabilities** — extended `photoshop_get_capabilities` with `generative_remove`, `generative_expand`, `neural_filters`, `uxp_bridge_reachable`, `sky_replacement_native`.
-- **Prompts** — `ps.generative_fill`, `ps.generative_remove`, `ps.generative_expand` guide templates.
-- **Recipe upgrades** — `remove_distraction` and `sky_blend` prefer native generative paths when capable; `enhance_portrait` supports `use_neural_skin`.
-- **Spike** — extended `spike:photoshop-actions` probes + `scripts/output/generative-probe-report.json`.
+- release: v1.4.0 — Photoshop native AI (Generative + Neural Filters) (`d76e822`)
 
 ### Version bumps
 
-- 1.4.0
+- 1.3.13 (`b94812f`)
+
+## [1.3.13] - 2026-07-03
+
+[v1.3.12...v1.3.13](https://github.com/alisaitteke/photoshop-mcp/compare/v1.3.12...v1.3.13)
+
+### Documentation
+
+- docs: add README hero banner with alisait.com branding (`c535f7d`)
+- docs: add portfolio positioning, architecture deep-dive, and social preview assets (`1011044`)
+
+### Chores
+
+- chore(images): update og-social.png to enhance visual quality and branding (`74d48e5`)
+
+## [1.3.12] - 2026-07-02
+
+[v1.3.11...v1.3.12](https://github.com/alisaitteke/photoshop-mcp/compare/v1.3.11...v1.3.12)
+
+### Features
+
+- feat(analytics): improve Mixpanel tracking with cohorts, milestones, and flush parity (`b7daf3a`)
+
+### Version bumps
+
+- 1.3.12 (`d016e61`)
 
 ## [1.3.11] - 2026-07-02
 
@@ -241,11 +259,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 1.1.0 (`6e1c1f0`)
 - 1.0.0 (`17d8d91`)
 
-## [1.3.12] - 2026-07-02
+## [1.5.0] - 2026-07-27
 
-[v1.3.11...HEAD](https://github.com/alisaitteke/photoshop-mcp/compare/v1.3.11...HEAD) *(pending tag v1.3.12)*
+[v1.4.0...HEAD](https://github.com/alisaitteke/photoshop-mcp/compare/v1.4.0...HEAD) *(pending tag v1.5.0)*
 
 ### Features
 
-- feat(analytics): improve Mixpanel tracking with cohorts, milestones, and flush parity (`b7daf3a`)
+- feat(tools): add split_carousel, batch_watermark, passport_photo recipes and neural colorize (`f266aee`)
+
+### Fixes
+
+- fix(layers): make photoshop_duplicate_layer activate the duplicate (`50b1a88`)
+
+### Documentation
+
+- docs(readme): make recipe examples visible with infographics for all 15 recipes (`afbe5be`)
+- docs(i18n): add locale README translations (ES, ZH, DE, JA, TR) (`bdde203`)
 
