@@ -68,8 +68,11 @@ export class MacOSDetector {
   private getCommonPaths(): string[] {
     const paths: string[] = [];
 
-    // Generate paths for versions 2012-2025
-    for (let year = 2025; year >= 2012; year--) {
+    // Generate paths from next year's release (Adobe ships "Photoshop N+1"
+    // in the autumn of year N) back to 2012, so new versions are found
+    // without a code change.
+    const maxYear = new Date().getFullYear() + 1;
+    for (let year = maxYear; year >= 2012; year--) {
       paths.push(
         `/Applications/Adobe Photoshop ${year}/Adobe Photoshop ${year}.app`,
         `/Applications/Adobe Photoshop CC ${year}/Adobe Photoshop CC ${year}.app`,
@@ -77,11 +80,13 @@ export class MacOSDetector {
       );
     }
 
-    // Also check for version-less installation
+    // Also check for version-less and beta installations
     paths.push(
       '/Applications/Adobe Photoshop CC/Adobe Photoshop CC.app',
       '/Applications/Adobe Photoshop/Adobe Photoshop.app',
-      '/Applications/Adobe Photoshop.app'
+      '/Applications/Adobe Photoshop.app',
+      '/Applications/Adobe Photoshop (Beta)/Adobe Photoshop (Beta).app',
+      '/Applications/Adobe Photoshop (Beta).app'
     );
 
     return paths;
