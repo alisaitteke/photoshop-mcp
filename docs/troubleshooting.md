@@ -29,6 +29,25 @@ Common issues when connecting to or scripting Photoshop through the MCP server.
 - The default timeout is 30 seconds
 - For complex operations, consider breaking them into smaller steps
 
+### `photoshop_execute_script` returns `Result: undefined`
+
+**Symptom:** The tool succeeds but the result text is `"undefined"`, or you assume the script did not run.
+
+**Cause:** ExtendScript runs inside a server-side IIFE wrapper. Without an explicit `return`, the inner block evaluates to `undefined` — side effects (layer renames, property changes, etc.) may still have applied.
+
+**Fix:** Add an explicit return in your script:
+
+```javascript
+photoshop_execute_script({
+  code: `
+    app.activeDocument.activeLayer.name = "Updated";
+    return { ok: true };
+  `
+})
+```
+
+See also the `photoshop_execute_script` section in [`docs/available-tools.md`](available-tools.md).
+
 ### Debug Logging
 
 Enable detailed logging by setting `LOG_LEVEL=0`:

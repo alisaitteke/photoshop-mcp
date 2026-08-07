@@ -20,6 +20,7 @@ import {
   apiSaveKey,
   apiSetActive,
   apiSetAuthMethod,
+  apiSetCliPath,
   apiValidateCli,
   apiValidateCustomProvider,
   apiValidateKey,
@@ -28,6 +29,7 @@ import {
   type ProviderInfo,
 } from '@/lib/api';
 import { capture } from '@/lib/analytics';
+import { formatCliAuthError } from '@/lib/cli-auth-errors';
 
 const emit = defineEmits<{ saved: [] }>();
 
@@ -35,6 +37,7 @@ const providers = ref<ProviderInfo[]>([]);
 const selectedId = ref<ProviderId>('anthropic');
 const authMethod = ref<AuthMethod>('api_key');
 const apiKey = ref('');
+const cliPath = ref('');
 const validating = ref(false);
 const error = ref<string | null>(null);
 
@@ -114,9 +117,17 @@ async function submitBuiltIn(): Promise<void> {
     }
     await apiSaveKey(provider.id, apiKey.value);
   } else {
+    const path = cliPath.value.trim();
+    if (path) {
+      await apiSetCliPath(provider.id, path);
+    }
     const validation = await apiValidateCli(provider.id);
     if (!validation.ok) {
-      error.value = validation.error || 'CLI is not authenticated.';
+      error.value = formatCliAuthError(
+        validation.error,
+        provider.id,
+        validation.detail
+      );
       return;
     }
   }
@@ -188,6 +199,12 @@ const canSubmit = computed(() => {
   if (authMethod.value === 'api_key') return Boolean(apiKey.value.trim());
   return true;
 });
+
+function cliPathPlaceholder(provider: ProviderInfo): string {
+  return provider.cliBinaryName
+    ? `/usr/local/bin/${provider.cliBinaryName}`
+    : 'Optional custom path';
+}
 </script>
 
 <template>
@@ -284,9 +301,22 @@ const canSubmit = computed(() => {
                 <code class="text-foreground">{{ CLI_INSTALL[selected.id]!.login }}</code>
               </p>
               <p class="mt-2">
+                Anthropic API keys and Agent SDK sessions do not apply here — use
+                <strong>API key</strong> auth if that is how you already connect.
+              </p>
+              <p class="mt-2">
                 Then click validate — usage counts against your subscription quota, not API
                 billing.
               </p>
+            </div>
+            <div class="space-y-2">
+              <Label for="cli-path">CLI path (optional)</Label>
+              <Input
+                id="cli-path"
+                v-model="cliPath"
+                :placeholder="cliPathPlaceholder(selected)"
+                :disabled="validating"
+              />
             </div>
           </template>
         </template>
@@ -345,7 +375,7 @@ const canSubmit = computed(() => {
           </div>
         </template>
 
-        <p v-if="error" class="text-sm text-destructive">{{ error }}</p>
+        <p v-if="error" class="whitespace-pre-line text-sm text-destructive">{{ error }}</p>
       </CardContent>
       <CardFooter>
         <Button class="w-full" :disabled="validating || !canSubmit" @click="submit">

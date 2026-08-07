@@ -631,6 +631,54 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 }
 ```
 
+**Can't find the config file?** In Claude Desktop, open **Settings → Developer → Edit Config** — it opens the correct path for your install (the `%APPDATA%` path may differ on some setups).
+
+### For Claude Code
+
+Use the [Claude Code CLI](https://code.claude.com/docs/en/agent-sdk/mcp) or the [Claude Agent SDK](https://code.claude.com/docs/en/agent-sdk/mcp) with the same MCP server entry.
+
+**Recommended (CLI):**
+
+```bash
+claude mcp add photoshop -- npx -y @alisaitteke/photoshop-mcp
+```
+
+**Manual JSON** — merge into your project `.mcp.json` or Claude Code MCP settings (see [`examples/claude-code-mcp.json`](examples/claude-code-mcp.json)):
+
+```json
+{
+  "mcpServers": {
+    "photoshop": {
+      "command": "npx",
+      "args": ["-y", "@alisaitteke/photoshop-mcp"],
+      "env": {
+        "LOG_LEVEL": "1"
+      }
+    }
+  }
+}
+```
+
+**Agent SDK (TypeScript)** — pass the same `mcpServers` block in your `query()` options:
+
+```typescript
+import { query } from '@anthropic-ai/claude-agent-sdk';
+
+const q = query({
+  prompt: 'List open documents in Photoshop',
+  options: {
+    mcpServers: {
+      photoshop: {
+        command: 'npx',
+        args: ['-y', '@alisaitteke/photoshop-mcp'],
+        env: { LOG_LEVEL: '1' },
+      },
+    },
+    allowedTools: ['mcp__photoshop__*'],
+  },
+});
+```
+
 ### Environment Variables
 
 - `PHOTOSHOP_PATH`: (Optional) Specify custom Photoshop installation path
@@ -733,7 +781,8 @@ Common connection, scripting, and logging issues:
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | `cli_not_found` | Claude Code / Gemini CLI not installed | `npm i -g @anthropic-ai/claude-code` or `npm i -g @google/gemini-cli` |
-| `not_authenticated` | No OAuth session | Run `claude auth login` or `gemini auth login` in Terminal |
+| `not_authenticated` | No CLI OAuth session (API key / SDK auth does not count) | Run `claude auth login` or `gemini auth login` in Terminal, or switch to **API key** auth |
+| SDK client works, UI CLI mode fails | SDK/API credentials are separate from Claude Code CLI OAuth | Use **API key** in the standalone UI, or log in with `claude auth login` for CLI account mode |
 | `claude` / `gemini` not on `PATH` | Custom install location | Settings → **CLI path** → **Check connection** |
 | Chat works in IDE but not UI (CLI mode) | OAuth tokens are CLI-only | Use **CLI account** in UI; API keys and CLI sessions are separate |
 | Gemini multi-turn feels forgetful | Headless CLI may start a fresh session each turn | Known limitation; history is prepended to the prompt (MVP) |

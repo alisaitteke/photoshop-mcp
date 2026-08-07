@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "photoshop": {
+      "command": "npx",
+      "args": ["-y", "@alisaitteke/photoshop-mcp"],
+      "env": {
+        "LOG_LEVEL": "1",
+        "PHOTOSHOP_PATH": ""
+      }
+    }
+  }
+}

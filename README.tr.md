@@ -608,6 +608,54 @@ Claude Desktop yapılandırmanıza ekleyin (macOS'ta `~/Library/Application Supp
 }
 ```
 
+**Yapılandırma dosyasını bulamıyor musunuz?** Claude Desktop'ta **Settings → Developer → Edit Config** yolunu kullanın — kurulumunuza uygun dosyayı açar (`%APPDATA%` yolu her zaman aynı olmayabilir).
+
+### Claude Code için
+
+[Claude Code CLI](https://code.claude.com/docs/en/agent-sdk/mcp) veya [Claude Agent SDK](https://code.claude.com/docs/en/agent-sdk/mcp) ile aynı MCP sunucu girdisini kullanın.
+
+**Önerilen (CLI):**
+
+```bash
+claude mcp add photoshop -- npx -y @alisaitteke/photoshop-mcp
+```
+
+**Manuel JSON** — proje `.mcp.json` dosyanıza veya Claude Code MCP ayarlarınıza ekleyin ([`examples/claude-code-mcp.json`](examples/claude-code-mcp.json)):
+
+```json
+{
+  "mcpServers": {
+    "photoshop": {
+      "command": "npx",
+      "args": ["-y", "@alisaitteke/photoshop-mcp"],
+      "env": {
+        "LOG_LEVEL": "1"
+      }
+    }
+  }
+}
+```
+
+**Agent SDK (TypeScript)** — `query()` seçeneklerinde aynı `mcpServers` bloğunu geçirin:
+
+```typescript
+import { query } from '@anthropic-ai/claude-agent-sdk';
+
+const q = query({
+  prompt: 'Photoshop\'ta açık belgeleri listele',
+  options: {
+    mcpServers: {
+      photoshop: {
+        command: 'npx',
+        args: ['-y', '@alisaitteke/photoshop-mcp'],
+        env: { LOG_LEVEL: '1' },
+      },
+    },
+    allowedTools: ['mcp__photoshop__*'],
+  },
+});
+```
+
 ### Ortam Değişkenleri
 
 - `PHOTOSHOP_PATH`: (İsteğe bağlı) Özel Photoshop kurulum yolunu belirtin
@@ -717,7 +765,8 @@ Yaygın bağlantı, betik ve günlük kaydı sorunları:
 | Belirti | Olası neden | Düzeltme |
 |---|---|---|
 | `cli_not_found` | Claude Code / Gemini CLI yüklü değil | `npm i -g @anthropic-ai/claude-code` veya `npm i -g @google/gemini-cli` |
-| `not_authenticated` | OAuth oturumu yok | Terminal'de `claude auth login` veya `gemini auth login` çalıştırın |
+| `not_authenticated` | CLI OAuth oturumu yok (API anahtarı / SDK oturumu sayılmaz) | Terminal'de `claude auth login` veya `gemini auth login` çalıştırın veya **API key** moduna geçin |
+| SDK istemcisi çalışıyor, UI CLI modu başarısız | SDK/API kimlik bilgileri Claude Code CLI OAuth'tan ayrıdır | Bağımsız UI'da **API key** kullanın veya CLI hesabı için `claude auth login` çalıştırın |
 | `claude` / `gemini` `PATH`'de yok | Özel kurulum konumu | Ayarlar → **CLI path** → **Check connection** |
 | Sohbet IDE'de çalışıyor ama UI'da çalışmıyor (CLI modu) | OAuth tokenları yalnızca CLI'ya özgü | UI'da **CLI account** kullanın; API anahtarları ve CLI oturumları ayrıdır |
 | Gemini çok turlu konuşmalarda unutkanlık gösteriyor | Başsız CLI her turda yeni oturum açabilir | Bilinen kısıtlama; geçmiş isteme eklenir (MVP) |

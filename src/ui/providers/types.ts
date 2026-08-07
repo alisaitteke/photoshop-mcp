@@ -33,6 +33,7 @@ export interface ApiKeyValidation {
 export interface CliAccountValidation {
   ok: boolean;
   error?: string;
+  detail?: string;
   accountLabel?: string;
 }
 

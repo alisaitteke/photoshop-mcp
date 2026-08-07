@@ -222,7 +222,7 @@ export const apiSetAuthMethod = (id: ProviderId, authMethod: AuthMethod) =>
   });
 
 export const apiValidateCli = (id: ProviderId) =>
-  api<{ ok: boolean; error?: string; accountLabel?: string }>(
+  api<{ ok: boolean; error?: string; detail?: string; accountLabel?: string }>(
     `/api/providers/${id}/validate-cli`,
     { method: 'POST', body: '{}' }
   );
