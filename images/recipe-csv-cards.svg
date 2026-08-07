@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="260" viewBox="0 0 640 260" font-family="Helvetica, Arial, sans-serif">
+  <rect width="640" height="260" rx="12" fill="#f6f8fa"/>
+  <text x="320" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#1f2328">photoshop_recipe_csv_to_cards</text>
+  <text x="320" y="48" text-anchor="middle" font-size="11" fill="#57606a">CSV rows → data sets → one personalized card per row ("mail merge for images")</text>
+
+  <!-- CSV table -->
+  <g transform="translate(70,78)">
+    <rect width="200" height="130" rx="6" fill="#ffffff" stroke="#d0d7de" stroke-width="1.5"/>
+    <rect width="200" height="26" rx="6" fill="#eaeef2"/>
+    <text x="14" y="17" font-size="10" font-weight="700" fill="#1f2328">name</text>
+    <text x="112" y="17" font-size="10" font-weight="700" fill="#1f2328">role</text>
+    <g font-size="10" fill="#57606a">
+      <text x="14" y="44">Ada Lovelace</text>
+      <text x="112" y="44">Engineer</text>
+      <text x="14" y="70">Grace Hopper</text>
+      <text x="112" y="70">Admiral</text>
+      <text x="14" y="96">Alan Turing</text>
+      <text x="112" y="96">Pioneer</text>
+    </g>
+    <g stroke="#d0d7de" stroke-width="1">
+      <line x1="0" y1="52" x2="200" y2="52"/>
+      <line x1="0" y1="78" x2="200" y2="78"/>
+      <line x1="0" y1="104" x2="200" y2="104"/>
+      <line x1="100" y1="0" x2="100" y2="130"/>
+    </g>
+    <text x="0" y="148" font-size="10" fill="#57606a">speakers.csv</text>
+  </g>
+
+  <!-- arrow -->
+  <g transform="translate(300,138)">
+    <line x1="0" y1="0" x2="34" y2="0" stroke="#57606a" stroke-width="1.5"/>
+    <polygon points="30,-6 44,0 30,6" fill="#57606a"/>
+  </g>
+
+  <!-- output cards -->
+  <g transform="translate(380,66)">
+    <g transform="translate(0,0)">
+      <rect width="190" height="52" rx="6" fill="#ffffff" stroke="#d0d7de" stroke-width="1.5"/>
+      <circle cx="26" cy="26" r="14" fill="#eaeef2" stroke="#d0d7de" stroke-width="1"/>
+      <text x="50" y="24" font-size="11" font-weight="700" fill="#1f2328">Ada Lovelace</text>
+      <text x="50" y="40" font-size="10" fill="#57606a">Engineer</text>
+      <text x="182" y="44" text-anchor="end" font-size="8" fill="#8b949e">row_1.png</text>
+    </g>
+    <g transform="translate(0,62)">
+      <rect width="190" height="52" rx="6" fill="#ffffff" stroke="#d0d7de" stroke-width="1.5"/>
+      <circle cx="26" cy="26" r="14" fill="#eaeef2" stroke="#d0d7de" stroke-width="1"/>
+      <text x="50" y="24" font-size="11" font-weight="700" fill="#1f2328">Grace Hopper</text>
+      <text x="50" y="40" font-size="10" fill="#57606a">Admiral</text>
+      <text x="182" y="44" text-anchor="end" font-size="8" fill="#8b949e">row_2.png</text>
+    </g>
+    <g transform="translate(0,124)">
+      <rect width="190" height="52" rx="6" fill="#ffffff" stroke="#d0d7de" stroke-width="1.5"/>
+      <circle cx="26" cy="26" r="14" fill="#eaeef2" stroke="#d0d7de" stroke-width="1"/>
+      <text x="50" y="24" font-size="11" font-weight="700" fill="#1f2328">Alan Turing</text>
+      <text x="50" y="40" font-size="10" fill="#57606a">Pioneer</text>
+      <text x="182" y="44" text-anchor="end" font-size="8" fill="#8b949e">row_3.png</text>
+    </g>
+  </g>
+
+  <text x="320" y="248" text-anchor="middle" font-size="10" fill="#57606a">template PSD with variable-bound layers + one CSV → N exported files, original untouched</text>
+</svg>

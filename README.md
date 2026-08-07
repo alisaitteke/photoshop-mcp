@@ -388,6 +388,17 @@ Note: framing is approximated from subject bounds — official acceptance is not
 
 Equivalent MCP prompt template: `ps.passport_photo` with `{ spec: "us_2x2", make_sheet: "true" }`.
 
+#### 🪪 CSV → cards (data-driven graphics)
+
+<img src="./images/recipe-csv-cards.svg" alt="CSV rows become data sets; one personalized card exported per row" width="640" />
+
+```
+Generate a name card for every row in ~/cards/speakers.csv using the open template PSD.
+PNG output to ~/cards/out — one file per row, named after the row.
+```
+
+Equivalent MCP prompt template: `ps.csv_to_cards` with `{ csv_path: "~/cards/speakers.csv", output_dir: "~/cards/out", format: "PNG" }`.
+
 ### More examples
 
 <details>
