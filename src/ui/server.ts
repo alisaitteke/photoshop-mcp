@@ -39,6 +39,14 @@ import {
 } from './config.js';
 import { getProvider, listProviders } from './providers/registry.js';
 import {
+  createSessionToken,
+  extractRequestToken,
+  matchesSessionToken,
+  removeSessionFile,
+  SESSION_TOKEN_HEADER,
+  writeSessionFile,
+} from './security/session-token.js';
+import {
   appendMessage,
   createChat,
   deleteChat,
@@ -76,10 +84,14 @@ const MIME: Record<string, string> = {
 export interface UIServerOptions {
   port: number;
   host: string;
+  /** Overrides the generated session token; primarily for tests. */
+  token?: string;
 }
 
 export interface UIServer {
   url: string;
+  /** Shared secret every `/api/*` request must present. */
+  token: string;
   close(): Promise<void>;
 }
 
@@ -92,13 +104,39 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
   getDB();
   ensureAnalyticsIdentity();
 
+  const token = opts.token ?? createSessionToken();
+  writeSessionFile({ token, port: opts.port, pid: process.pid });
+
   const abortControllers = new Map<string, AbortController>();
 
+  // `/api/*` reads and writes LLM provider credentials and drives Photoshop, so
+  // it is gated by three independent controls: a Host check (DNS rebinding), an
+  // Origin check (cross-origin browser callers), and a per-session token (local
+  // non-browser processes, which can forge any header but cannot read the
+  // token). Fetch metadata is only ever used to reject, never to grant trust.
   app.use('/api/*', async (c, next) => {
+    const host = parseHostHeader(c.req.header('host'));
+    if (!host || !isAllowedHost(host, opts)) {
+      return c.json({ error: 'invalid_host' }, 403);
+    }
+
     const origin = c.req.header('origin');
-    if (origin && !isLoopbackOrigin(origin, opts.port)) {
+    if (origin !== undefined && !isAllowedOrigin(origin, host.hostname, opts.port)) {
       return c.json({ error: 'invalid_origin' }, 403);
     }
+
+    if (c.req.header('sec-fetch-site') === 'cross-site') {
+      return c.json({ error: 'invalid_origin' }, 403);
+    }
+
+    const presented = extractRequestToken({
+      token: c.req.header(SESSION_TOKEN_HEADER),
+      authorization: c.req.header('authorization'),
+    });
+    if (!matchesSessionToken(presented, token)) {
+      return c.json({ error: 'unauthorized' }, 401);
+    }
+
     return next();
   });
 
@@ -587,6 +625,18 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
       ? 'public, max-age=31536000, immutable'
       : 'no-cache';
 
+  // The shell carries the session token, so it must never be stored on disk by
+  // the browser or an intermediary.
+  const renderIndexHtml = async (): Promise<Response> => {
+    const html = await readFile(join(WEB_DIST, 'index.html'), 'utf8');
+    return new Response(injectSessionToken(html, token), {
+      headers: {
+        'content-type': MIME['.html']!,
+        'cache-control': 'no-store',
+      },
+    });
+  };
+
   app.get('*', async (c) => {
     const url = new URL(c.req.url);
     let pathname = decodeURIComponent(url.pathname);
@@ -599,6 +649,7 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
     try {
       const stats = await stat(filePath);
       if (stats.isFile()) {
+        if (safe === 'index.html') return await renderIndexHtml();
         const buf = await readFile(filePath);
         const ext = '.' + safe.split('.').pop();
         return new Response(new Uint8Array(buf), {
@@ -612,13 +663,7 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
       // fall through to SPA fallback
     }
     try {
-      const buf = await readFile(join(WEB_DIST, 'index.html'));
-      return new Response(buf.toString('utf8'), {
-        headers: {
-          'content-type': MIME['.html']!,
-          'cache-control': 'no-cache',
-        },
-      });
+      return await renderIndexHtml();
     } catch {
       return c.text(
         'UI bundle not found. Run `npm run build` and try again.',
@@ -634,22 +679,61 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
 
   return {
     url: `http://${opts.host}:${opts.port}`,
+    token,
     close: () =>
       new Promise<void>((resolveClose) => {
         for (const controller of abortControllers.values()) controller.abort();
         abortControllers.clear();
+        removeSessionFile();
         server.close(() => resolveClose());
       }),
   };
 }
 
-function isLoopbackOrigin(origin: string, port: number): boolean {
+const LOOPBACK_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
+/** Binds that accept any interface, so no single expected hostname exists. */
+const WILDCARD_HOSTS = new Set(['', '0.0.0.0', '::', '[::]']);
+
+interface ParsedHost {
+  hostname: string;
+  port: string;
+}
+
+function parseHostHeader(host: string | undefined): ParsedHost | null {
+  if (!host) return null;
+  try {
+    const u = new URL(`http://${host}`);
+    if (!u.hostname) return null;
+    return { hostname: u.hostname, port: u.port };
+  } catch {
+    return null;
+  }
+}
+
+function isAllowedHost(host: ParsedHost, opts: UIServerOptions): boolean {
+  if (host.port !== '' && host.port !== String(opts.port)) return false;
+  if (WILDCARD_HOSTS.has(opts.host)) return true;
+  return LOOPBACK_HOSTNAMES.has(host.hostname) || host.hostname === opts.host;
+}
+
+function isAllowedOrigin(origin: string, hostHostname: string, port: number): boolean {
   try {
     const u = new URL(origin);
-    const isLoopback =
-      u.hostname === 'localhost' || u.hostname === '127.0.0.1' || u.hostname === '[::1]';
-    return isLoopback && (u.port === '' || u.port === String(port));
+    if (u.port !== '' && u.port !== String(port)) return false;
+    if (u.hostname === hostHostname) return true;
+    // localhost and 127.0.0.1 address the same server, and browsers pick either
+    // depending on how the user reached the UI.
+    return LOOPBACK_HOSTNAMES.has(u.hostname) && LOOPBACK_HOSTNAMES.has(hostHostname);
   } catch {
     return false;
   }
+}
+
+function injectSessionToken(html: string, token: string): string {
+  const literal = JSON.stringify(token).replace(/</g, '\\u003c');
+  const tag = `<script>window.__PSMCP_TOKEN__=${literal};</script>`;
+  const head = /<head[^>]*>/i.exec(html);
+  if (!head) return tag + html;
+  const at = head.index + head[0].length;
+  return html.slice(0, at) + tag + html.slice(at);
 }

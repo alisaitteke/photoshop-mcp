@@ -2,6 +2,10 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { resolveCliBinary, runCommand } from './cli-utils.js';
 import type { ProviderAdapter, ProviderModel } from './types.js';
 
+function sanitizeCliDetail(text: string): string {
+  return text.replace(/\s+/g, ' ').slice(0, 200);
+}
+
 // Public list pricing (USD per 1M tokens). Cache-write reflects the 5-minute
 // tier; we don't currently differentiate the 1-hour tier.
 const MODELS: ProviderModel[] = [
@@ -71,7 +75,14 @@ export const anthropicAdapter: ProviderAdapter = {
     }
     const result = await runCommand(binary, ['auth', 'status'], { timeoutMs: 15_000 });
     if (result.exitCode !== 0) {
-      return { ok: false, error: 'not_authenticated' };
+      const detail = sanitizeCliDetail(result.stderr.trim() || result.stdout.trim());
+      return {
+        ok: false,
+        error: 'not_authenticated',
+        detail: detail
+          ? `exit ${result.exitCode}: ${detail}`
+          : `exit ${result.exitCode}`,
+      };
     }
     try {
       const parsed = JSON.parse(result.stdout) as {

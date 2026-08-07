@@ -104,6 +104,26 @@ kullanır ve değişmeden çalışmaya devam eder.
 photoshop-mcp-ui [--port 5174] [--host 127.0.0.1] [--no-open]
 ```
 
+### Yerel API güvenliği
+
+UI sunucusu sağlayıcı API anahtarlarınızı saklar ve Photoshop'u sürebilir; bu
+nedenle `/api/*` makinenizde çalışan her şeye açık değildir. Her istek üç
+kontrolden geçer:
+
+1. **Host** — sunucunun portunda loopback adresi (veya bağlandığınız `--host`)
+   olmalıdır. DNS rebinding saldırısını engeller.
+2. **Origin** — varsa UI'ın kendi origin'iyle eşleşmelidir. Çapraz kaynaklı
+   tarayıcı isteklerini engeller.
+3. **Oturum token'ı** — her başlatmada üretilen rastgele bir sır. Header'ları
+   taklit edebilen ama token'ı okuyamayan diğer yerel süreçleri engeller.
+
+Tarayıcının token ile uğraşması gerekmez: sunucu token'ı servis ettiği
+`index.html` içine enjekte eder. Script yazarken token'ı
+`~/.photoshop-mcp/ui-session.json` (chmod 600) dosyasından okuyup `x-psmcp-token`
+veya `Authorization: Bearer` header'ı olarak gönderin; ya da sunucuyu
+başlatmadan önce `PSMCP_UI_TOKEN` ile kendi token'ınızı sabitleyin. Geçerli
+token içermeyen istekler `401 unauthorized` alır.
+
 ### Notlar
 
 - Ajan yalnızca Photoshop MCP araçlarıyla sınırlıdır — dahili kabuk, dosya
@@ -608,6 +628,54 @@ Claude Desktop yapılandırmanıza ekleyin (macOS'ta `~/Library/Application Supp
 }
 ```
 
+**Yapılandırma dosyasını bulamıyor musunuz?** Claude Desktop'ta **Settings → Developer → Edit Config** yolunu kullanın — kurulumunuza uygun dosyayı açar (`%APPDATA%` yolu her zaman aynı olmayabilir).
+
+### Claude Code için
+
+[Claude Code CLI](https://code.claude.com/docs/en/agent-sdk/mcp) veya [Claude Agent SDK](https://code.claude.com/docs/en/agent-sdk/mcp) ile aynı MCP sunucu girdisini kullanın.
+
+**Önerilen (CLI):**
+
+```bash
+claude mcp add photoshop -- npx -y @alisaitteke/photoshop-mcp
+```
+
+**Manuel JSON** — proje `.mcp.json` dosyanıza veya Claude Code MCP ayarlarınıza ekleyin ([`examples/claude-code-mcp.json`](examples/claude-code-mcp.json)):
+
+```json
+{
+  "mcpServers": {
+    "photoshop": {
+      "command": "npx",
+      "args": ["-y", "@alisaitteke/photoshop-mcp"],
+      "env": {
+        "LOG_LEVEL": "1"
+      }
+    }
+  }
+}
+```
+
+**Agent SDK (TypeScript)** — `query()` seçeneklerinde aynı `mcpServers` bloğunu geçirin:
+
+```typescript
+import { query } from '@anthropic-ai/claude-agent-sdk';
+
+const q = query({
+  prompt: 'Photoshop\'ta açık belgeleri listele',
+  options: {
+    mcpServers: {
+      photoshop: {
+        command: 'npx',
+        args: ['-y', '@alisaitteke/photoshop-mcp'],
+        env: { LOG_LEVEL: '1' },
+      },
+    },
+    allowedTools: ['mcp__photoshop__*'],
+  },
+});
+```
+
 ### Ortam Değişkenleri
 
 - `PHOTOSHOP_PATH`: (İsteğe bağlı) Özel Photoshop kurulum yolunu belirtin
@@ -717,7 +785,8 @@ Yaygın bağlantı, betik ve günlük kaydı sorunları:
 | Belirti | Olası neden | Düzeltme |
 |---|---|---|
 | `cli_not_found` | Claude Code / Gemini CLI yüklü değil | `npm i -g @anthropic-ai/claude-code` veya `npm i -g @google/gemini-cli` |
-| `not_authenticated` | OAuth oturumu yok | Terminal'de `claude auth login` veya `gemini auth login` çalıştırın |
+| `not_authenticated` | CLI OAuth oturumu yok (API anahtarı / SDK oturumu sayılmaz) | Terminal'de `claude auth login` veya `gemini auth login` çalıştırın veya **API key** moduna geçin |
+| SDK istemcisi çalışıyor, UI CLI modu başarısız | SDK/API kimlik bilgileri Claude Code CLI OAuth'tan ayrıdır | Bağımsız UI'da **API key** kullanın veya CLI hesabı için `claude auth login` çalıştırın |
 | `claude` / `gemini` `PATH`'de yok | Özel kurulum konumu | Ayarlar → **CLI path** → **Check connection** |
 | Sohbet IDE'de çalışıyor ama UI'da çalışmıyor (CLI modu) | OAuth tokenları yalnızca CLI'ya özgü | UI'da **CLI account** kullanın; API anahtarları ve CLI oturumları ayrıdır |
 | Gemini çok turlu konuşmalarda unutkanlık gösteriyor | Başsız CLI her turda yeni oturum açabilir | Bilinen kısıtlama; geçmiş isteme eklenir (MVP) |

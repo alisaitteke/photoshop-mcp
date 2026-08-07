@@ -719,10 +719,21 @@ Execute custom ExtendScript code (advanced).
 **Parameters:**
 - `code` (string, required): ExtendScript code
 
+Your code runs inside a wrapping IIFE on the server side. Use an explicit `return` to pass data back — a bare trailing expression or assignment (e.g. `layer.name = "X"`) evaluates to `undefined`, so the tool result shows `"undefined"` even when the mutation succeeded.
+
 ```javascript
-// Example: Execute custom code
+// Example: Rename the active layer and return confirmation
 photoshop_execute_script({
-  code: "app.beep();"
+  code: `
+    var layer = app.activeDocument.activeLayer;
+    layer.name = "Renamed";
+    return { ok: true, name: layer.name };
+  `
+})
+
+// Example: Read-only query (always return a value you can inspect)
+photoshop_execute_script({
+  code: "return app.documents.length;"
 })
 ```
 

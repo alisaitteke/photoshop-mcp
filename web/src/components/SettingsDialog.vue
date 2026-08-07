@@ -25,6 +25,7 @@ import {
   type ProviderInfo,
 } from '@/lib/api';
 import { refreshAnalyticsState, setAnalyticsOptOut, syncAnalyticsContext } from '@/lib/analytics';
+import { formatCliAuthError } from '@/lib/cli-auth-errors';
 import { apiSetBetaTelemetry } from '@/lib/api';
 
 const props = defineProps<{
@@ -164,7 +165,11 @@ async function validateCli(provider: ProviderInfo): Promise<void> {
     }
     const result = await apiValidateCli(provider.id);
     if (!result.ok) {
-      errors.value[provider.id] = result.error || 'CLI not authenticated';
+      errors.value[provider.id] = formatCliAuthError(
+        result.error,
+        provider.id,
+        result.detail
+      );
       return;
     }
     await refresh();
@@ -578,7 +583,7 @@ watch(
                 </div>
               </template>
 
-              <p v-if="errors[p.id]" class="mt-2 text-xs text-destructive">
+              <p v-if="errors[p.id]" class="mt-2 whitespace-pre-line text-xs text-destructive">
                 {{ errors[p.id] }}
               </p>
             </div>
