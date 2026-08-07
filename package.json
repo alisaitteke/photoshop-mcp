@@ -1,7 +1,7 @@
 {
   "name": "@alisaitteke/photoshop-mcp",
   "version": "1.6.0",
-  "description": "MCP server for Adobe Photoshop — 89 tools (generative AI + recipes), standalone web UI. Control Photoshop from Cursor, Claude, or natural language.",
+  "description": "MCP server for Adobe Photoshop — 102 tools (generative AI + recipes), standalone web UI. Control Photoshop from Cursor, Claude, or natural language.",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
@@ -29,6 +29,7 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
     "spike:photoshop-actions": "tsx scripts/spike-photoshop-actions.ts",
+    "spike:2026": "tsx scripts/spike-2026-features.ts",
     "spike:issue-2": "tsx scripts/spike-issue-2.ts",
     "verify:photoshop-prompts": "tsx scripts/verify-photoshop-prompt-coverage.ts",
     "test:mcp-local": "tsx scripts/test-mcp-local.ts",
@@ -36,7 +37,8 @@
     "test:mcp-all": "tsx scripts/test-all-mcp-tools.ts",
     "test:intent-expansion": "tsx scripts/test-intent-expansion-local.ts",
     "prepare": "npm run build",
-    "prepublishOnly": "npm run build",
+    "sync:server-version": "tsx scripts/sync-server-version.ts",
+    "prepublishOnly": "npm run build && npm run sync:server-version",
     "test:unit": "vitest run"
   },
   "keywords": [
@@ -92,12 +94,14 @@
   },
   "mcpName": "io.github.alisaitteke/photoshop-mcp",
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.10.5",
     "@typescript-eslint/eslint-plugin": "^8.20.0",
     "@typescript-eslint/parser": "^8.20.0",
     "concurrently": "^9.1.2",
     "eslint": "^9.18.0",
+    "globals": "^17.9.0",
     "prettier": "^3.4.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",

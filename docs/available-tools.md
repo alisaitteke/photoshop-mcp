@@ -831,3 +831,96 @@ Requires `uxp-plugin/` — see [development.md](development.md).
 
 #### `photoshop_neural_filter`
 **Parameters:** `filter` (skin_smoothing|harmonize|depth_blur|super_zoom|colorize), `smoothness`, `blur`
+
+### Layer Styles
+
+#### `photoshop_apply_layer_style`
+Apply a layer effect (Action Manager `layerEffects`) to the active layer.
+
+**Parameters:**
+- `style` (string, required): `drop_shadow` | `outer_glow` | `stroke` | `bevel_emboss`
+- `red`, `green`, `blue` (number, optional): Effect color (default 0/0/0)
+- `opacity` (number, optional): 0-100 (default 60)
+- `size` (number, optional): Blur/size in px — stroke width for stroke (default 10)
+- `distance` (number, optional): Offset in px, drop shadow only (default 8)
+- `angle` (number, optional): Light angle in degrees (default 120)
+
+```javascript
+// Example: soft drop shadow on the active layer
+photoshop_apply_layer_style({ style: "drop_shadow", opacity: 55, size: 14, distance: 10 })
+```
+
+### Color Grading
+
+#### `photoshop_apply_lut`
+Color Lookup (3D LUT) adjustment layer — cinematic grades in one step.
+
+**Parameters:**
+- `lut` (string, required): Built-in LUT name (e.g. `"Crisp_Warm.3dl"`, `"Kodak 5218 Fuji 3510.3dl"`, `"Moonlight.3dl"`) or absolute path to a `.cube`/`.3dl`/`.look` file
+
+```javascript
+photoshop_apply_lut({ lut: "Crisp_Warm.3dl" })
+```
+
+#### `photoshop_adjust_vibrance`
+Vibrance adjustment layer. **Parameters:** `vibrance` (-100..100, default 40), `saturation` (-100..100, default 0)
+
+#### `photoshop_adjust_exposure`
+Exposure adjustment layer. **Parameters:** `exposure` (stops, default 0.5), `offset` (default 0), `gamma` (default 1)
+
+#### `photoshop_apply_photo_filter`
+Photo Filter adjustment layer (warming/cooling/tint). **Parameters:** `red`, `green`, `blue` (default 236/138/0 ≈ warming 85), `density` (0-100, default 25), `preserve_luminosity` (default true)
+
+#### `photoshop_apply_gradient_map`
+Gradient Map adjustment layer (black→white). **Parameters:** `reverse` (boolean, default false)
+
+### Data-Driven Graphics
+
+Photoshop's hidden "mail merge for images": template PSD with variable-bound layers (Image > Variables > Define) + data sets → one image per row.
+
+#### `photoshop_list_datasets`
+List data sets on the active document. **Returns:** `{ datasets, active, count }`
+
+#### `photoshop_import_datasets`
+Import a variables/data-sets XML file. **Parameters:** `xml_path` (required)
+
+#### `photoshop_generate_from_datasets`
+Batch-export the document once per data set.
+
+**Parameters:**
+- `output_dir` (string, required)
+- `format` (string, optional): `JPEG` | `PNG` | `PSD` (default JPEG)
+- `dataset_names` (string[], optional): subset to export (default all)
+
+```javascript
+photoshop_generate_from_datasets({ output_dir: "/Users/me/cards", format: "PNG" })
+```
+
+**One-shot alternative:** `photoshop_recipe_csv_to_cards` converts a CSV straight into data sets and exports every row (prompt template `ps.csv_to_cards`).
+
+### Image Stacking
+
+#### `photoshop_image_stack`
+Load 2+ images into one document, convert to a smart object, apply a stack mode — classic tourist removal / noise reduction without generative AI.
+
+**Parameters:**
+- `files` (string[], required): 2+ absolute image paths
+- `mode` (string, optional): `mean` | `median` | `maximum` | `minimum` | `summation` | `stddev` (default `median`)
+
+```javascript
+// Example: remove tourists from 3 aligned shots
+photoshop_image_stack({
+  files: ["/shots/a.jpg", "/shots/b.jpg", "/shots/c.jpg"],
+  mode: "median"
+})
+```
+
+### Modern Export
+
+#### `photoshop_export_as`
+Export a copy as PNG/JPEG (Save for Web) or WebP/AVIF (native, PS 23.2+). Returns `version_unsupported` when the build lacks WebP/AVIF.
+
+**Parameters:**
+- `path` (string, required): Absolute output path
+- `format` (string, optional): `PNG` | `JPEG` | `WEBP` | `AVIF` (default PNG)
+- `quality` (number, optional): 0-100 (default 80)

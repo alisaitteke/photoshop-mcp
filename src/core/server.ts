@@ -32,6 +32,11 @@ import { createStateTools } from '../tools/state-tools.js';
 import { createRecipeTools } from '../tools/recipes/index.js';
 import { createGenerativeTools } from '../tools/generative-tools.js';
 import { createNeuralTools } from '../tools/neural-tools.js';
+import { createStyleTools } from '../tools/style-tools.js';
+import { createColorAdjustmentTools } from '../tools/color-adjustment-tools.js';
+import { createDataTools } from '../tools/data-tools.js';
+import { createStackTools } from '../tools/stack-tools.js';
+import { createExportTools } from '../tools/export-tools.js';
 import { ensureUxpBridgeServer } from '../platform/uxp-bridge-server.js';
 
 export interface PhotoshopMCPServerOptions {
@@ -133,6 +138,11 @@ export class PhotoshopMCPServer {
     this.registerToolDefinitions(createStateTools(connection));
     this.registerToolDefinitions(createGenerativeTools(connection));
     this.registerToolDefinitions(createNeuralTools(connection));
+    this.registerToolDefinitions(createStyleTools(connection));
+    this.registerToolDefinitions(createColorAdjustmentTools(connection));
+    this.registerToolDefinitions(createDataTools(connection));
+    this.registerToolDefinitions(createStackTools(connection));
+    this.registerToolDefinitions(createExportTools(connection));
     this.registerToolDefinitions(createRecipeTools(connection));
 
     this.logger.info(

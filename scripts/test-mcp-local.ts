@@ -71,16 +71,20 @@ async function main(): Promise<void> {
   const expectedRecipePrompts = [
     'ps.apply_color_grade',
     'ps.batch_mockup_replace',
+    'ps.batch_watermark',
+    'ps.csv_to_cards',
     'ps.dodge_burn',
     'ps.enhance_portrait',
     'ps.export_social_variants',
     'ps.frequency_separation',
     'ps.gradient_fade',
     'ps.organize_layers',
+    'ps.passport_photo',
     'ps.prepare_for_web',
     'ps.remove_background',
     'ps.remove_distraction',
     'ps.sky_blend',
+    'ps.split_carousel',
   ];
   const expectedGuidePrompts = [
     'ps.color_correct',
@@ -91,11 +95,15 @@ async function main(): Promise<void> {
     'ps.generative_remove',
     'ps.generative_expand',
   ];
-  if (promptNames.length !== 19) fail('prompt count', String(promptNames.length));
+  const expectedPromptCount = expectedRecipePrompts.length + expectedGuidePrompts.length;
+  if (promptNames.length !== expectedPromptCount) fail('prompt count', String(promptNames.length));
   for (const name of [...expectedRecipePrompts, ...expectedGuidePrompts]) {
     if (!promptNames.includes(name)) fail('missing prompt', name);
   }
-  ok('19 prompt templates', `${expectedRecipePrompts.length} recipe + ${expectedGuidePrompts.length} guide`);
+  ok(
+    `${expectedPromptCount} prompt templates`,
+    `${expectedRecipePrompts.length} recipe + ${expectedGuidePrompts.length} guide`
+  );
 
   section('Get prompt (ps.remove_background)');
   const promptResult = await client.getPrompt({
@@ -144,6 +152,7 @@ async function main(): Promise<void> {
     'photoshop_recipe_sky_blend',
     'photoshop_recipe_dodge_burn',
     'photoshop_recipe_remove_distraction',
+    'photoshop_recipe_csv_to_cards',
     'photoshop_generative_fill',
     'photoshop_generative_remove',
     'photoshop_generative_expand',
@@ -151,6 +160,17 @@ async function main(): Promise<void> {
     'photoshop_sky_replacement',
     'photoshop_generate_image',
     'photoshop_neural_filter',
+    'photoshop_apply_layer_style',
+    'photoshop_apply_lut',
+    'photoshop_adjust_vibrance',
+    'photoshop_adjust_exposure',
+    'photoshop_apply_photo_filter',
+    'photoshop_apply_gradient_map',
+    'photoshop_list_datasets',
+    'photoshop_import_datasets',
+    'photoshop_generate_from_datasets',
+    'photoshop_image_stack',
+    'photoshop_export_as',
   ];
   for (const name of required) {
     if (!toolNames.has(name)) fail('missing tool', name);
@@ -166,14 +186,21 @@ async function main(): Promise<void> {
   section('Call photoshop_get_capabilities');
   const caps = await client.callTool({ name: 'photoshop_get_capabilities', arguments: {} });
   const capsText = textFromToolResult(caps);
-  if (caps.isError) fail('get_capabilities', capsText);
   let capsJson: Record<string, unknown> = {};
-  try {
-    capsJson = JSON.parse(capsText) as Record<string, unknown>;
-  } catch {
-    fail('get_capabilities JSON', capsText.slice(0, 200));
+  if (caps.isError) {
+    if (!photoshopReachable) {
+      console.log('  SKIP get_capabilities — Photoshop not reachable');
+    } else {
+      fail('get_capabilities', capsText);
+    }
+  } else {
+    try {
+      capsJson = JSON.parse(capsText) as Record<string, unknown>;
+    } catch {
+      fail('get_capabilities JSON', capsText.slice(0, 200));
+    }
+    ok('get_capabilities', `version=${String(capsJson.version ?? 'unknown')}`);
   }
-  ok('get_capabilities', `version=${String(capsJson.version ?? 'unknown')}`);
 
   if (photoshopReachable) {
     section('Call photoshop_get_state');

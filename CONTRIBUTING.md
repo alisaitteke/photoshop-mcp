@@ -81,7 +81,9 @@ publish stays manual on the maintainer machine (OTP/2FA).
    **New Contributors** when applicable (see
    [`scripts/build-release-notes.sh`](scripts/build-release-notes.sh)).
 6. From a clean `master` checkout, run `npm publish` (`prepublishOnly` runs
-   `npm run build` automatically).
+   `npm run build` and `npm run sync:server-version` automatically — the latter
+   keeps [`server.json`](server.json) version/description in lockstep with
+   `package.json`, so commit any resulting `server.json` diff).
 7. After npm publish, refresh the GitHub release so the body shows **Published on
    npm**:
 
