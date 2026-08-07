@@ -99,6 +99,23 @@ npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
 photoshop-mcp-ui [--port 5174] [--host 127.0.0.1] [--no-open]
 ```
 
+### 本地 API 安全
+
+UI 服务器保存着你的模型提供方 API 密钥，并且可以驱动 Photoshop，因此 `/api/*`
+并不对本机上运行的所有程序开放。每个请求都必须通过三项检查：
+
+1. **Host** — 必须是服务器端口上的回环地址（或你通过 `--host` 绑定的主机），
+   用于阻止 DNS 重绑定攻击。
+2. **Origin** — 如果存在，必须与 UI 自身的来源一致，用于阻止浏览器发起的跨源
+   调用。
+3. **会话令牌** — 每次启动生成的随机密钥，用于阻止其他本地进程；它们可以伪造
+   任意请求头，却无法读取该令牌。
+
+浏览器无需处理令牌：服务器会将其注入所返回的 `index.html`。编写脚本时，请从
+`~/.photoshop-mcp/ui-session.json`（chmod 600）读取令牌，并通过
+`x-psmcp-token` 或 `Authorization: Bearer` 请求头发送；也可以在启动服务器前用
+`PSMCP_UI_TOKEN` 指定自己的令牌。缺少有效令牌的请求会收到 `401 unauthorized`。
+
 ### 注意事项
 
 - 代理仅限于使用 Photoshop MCP 工具——内置的 shell、文件和网络工具已禁用。

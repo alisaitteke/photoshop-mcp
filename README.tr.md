@@ -104,6 +104,26 @@ kullanır ve değişmeden çalışmaya devam eder.
 photoshop-mcp-ui [--port 5174] [--host 127.0.0.1] [--no-open]
 ```
 
+### Yerel API güvenliği
+
+UI sunucusu sağlayıcı API anahtarlarınızı saklar ve Photoshop'u sürebilir; bu
+nedenle `/api/*` makinenizde çalışan her şeye açık değildir. Her istek üç
+kontrolden geçer:
+
+1. **Host** — sunucunun portunda loopback adresi (veya bağlandığınız `--host`)
+   olmalıdır. DNS rebinding saldırısını engeller.
+2. **Origin** — varsa UI'ın kendi origin'iyle eşleşmelidir. Çapraz kaynaklı
+   tarayıcı isteklerini engeller.
+3. **Oturum token'ı** — her başlatmada üretilen rastgele bir sır. Header'ları
+   taklit edebilen ama token'ı okuyamayan diğer yerel süreçleri engeller.
+
+Tarayıcının token ile uğraşması gerekmez: sunucu token'ı servis ettiği
+`index.html` içine enjekte eder. Script yazarken token'ı
+`~/.photoshop-mcp/ui-session.json` (chmod 600) dosyasından okuyup `x-psmcp-token`
+veya `Authorization: Bearer` header'ı olarak gönderin; ya da sunucuyu
+başlatmadan önce `PSMCP_UI_TOKEN` ile kendi token'ınızı sabitleyin. Geçerli
+token içermeyen istekler `401 unauthorized` alır.
+
 ### Notlar
 
 - Ajan yalnızca Photoshop MCP araçlarıyla sınırlıdır — dahili kabuk, dosya

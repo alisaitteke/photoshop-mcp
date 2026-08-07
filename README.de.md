@@ -115,6 +115,27 @@ Die Authentifizierungsmethode wird pro Anbieter in `~/.photoshop-mcp/data.db` ge
 photoshop-mcp-ui [--port 5174] [--host 127.0.0.1] [--no-open]
 ```
 
+### Sicherheit der lokalen API
+
+Der UI-Server speichert deine Provider-API-Schlüssel und kann Photoshop
+steuern, daher ist `/api/*` nicht für alles offen, was auf deinem Rechner
+läuft. Jede Anfrage muss drei Prüfungen bestehen:
+
+1. **Host** — muss die Loopback-Adresse (oder der via `--host` gebundene Host)
+   auf dem Port des Servers sein. Blockiert DNS-Rebinding.
+2. **Origin** — falls vorhanden, muss sie dem Origin der UI entsprechen.
+   Blockiert Cross-Origin-Aufrufe aus dem Browser.
+3. **Session-Token** — ein zufälliges Geheimnis pro Serverstart. Blockiert
+   andere lokale Prozesse, die zwar jeden Header fälschen, aber das Token nicht
+   lesen können.
+
+Der Browser muss sich nicht um das Token kümmern: Der Server injiziert es in
+die ausgelieferte `index.html`. Für Skripte liest du es aus
+`~/.photoshop-mcp/ui-session.json` (chmod 600) und sendest es als
+`x-psmcp-token` oder `Authorization: Bearer`; alternativ setzt du vor dem Start
+`PSMCP_UI_TOKEN` auf ein eigenes Token. Anfragen ohne gültiges Token erhalten
+`401 unauthorized`.
+
 ### Hinweise
 
 - Der Agent ist auf Photoshop-MCP-Werkzeuge beschränkt – integrierte Shell-, Datei-

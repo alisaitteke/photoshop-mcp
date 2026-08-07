@@ -32,6 +32,7 @@
     "spike:issue-2": "tsx scripts/spike-issue-2.ts",
     "verify:photoshop-prompts": "tsx scripts/verify-photoshop-prompt-coverage.ts",
     "test:mcp-local": "tsx scripts/test-mcp-local.ts",
+    "test:ui-auth": "tsx scripts/test-ui-auth.ts",
     "test:mcp-all": "tsx scripts/test-all-mcp-tools.ts",
     "test:intent-expansion": "tsx scripts/test-intent-expansion-local.ts",
     "prepare": "npm run build",

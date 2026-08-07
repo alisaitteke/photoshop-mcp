@@ -3,19 +3,44 @@ export class ApiError extends Error {
     super(message);
     this.name = 'ApiError';
   }
+
+  get isUnauthorized(): boolean {
+    return this.status === 401;
+  }
+}
+
+const SESSION_TOKEN_HEADER = 'x-psmcp-token';
+
+const UNAUTHORIZED_MESSAGE =
+  'Session token rejected. Reload this page from the URL printed by the Photoshop MCP UI.';
+
+/**
+ * The server injects the token into index.html; in dev the Vite proxy adds the
+ * header on its way to the API, so an empty value here is expected.
+ */
+function sessionToken(): string | undefined {
+  return typeof window === 'undefined' ? undefined : window.__PSMCP_TOKEN__;
+}
+
+function withAuthHeaders(init: HeadersInit | undefined): Headers {
+  const headers = new Headers(init);
+  const token = sessionToken();
+  if (token) headers.set(SESSION_TOKEN_HEADER, token);
+  return headers;
 }
 
 export async function api<T = unknown>(
   path: string,
   init: RequestInit = {}
 ): Promise<T> {
-  const headers = new Headers(init.headers);
+  const headers = withAuthHeaders(init.headers);
   if (init.body && !headers.has('content-type')) {
     headers.set('content-type', 'application/json');
   }
   const res = await fetch(path, { ...init, headers });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
+    if (res.status === 401) throw new ApiError(401, UNAUTHORIZED_MESSAGE, data);
     throw new ApiError(res.status, (data as { error?: string }).error ?? res.statusText, data);
   }
   if (res.status === 204) return undefined as T;
@@ -294,11 +319,12 @@ export async function* streamChat(
 ): AsyncGenerator<{ event: string; data: unknown }, void, void> {
   const res = await fetch('/api/chat', {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: withAuthHeaders({ 'content-type': 'application/json' }),
     body: JSON.stringify(req),
     signal,
   });
   if (!res.ok || !res.body) {
+    if (res.status === 401) throw new ApiError(401, UNAUTHORIZED_MESSAGE);
     const text = await res.text().catch(() => '');
     throw new ApiError(res.status, text || res.statusText);
   }

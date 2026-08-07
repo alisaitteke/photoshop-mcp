@@ -10,6 +10,7 @@ import {
   shutdownAnalytics,
 } from '../analytics/index.js';
 import { Logger } from '../utils/logger.js';
+import { getSessionFilePath } from './security/session-token.js';
 import { startUIServer } from './server.js';
 
 interface CliFlags {
@@ -55,6 +56,9 @@ function printHelp(): void {
       '  -v, --version         Show version',
       '',
       'Configuration is stored at ~/.photoshop-mcp/config.json (chmod 600).',
+      'The /api/* endpoints require the session token from',
+      '~/.photoshop-mcp/ui-session.json (chmod 600), sent as an',
+      'x-psmcp-token or Authorization: Bearer header.',
       '',
     ].join('\n')
   );
@@ -90,7 +94,11 @@ async function main(): Promise<void> {
   });
 
   const url = server.url;
-  process.stdout.write(`\nPhotoshop MCP UI ready at:\n  ${url}\n\n`);
+  process.stdout.write(
+    `\nPhotoshop MCP UI ready at:\n  ${url}\n\n` +
+      `The /api/* endpoints require this session's token.\n` +
+      `  ${getSessionFilePath()}\n\n`
+  );
 
   if (!flags.noOpen) {
     try {

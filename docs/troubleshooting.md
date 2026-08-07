@@ -48,6 +48,30 @@ photoshop_execute_script({
 
 See also the `photoshop_execute_script` section in [`docs/available-tools.md`](available-tools.md).
 
+### Web UI: `401 unauthorized` from `/api/*`
+
+**Symptom:** The UI shows "Session token rejected...", or a script calling `/api/*` gets `{"error":"unauthorized"}`.
+
+**Cause:** The UI server holds your LLM provider API keys and can drive Photoshop, so every `/api/*` request must present the token generated when the server starts. The browser gets it automatically because the server injects it into `index.html`; anything else must send it explicitly.
+
+**Fix:**
+
+- In the browser: reload the page from the URL printed by `photoshop-mcp-ui`. An old tab kept open across a server restart carries the previous token.
+- From a script: read the token from `~/.photoshop-mcp/ui-session.json` (chmod 600) and send it as a header.
+
+```bash
+TOKEN=$(node -p "require('$HOME/.photoshop-mcp/ui-session.json').token")
+curl -H "x-psmcp-token: $TOKEN" http://127.0.0.1:5174/api/status
+```
+
+`Authorization: Bearer $TOKEN` works too. Set `PSMCP_UI_TOKEN` before starting the server to pin a known token instead.
+
+### Web UI: `403 invalid_host` or `403 invalid_origin`
+
+**Cause:** Two guards that run before the token check. `invalid_host` means the `Host` header did not resolve to the loopback address (or the `--host` you bound to) on the server's port — this is what blocks DNS rebinding. `invalid_origin` means the request came from a different origin than the UI itself.
+
+**Fix:** Reach the UI through the exact URL the CLI printed (`http://127.0.0.1:<port>`), not through a hostname that merely points at your machine, and not from a page served on another port.
+
 ### Debug Logging
 
 Enable detailed logging by setting `LOG_LEVEL=0`:
