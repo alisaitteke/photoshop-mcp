@@ -6,7 +6,7 @@
   </a>
 </p>
 
-**Diller:** [English](README.md) · [简体中文](README.zh-CN.md) · [Español](README.es.md) · [Deutsch](README.de.md) · [日本語](README.ja.md) · Türkçe
+**Diller:** [English](README.md) · [简体中文](README.zh-CN.md) · [Español](README.es.md) · [Deutsch](README.de.md) · [日本語](README.ja.md) · Türkçe · **[Website](https://alisaitteke.github.io/photoshop-mcp/)**
 
 *v1.1+ — tarif iş akışları, daha az gidiş-dönüş, daha hızlı oturumlar. Bağımsız UI, plan-sonra-uygula çalıştırmaları için **Action Plan (beta)** sunar.*
 

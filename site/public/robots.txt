@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://alisaitteke.github.io/photoshop-mcp/sitemap.xml

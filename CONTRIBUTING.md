@@ -47,9 +47,14 @@ This starts the server on port 5174 (with hot reload) and the web dev server con
 
 ## Releasing
 
-Version bumps ship from **`master`**. npm publish and GitHub Releases are related but
-separate steps: pushing a version tag triggers a GitHub Release automatically; npm
-publish stays manual on the maintainer machine (OTP/2FA).
+Version bumps ship from **`master`**. Pushing a version tag triggers the
+[Release workflow](.github/workflows/release.yml), which creates a GitHub Release,
+publishes to npm, publishes metadata to the [Official MCP Registry](https://registry.modelcontextprotocol.io),
+and refreshes release notes once npm is live.
+
+**One-time setup:** add an npm automation token as the repository secret `NPM_TOKEN`
+(Settings → Secrets and variables → Actions). Use an npm **Automation** or
+**Publish** token scoped to `@alisaitteke/photoshop-mcp` (or the whole org).
 
 1. Merge feature work to `master`.
 2. Bump the `version` field in the root [`package.json`](package.json) only (the
@@ -61,7 +66,8 @@ publish stays manual on the maintainer machine (OTP/2FA).
 
    ```bash
    ./scripts/backfill-changelog.sh
-   git add CHANGELOG.md package.json
+   npm run sync:server-version
+   git add CHANGELOG.md package.json server.json
    git commit -m "X.Y.Z"
    git tag vX.Y.Z
    ```
@@ -75,24 +81,16 @@ publish stays manual on the maintainer machine (OTP/2FA).
    ```
 
 5. Wait for the [Release workflow](.github/workflows/release.yml) to finish, then
-   verify the new release on the repo **Releases** page. Each release includes
-   install commands, npm registry link, [CHANGELOG.md](CHANGELOG.md) anchor,
-   categorized commits, PR links (when `#123` appears in messages), and
-   **New Contributors** when applicable (see
+   verify the new release on the repo **Releases** page. The workflow publishes to
+   npm and the MCP Registry, then refreshes release notes with **✅ Published on
+   npm.** Each release includes install commands, npm registry link,
+   [CHANGELOG.md](CHANGELOG.md) anchor, categorized commits, PR links (when `#123`
+   appears in messages), and **New Contributors** when applicable (see
    [`scripts/build-release-notes.sh`](scripts/build-release-notes.sh)).
-6. From a clean `master` checkout, run `npm publish` (`prepublishOnly` runs
-   `npm run build` and `npm run sync:server-version` automatically — the latter
-   keeps [`server.json`](server.json) version/description in lockstep with
-   `package.json`, so commit any resulting `server.json` diff).
-7. After npm publish, refresh the GitHub release so the body shows **Published on
-   npm**:
 
-   ```bash
-   ./scripts/refresh-release-notes.sh vX.Y.Z
-   ```
-
-   Or run the [Refresh Release Notes](.github/workflows/refresh-release-notes.yml)
-   workflow in GitHub Actions (Actions → Refresh Release Notes → enter the tag).
+   If publish failed but the GitHub Release exists, fix the issue and re-run the
+   failed **publish** job from Actions, or run [Refresh Release Notes](.github/workflows/refresh-release-notes.yml)
+   after a manual `npm publish` + `./mcp-publisher publish`.
 
 Always tag the **release commit on `master`**, not a feature branch. Re-pushing an
 existing tag is safe — the workflow skips creation when a release already exists.
@@ -109,6 +107,71 @@ To rewrite release notes on existing releases (e.g. after improving the template
 ./scripts/backfill-github-releases.sh --refresh
 ```
 
+## Registry listings
+
+### Official MCP Registry
+
+Metadata lives in [`server.json`](server.json). The Release workflow publishes to
+[registry.modelcontextprotocol.io](https://registry.modelcontextprotocol.io) after
+each npm publish (`mcp-publisher` via GitHub OIDC). `npm run sync:server-version`
+keeps `server.json` aligned with `package.json` before tagging.
+
+### Glama
+
+Listing: [glama.ai/mcp/servers/alisaitteke/photoshop-mcp](https://glama.ai/mcp/servers/alisaitteke/photoshop-mcp)
+
+[`glama.json`](glama.json) at the repo root lets org maintainers claim the server.
+After merging changes to `glama.json`, re-run the claim flow on Glama so metadata
+syncs.
+
+1. Open the server page → **Claim ownership** (GitHub OAuth).
+2. On the **admin** tab, configure the Docker/build spec (Node 20, `npm install`,
+   `node dist/index.js` via Glama's `mcp-proxy` wrapper).
+3. **Deploy** → wait for the sandbox health check (`initialize` + `tools/list`).
+4. **Make Release** with the semver matching the GitHub tag.
+
+Glama releases are independent of GitHub Releases — trigger a new Glama release when
+you want the directory grade/security scan refreshed for a shipped version.
+
+### Smithery (MCPB)
+
+Smithery distributes stdio servers as `.mcpb` bundles. Source manifest:
+[`mcpb/manifest.json`](mcpb/manifest.json). Build script:
+[`scripts/build-mcpb.ts`](scripts/build-mcpb.ts).
+
+```bash
+npm run build:mcpb
+# → release/photoshop-mcp-<version>.mcpb
+
+npx @smithery/cli auth login
+npx @smithery/cli mcp publish "./release/photoshop-mcp-<version>.mcpb" -n alisaitteke/photoshop-mcp
+```
+
+`tools_generated` / `prompts_generated` are set because this server exposes a large
+dynamic catalog. Rebuild and republish the MCPB after each semver release. Native
+deps (`better-sqlite3`) are compiled for the machine that runs `build:mcpb` — build
+on macOS for darwin bundles and on Windows for win32 if you need platform-specific
+artifacts.
+
+## Site development (GitHub Pages)
+
+Marketing site: [alisaitteke.github.io/photoshop-mcp](https://alisaitteke.github.io/photoshop-mcp/)
+
+| Path | Purpose |
+| --- | --- |
+| `site/` | VitePress site (landing pages per locale) |
+| `site/content/*/index.md` | Hand-authored marketing landings (committed) |
+| `site/content/**/readme.md`, `site/content/docs/` | Generated by `scripts/sync-site-content.ts` (not committed) |
+
+```bash
+cd site && npm install && npm run dev    # local preview
+cd site && npm run build                 # sync + vitepress build + sitemap
+```
+
+**One-time GitHub setup:** Repository **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+
+Edit canonical content in repo root `docs/` and `README*.md`; the sync script copies them before each build. Deploy workflow: [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml).
+
 ## Project layout
 
 | Path | Purpose |
@@ -116,7 +179,8 @@ To rewrite release notes on existing releases (e.g. after improving the template
 | `src/` | MCP server core, tools, recipes, and UI backend |
 | `web/` | Vue 3 standalone UI (Tailwind v4, shadcn-vue) |
 | `scripts/` | Integration and verification test scripts |
-| `docs/` | Additional documentation |
+| `site/` | VitePress marketing site (GitHub Pages) |
+| `docs/` | Additional documentation (synced to the site at build time) |
 
 See [`docs/architecture.md`](docs/architecture.md) for a detailed breakdown.
 

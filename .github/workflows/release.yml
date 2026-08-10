@@ -1,6 +1,5 @@
-# Creates a GitHub Release when a version tag (v*) is pushed.
-# Release notes include npm install commands, registry links, and commit changelog.
-# npm publish remains a separate manual step — see CONTRIBUTING.md § Releasing.
+# Creates a GitHub Release when a version tag (v*) is pushed, then publishes to
+# npm and the Official MCP Registry. See CONTRIBUTING.md § Releasing.
 name: Release
 
 on:
@@ -35,3 +34,64 @@ jobs:
           name: ${{ github.ref_name }}
           body: ${{ steps.notes.outputs.body }}
           skip_if_release_exists: true
+
+  publish:
+    needs: github-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    concurrency:
+      group: publish-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Verify prompt coverage
+        run: npm run verify:photoshop-prompts
+
+      - name: Sync server.json with package.json
+        run: npm run sync:server-version
+
+      - name: Assert server.json version matches tag
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          SERVER_VERSION="$(node -p "require('./server.json').version")"
+          if [[ "$SERVER_VERSION" != "$TAG_VERSION" ]]; then
+            echo "server.json version ($SERVER_VERSION) does not match tag ($TAG_VERSION)" >&2
+            exit 1
+          fi
+
+      - name: Publish to npm
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Install MCP Publisher
+        run: |
+          curl -fsSL \
+            "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" \
+            | tar xz mcp-publisher
+
+      - name: Publish to MCP Registry
+        run: |
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher publish
+
+      - name: Refresh release notes (npm published)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/refresh-release-notes.sh "${GITHUB_REF_NAME}"

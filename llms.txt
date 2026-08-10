@@ -2,6 +2,8 @@
 
 > MCP server for Adobe Photoshop — 102 tools (generative AI + recipes), standalone web UI, and state-aware agent workflows. Unofficial; not affiliated with Adobe.
 
+**Website:** https://alisaitteke.github.io/photoshop-mcp/
+
 ## Quick start
 
 ```bash

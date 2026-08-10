@@ -12,8 +12,11 @@
     "dist",
     "web/dist",
     "uxp-plugin",
+    "examples",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "llms.txt",
+    "AGENTS.md"
   ],
   "scripts": {
     "dev": "tsc --watch",
@@ -23,6 +26,7 @@
     "build": "npm run build:server && npm run build:web",
     "build:server": "tsc",
     "build:web": "npm --prefix web install --no-audit --no-fund && npm --prefix web run build",
+    "build:site": "npm --prefix site run build",
     "start": "node dist/index.js",
     "start:ui": "node dist/ui/cli.js",
     "lint": "eslint src --ext .ts",
@@ -38,6 +42,7 @@
     "test:intent-expansion": "tsx scripts/test-intent-expansion-local.ts",
     "prepare": "npm run build",
     "sync:server-version": "tsx scripts/sync-server-version.ts",
+    "build:mcpb": "tsx scripts/build-mcpb.ts",
     "prepublishOnly": "npm run build && npm run sync:server-version",
     "test:unit": "vitest run"
   },
@@ -64,7 +69,7 @@
     "type": "git",
     "url": "git+https://github.com/alisaitteke/photoshop-mcp.git"
   },
-  "homepage": "https://github.com/alisaitteke/photoshop-mcp#readme",
+  "homepage": "https://alisaitteke.github.io/photoshop-mcp/",
   "bugs": {
     "url": "https://github.com/alisaitteke/photoshop-mcp/issues"
   },

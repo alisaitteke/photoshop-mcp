@@ -1,0 +1,17 @@
+{
+  "name": "photoshop-mcp-site",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "prebuild": "tsx ../scripts/sync-site-content.ts",
+    "predev": "tsx ../scripts/sync-site-content.ts",
+    "dev": "vitepress dev",
+    "build": "vitepress build && node scripts/generate-sitemap.mjs",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "vitepress": "^1.6.3"
+  }
+}
