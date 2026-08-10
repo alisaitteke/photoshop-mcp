@@ -1,0 +1,71 @@
+# photoshop-mcp
+
+> MCP server for Adobe Photoshop — 102 tools (generative AI + recipes), standalone web UI, and state-aware agent workflows. Unofficial; not affiliated with Adobe.
+
+## Quick start
+
+```bash
+# MCP server (stdio) — use with Cursor, Claude Desktop, Claude Code, VS Code
+npx -y @alisaitteke/photoshop-mcp
+
+# Standalone web UI (local chat + Photoshop, no IDE required)
+npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
+```
+
+**Prerequisites:** Adobe Photoshop (Windows or macOS), Node.js 18+. Photoshop must be running. Optional UXP bridge plugin in `uxp-plugin/` for Neural Filters.
+
+## Agent workflow
+
+```
+get_capabilities → get_state → (recipe or atomic tool) → get_preview to verify
+```
+
+Prefer `photoshop_recipe_*` for multi-step outcomes (single undo step). Use atomic `photoshop_*` tools for fine-grained edits. On failure, read structured error envelopes (`code`, `suggested_next_tool`) and call `get_state` before retrying.
+
+Example session:
+
+```
+List MCP prompts, then remove the background from the active document and export for web.
+```
+
+## MCP client configuration
+
+```json
+{
+  "mcpServers": {
+    "photoshop": {
+      "command": "npx",
+      "args": ["-y", "@alisaitteke/photoshop-mcp"],
+      "env": { "LOG_LEVEL": "1" }
+    }
+  }
+}
+```
+
+Claude Code one-liner:
+
+```bash
+claude mcp add photoshop -- npx -y @alisaitteke/photoshop-mcp
+```
+
+## Tool surface
+
+- **102 tools** — 86 atomic + 16 recipe (`photoshop_recipe_*`)
+- **23 MCP prompts** — `ps.remove_background`, `ps.enhance_portrait`, `ps.generative_fill`, …
+- **Generative AI** — fill, remove, expand, upscale, sky replacement, generate image (Adobe account)
+- **State** — `photoshop_get_state`, `photoshop_get_preview`, `photoshop_get_capabilities`
+- **Standalone UI** — Action Plan (beta): plan all steps in one LLM call, then execute
+
+## Distribution
+
+- npm: `@alisaitteke/photoshop-mcp` (https://www.npmjs.com/package/@alisaitteke/photoshop-mcp)
+- MCP Registry: `io.github.alisaitteke/photoshop-mcp` (https://registry.modelcontextprotocol.io)
+- GitHub: https://github.com/alisaitteke/photoshop-mcp
+
+## Documentation
+
+- [README.md](README.md): install, configuration, example prompts
+- [docs/architecture.md](docs/architecture.md): system design
+- [docs/prompt-layer.md](docs/prompt-layer.md): prompts, recipes, agent instructions
+- [docs/available-tools.md](docs/available-tools.md): full tool reference
+- [docs/development.md](docs/development.md): local development and testing

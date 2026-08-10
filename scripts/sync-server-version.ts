@@ -13,8 +13,13 @@ const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
 const serverPath = join(ROOT, 'server.json');
 const server = JSON.parse(readFileSync(serverPath, 'utf8'));
 
+const REGISTRY_DESCRIPTION_MAX = 100;
+
 server.version = pkg.version;
-server.description = pkg.description;
+server.description =
+  pkg.description.length > REGISTRY_DESCRIPTION_MAX
+    ? `${pkg.description.slice(0, REGISTRY_DESCRIPTION_MAX - 1).trimEnd()}…`
+    : pkg.description;
 if (Array.isArray(server.packages)) {
   for (const p of server.packages) {
     if (p.registryType === 'npm') p.version = pkg.version;
