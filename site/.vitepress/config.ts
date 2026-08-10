@@ -65,7 +65,7 @@ const jsonLd = {
 };
 
 const sharedHead: Array<[string, Record<string, string> | string]> = [
-  ['meta', { name: 'keywords', content: 'photoshop mcp, cursor photoshop, claude photoshop, adobe photoshop automation, model context protocol, mcp server, ai photoshop' }],
+  ['link', { rel: 'icon', href: '/ps-logo-icon.svg', type: 'image/svg+xml' }],
   ['meta', { property: 'og:type', content: 'website' }],
   ['meta', { property: 'og:image', content: OG_IMAGE }],
   ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
@@ -102,7 +102,7 @@ export default defineConfig({
   head: sharedHead,
 
   themeConfig: {
-    logo: '/images/recipe-remove-bg.svg',
+    logo: '/ps-logo-icon.svg',
     siteTitle: 'Photoshop MCP',
     socialLinks: [
       { icon: 'github', link: 'https://github.com/alisaitteke/photoshop-mcp' },
