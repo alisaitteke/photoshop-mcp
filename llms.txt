@@ -1,8 +1,10 @@
 # photoshop-mcp
 
-> MCP server for Adobe Photoshop — 102 tools (generative AI + recipes), standalone web UI, and state-aware agent workflows. Unofficial; not affiliated with Adobe.
+> MCP server for Adobe Photoshop — 1.6.1 — 102 tools (generative AI + recipes), standalone web UI, and state-aware agent workflows. Unofficial; not affiliated with Adobe.
 
 **Website:** https://alisaitteke.github.io/photoshop-mcp/
+**llms.txt (site):** https://alisaitteke.github.io/photoshop-mcp/llms.txt
+**llms-full.txt:** https://alisaitteke.github.io/photoshop-mcp/llms-full.txt
 
 ## Quick start
 
@@ -23,12 +25,6 @@ get_capabilities → get_state → (recipe or atomic tool) → get_preview to ve
 ```
 
 Prefer `photoshop_recipe_*` for multi-step outcomes (single undo step). Use atomic `photoshop_*` tools for fine-grained edits. On failure, read structured error envelopes (`code`, `suggested_next_tool`) and call `get_state` before retrying.
-
-Example session:
-
-```
-List MCP prompts, then remove the background from the active document and export for web.
-```
 
 ## MCP client configuration
 
@@ -64,10 +60,13 @@ claude mcp add photoshop -- npx -y @alisaitteke/photoshop-mcp
 - MCP Registry: `io.github.alisaitteke/photoshop-mcp` (https://registry.modelcontextprotocol.io)
 - GitHub: https://github.com/alisaitteke/photoshop-mcp
 
-## Documentation
+## Documentation (web)
 
-- [README.md](README.md): install, configuration, example prompts
-- [docs/architecture.md](docs/architecture.md): system design
-- [docs/prompt-layer.md](docs/prompt-layer.md): prompts, recipes, agent instructions
-- [docs/available-tools.md](docs/available-tools.md): full tool reference
-- [docs/development.md](docs/development.md): local development and testing
+- [Home](https://alisaitteke.github.io/photoshop-mcp/)
+- [Full README](https://alisaitteke.github.io/photoshop-mcp/readme/)
+- [Architecture](https://alisaitteke.github.io/photoshop-mcp/docs/architecture/)
+- [Available tools](https://alisaitteke.github.io/photoshop-mcp/docs/available-tools/)
+- [Prompt layer](https://alisaitteke.github.io/photoshop-mcp/docs/prompt-layer/)
+- [Development](https://alisaitteke.github.io/photoshop-mcp/docs/development/)
+- [Troubleshooting](https://alisaitteke.github.io/photoshop-mcp/docs/troubleshooting/)
+- [AGENTS.md](https://github.com/alisaitteke/photoshop-mcp/blob/main/AGENTS.md)

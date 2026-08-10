@@ -1,7 +1,7 @@
 # AGENTS.md — photoshop-mcp
 
 > **Navigation map, not a reference manual.**
-> Start with [llms.txt](llms.txt) for a compact summary, then follow links as needed.
+> Start with [llms.txt](llms.txt) or the site index [llms.txt](https://alisaitteke.github.io/photoshop-mcp/llms.txt), then follow links as needed.
 
 ## Entry strategy
 

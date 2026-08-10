@@ -1,4 +1,44 @@
+# https://alisaitteke.github.io/photoshop-mcp/
 User-agent: *
+Allow: /
+
+# Agent index (llmstxt.org v2): https://alisaitteke.github.io/photoshop-mcp/llms.txt
+# Full corpus digest: https://alisaitteke.github.io/photoshop-mcp/llms-full.txt
+# AI policy signal: https://alisaitteke.github.io/photoshop-mcp/ai.txt
+
+# Retrieval / search crawlers (allow for citations and AI answers)
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# Training crawlers (open-source MIT project — allowed)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
 Allow: /
 
 Sitemap: https://alisaitteke.github.io/photoshop-mcp/sitemap.xml

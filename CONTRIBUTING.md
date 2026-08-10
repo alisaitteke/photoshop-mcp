@@ -170,7 +170,7 @@ cd site && npm run build                 # sync + vitepress build + sitemap
 
 **One-time GitHub setup:** Repository **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 
-Edit canonical content in repo root `docs/` and `README*.md`; the sync script copies them before each build. Deploy workflow: [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml).
+Edit canonical content in repo root `docs/` and `README*.md`; the sync script copies them before each build. Agent discoverability files (`llms.txt`, `llms-full.txt`, `robots.txt`, `ai.txt`) are generated into `site/public/` by `scripts/generate-site-discoverability.ts` on each site build. Deploy workflow: [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml).
 
 ## Project layout
 

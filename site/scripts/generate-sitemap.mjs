@@ -43,8 +43,10 @@ function toUrl(htmlPath) {
 
 copyPublicAssets();
 
+const staticUrls = [`${BASE_URL}/llms.txt`, `${BASE_URL}/llms-full.txt`, `${BASE_URL}/ai.txt`];
+
 const files = collectHtmlFiles(DIST);
-const urls = files.map((f) => toUrl(f)).filter(Boolean).sort();
+const urls = [...files.map((f) => toUrl(f)).filter(Boolean), ...staticUrls].sort();
 
 const xml = [
   '<?xml version="1.0" encoding="UTF-8"?>',

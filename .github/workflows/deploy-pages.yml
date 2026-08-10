@@ -10,6 +10,7 @@ on:
       - 'README*.md'
       - 'images/**'
       - 'scripts/sync-site-content.ts'
+      - 'scripts/generate-site-discoverability.ts'
   workflow_dispatch:
 
 permissions:

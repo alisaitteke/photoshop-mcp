@@ -55,6 +55,8 @@ site/content/es/readme.md
 site/content/de/readme.md
 site/content/ja/readme.md
 site/public/images/
+site/public/llms.txt
+site/public/llms-full.txt
 site/.vitepress/dist
 site/node_modules
 

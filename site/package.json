@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "prebuild": "tsx ../scripts/sync-site-content.ts",
+    "prebuild": "tsx ../scripts/sync-site-content.ts && tsx ../scripts/generate-site-discoverability.ts",
     "predev": "tsx ../scripts/sync-site-content.ts",
     "dev": "vitepress dev",
     "build": "vitepress build && node scripts/generate-sitemap.mjs",

@@ -1,0 +1,16 @@
+# ai.txt — AI training and usage policy for Photoshop MCP (open source)
+# Spec: community convention paired with robots.txt (not a technical access gate)
+# Site: https://alisaitteke.github.io/photoshop-mcp/
+
+Contact: https://github.com/alisaitteke/photoshop-mcp/issues
+License: MIT (https://github.com/alisaitteke/photoshop-mcp/blob/main/LICENSE)
+
+# This project is open source. Training, indexing, and citation for retrieval are welcome.
+# Use robots.txt for crawl access control; this file expresses consent and context.
+
+User-Agent: *
+Allow: /
+
+Policy: allow-training
+Policy: allow-retrieval
+Policy: allow-citation

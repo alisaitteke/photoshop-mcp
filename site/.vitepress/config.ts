@@ -1,7 +1,22 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitepress';
+
+const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const pkg = JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8'));
 
 const SITE_URL = 'https://alisaitteke.github.io/photoshop-mcp';
 const OG_IMAGE = `${SITE_URL}/images/og-social.png`;
+const LLMS_URL = `${SITE_URL}/llms.txt`;
+const LLMS_FULL_URL = `${SITE_URL}/llms-full.txt`;
+
+const SITE_NAME = 'Photoshop MCP';
+const DEFAULT_TITLE = 'Photoshop MCP — Control Adobe Photoshop with AI';
+const DEFAULT_DESCRIPTION =
+  'MCP server for Cursor, Claude Desktop, and natural language. 102 tools, recipe workflows, generative AI, and standalone web UI. Windows and macOS.';
+const KEYWORDS =
+  'photoshop mcp, cursor photoshop, claude photoshop, adobe photoshop automation, model context protocol, mcp server, ai photoshop, extendscript, generative fill';
 
 const LOCALES = ['en', 'tr', 'zh', 'es', 'de', 'ja'] as const;
 
@@ -51,7 +66,7 @@ const jsonLd = {
     'MCP server for Adobe Photoshop — 102 tools, generative AI, recipe workflows, and standalone web UI. Control Photoshop from Cursor, Claude, or natural language.',
   url: SITE_URL,
   downloadUrl: 'https://www.npmjs.com/package/@alisaitteke/photoshop-mcp',
-  softwareVersion: '1.6.1',
+  softwareVersion: pkg.version,
   author: {
     '@type': 'Person',
     name: 'Ali Sait Teke',
@@ -66,13 +81,46 @@ const jsonLd = {
 
 const sharedHead: Array<[string, Record<string, string> | string]> = [
   ['link', { rel: 'icon', href: '/ps-logo-icon.svg', type: 'image/svg+xml' }],
-  ['meta', { property: 'og:type', content: 'website' }],
+  ['link', { rel: 'apple-touch-icon', href: `${SITE_URL}/images/og-social.png` }],
+  ['link', { rel: 'describedby', href: LLMS_URL, type: 'text/plain' }],
+  ['link', { rel: 'alternate', href: LLMS_URL, type: 'text/plain', title: 'llms.txt' }],
+  ['link', { rel: 'alternate', href: LLMS_FULL_URL, type: 'text/plain', title: 'llms-full.txt' }],
+  ['meta', { name: 'keywords', content: KEYWORDS }],
+  ['meta', { name: 'author', content: 'Ali Sait Teke' }],
+  ['meta', { name: 'robots', content: 'index, follow, max-image-preview:large' }],
+  ['meta', { property: 'og:site_name', content: SITE_NAME }],
+  ['meta', { property: 'og:locale', content: 'en_US' }],
   ['meta', { property: 'og:image', content: OG_IMAGE }],
+  ['meta', { property: 'og:image:width', content: '1200' }],
+  ['meta', { property: 'og:image:height', content: '630' }],
+  ['meta', { property: 'og:image:alt', content: 'Photoshop MCP — AI-driven Photoshop automation' }],
   ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
   ['meta', { name: 'twitter:image', content: OG_IMAGE }],
+  ['meta', { name: 'twitter:image:alt', content: 'Photoshop MCP — AI-driven Photoshop automation' }],
   ['script', { type: 'application/ld+json' }, JSON.stringify(jsonLd)],
   ...hreflangTags(),
 ];
+
+function pageOgTitle(pageData: { title?: string; frontmatter: Record<string, unknown> }): string {
+  const hero = pageData.frontmatter.hero as { name?: string; text?: string } | undefined;
+  if (hero?.name && hero?.text) return `${hero.name} — ${hero.text}`;
+  const fmTitle = pageData.frontmatter.title as string | undefined;
+  if (fmTitle) return fmTitle;
+  if (pageData.title) return `${pageData.title} | ${SITE_NAME}`;
+  return DEFAULT_TITLE;
+}
+
+function pageOgDescription(pageData: {
+  description?: string;
+  frontmatter: Record<string, unknown>;
+}): string {
+  const hero = pageData.frontmatter.hero as { tagline?: string } | undefined;
+  if (hero?.tagline) return hero.tagline;
+  const fmDesc = pageData.frontmatter.description as string | undefined;
+  if (fmDesc) return fmDesc;
+  if (pageData.description) return pageData.description;
+  return DEFAULT_DESCRIPTION;
+}
 
 const docsSidebar = [
   {
@@ -283,10 +331,20 @@ export default defineConfig({
       pageData.relativePath === 'index.md'
         ? `${SITE_URL}/`
         : `${SITE_URL}/${pageData.relativePath.replace(/\.md$/, '').replace(/\/index$/, '')}/`;
+    const ogTitle = pageOgTitle(pageData);
+    const ogDescription = pageOgDescription(pageData);
+    const ogType = pageData.relativePath.startsWith('docs/') ? 'article' : 'website';
+
     pageData.frontmatter.head ??= [];
     pageData.frontmatter.head.push(
       ['link', { rel: 'canonical', href: canonical }],
       ['meta', { property: 'og:url', content: canonical }],
+      ['meta', { property: 'og:type', content: ogType }],
+      ['meta', { property: 'og:title', content: ogTitle }],
+      ['meta', { property: 'og:description', content: ogDescription }],
+      ['meta', { name: 'twitter:title', content: ogTitle }],
+      ['meta', { name: 'twitter:description', content: ogDescription }],
+      ['meta', { name: 'description', content: ogDescription }],
     );
   },
 });
