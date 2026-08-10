@@ -2458,6 +2458,558 @@ export const ExtendScriptSnippets = {
       };
     `;
   },
+
+  /**
+   * Apply a layer style (drop shadow / outer glow / stroke / bevel) via Action Manager layerEffects.
+   */
+  applyLayerStyle: (options: {
+    style: 'drop_shadow' | 'outer_glow' | 'stroke' | 'bevel_emboss';
+    red: number;
+    green: number;
+    blue: number;
+    opacity: number;
+    size: number;
+    distance: number;
+    angle: number;
+  }) => {
+    const { style, red, green, blue, opacity, size, distance, angle } = options;
+    let styleDescriptor: string;
+    if (style === 'drop_shadow') {
+      styleDescriptor = `
+      var fx = new ActionDescriptor();
+      fx.putBoolean(cTID('enab'), true);
+      fx.putEnumerated(cTID('Md  '), cTID('BlnM'), cTID('Mltp'));
+      fx.putObject(cTID('Clr '), cTID('RGBC'), rgb);
+      fx.putUnitDouble(cTID('Opct'), cTID('#Prc'), ${opacity});
+      fx.putUnitDouble(cTID('lagl'), cTID('#Ang'), ${angle});
+      fx.putUnitDouble(cTID('Dstn'), cTID('#Pxl'), ${distance});
+      fx.putUnitDouble(cTID('Ckmt'), cTID('#Pxl'), 0);
+      fx.putUnitDouble(cTID('blur'), cTID('#Pxl'), ${size});
+      fx.putBoolean(cTID('uglg'), true);
+      effects.putObject(cTID('DrSh'), fx);`;
+    } else if (style === 'outer_glow') {
+      styleDescriptor = `
+      var fx = new ActionDescriptor();
+      fx.putBoolean(cTID('enab'), true);
+      fx.putEnumerated(cTID('Md  '), cTID('BlnM'), cTID('Scrn'));
+      fx.putObject(cTID('Clr '), cTID('RGBC'), rgb);
+      fx.putUnitDouble(cTID('Opct'), cTID('#Prc'), ${opacity});
+      fx.putUnitDouble(cTID('Ckmt'), cTID('#Pxl'), 0);
+      fx.putUnitDouble(cTID('blur'), cTID('#Pxl'), ${size});
+      fx.putUnitDouble(cTID('Nose'), cTID('#Prc'), 0);
+      fx.putUnitDouble(cTID('ShdN'), cTID('#Prc'), 0);
+      fx.putBoolean(cTID('AntA'), true);
+      effects.putObject(cTID('OrGl'), fx);`;
+    } else if (style === 'stroke') {
+      styleDescriptor = `
+      var fx = new ActionDescriptor();
+      fx.putBoolean(cTID('enab'), true);
+      fx.putEnumerated(sTID('style'), sTID('frameStyle'), sTID('outsetFrame'));
+      fx.putEnumerated(sTID('paintType'), sTID('frameFill'), sTID('solidColor'));
+      fx.putEnumerated(cTID('Md  '), cTID('BlnM'), cTID('Nrml'));
+      fx.putUnitDouble(cTID('Opct'), cTID('#Prc'), ${opacity});
+      fx.putUnitDouble(cTID('Sz  '), cTID('#Pxl'), ${size});
+      fx.putObject(cTID('Clr '), cTID('RGBC'), rgb);
+      fx.putBoolean(sTID('overprint'), false);
+      effects.putObject(sTID('frameFX'), fx);`;
+    } else {
+      styleDescriptor = `
+      var fx = new ActionDescriptor();
+      fx.putBoolean(cTID('enab'), true);
+      fx.putEnumerated(cTID('bvlS'), cTID('BESL'), cTID('InrB'));
+      fx.putEnumerated(cTID('bvlT'), cTID('BSLT'), cTID('SfBl'));
+      fx.putEnumerated(cTID('bvlD'), cTID('BESD'), cTID('In  '));
+      fx.putUnitDouble(cTID('srg '), cTID('#Prc'), 100);
+      fx.putUnitDouble(cTID('blur'), cTID('#Pxl'), ${size});
+      fx.putUnitDouble(cTID('Sftn'), cTID('#Pxl'), 0);
+      fx.putUnitDouble(cTID('lagl'), cTID('#Ang'), ${angle});
+      fx.putUnitDouble(cTID('Lald'), cTID('#Ang'), 30);
+      var hiRgb = new ActionDescriptor();
+      hiRgb.putDouble(cTID('Rd  '), 255); hiRgb.putDouble(cTID('Grn '), 255); hiRgb.putDouble(cTID('Bl  '), 255);
+      fx.putEnumerated(cTID('hglM'), cTID('BlnM'), cTID('Scrn'));
+      fx.putObject(cTID('hglC'), cTID('RGBC'), hiRgb);
+      fx.putUnitDouble(cTID('hglO'), cTID('#Prc'), 75);
+      fx.putEnumerated(cTID('sdwM'), cTID('BlnM'), cTID('Mltp'));
+      fx.putObject(cTID('sdwC'), cTID('RGBC'), rgb);
+      fx.putUnitDouble(cTID('sdwO'), cTID('#Prc'), ${opacity});
+      effects.putObject(cTID('ebbl'), fx);`;
+    }
+    return `
+    ${helperFunctions}
+
+    if (app.documents.length === 0) {
+      throw new Error('No active document');
+    }
+    var doc = app.activeDocument;
+    app.displayDialogs = DialogModes.NO;
+
+    var rgb = new ActionDescriptor();
+    rgb.putDouble(cTID('Rd  '), ${red});
+    rgb.putDouble(cTID('Grn '), ${green});
+    rgb.putDouble(cTID('Bl  '), ${blue});
+
+    var effects = new ActionDescriptor();
+    effects.putUnitDouble(cTID('Scl '), cTID('#Prc'), 100);
+    ${styleDescriptor}
+
+    var desc = new ActionDescriptor();
+    var ref = new ActionReference();
+    ref.putProperty(cTID('Prpr'), cTID('Lefx'));
+    ref.putEnumerated(cTID('Lyr '), cTID('Ordn'), cTID('Trgt'));
+    desc.putReference(cTID('null'), ref);
+    desc.putObject(cTID('T   '), cTID('Lefx'), effects);
+    executeAction(cTID('setd'), desc, DialogModes.NO);
+
+    return {
+      applied: true,
+      style: '${style}',
+      layer_name: doc.activeLayer.name
+    };
+  `;
+  },
+
+  /**
+   * Color Lookup (3D LUT) adjustment layer — cinematic grades via built-in or file-based LUTs.
+   */
+  applyLut: (lut: string) => {
+    const escaped = jsString(lut);
+    return `
+    ${helperFunctions}
+
+    if (app.documents.length === 0) {
+      throw new Error('No active document');
+    }
+    app.displayDialogs = DialogModes.NO;
+
+    var lutFile = new File("${escaped}");
+    var desc = new ActionDescriptor();
+    var ref = new ActionReference();
+    ref.putClass(sTID('adjustmentLayer'));
+    desc.putReference(sTID('null'), ref);
+    var using = new ActionDescriptor();
+    var lookup = new ActionDescriptor();
+    lookup.putEnumerated(sTID('lookupType'), sTID('colorLookupType'), sTID('3DLUT'));
+    if (lutFile.exists) {
+      lookup.putPath(sTID('LUT3DFileName'), lutFile);
+    } else {
+      // Built-in LUT name (e.g. 'Crisp_Warm.3dl', 'Kodak 5218 Fuji 3510.3dl')
+      lookup.putString(sTID('LUT3DFileName'), "${escaped}");
+    }
+    using.putObject(sTID('type'), sTID('colorLookup'), lookup);
+    desc.putObject(sTID('using'), sTID('adjustmentLayer'), using);
+    executeAction(sTID('make'), desc, DialogModes.NO);
+
+    return {
+      created: true,
+      layer_name: app.activeDocument.activeLayer.name,
+      lut: "${escaped}",
+      lut_source: lutFile.exists ? 'file' : 'builtin'
+    };
+  `;
+  },
+
+  /**
+   * Vibrance adjustment layer.
+   */
+  adjustVibrance: (vibrance: number, saturation: number) => `
+    ${helperFunctions}
+
+    if (app.documents.length === 0) {
+      throw new Error('No active document');
+    }
+    app.displayDialogs = DialogModes.NO;
+
+    var desc = new ActionDescriptor();
+    var ref = new ActionReference();
+    ref.putClass(sTID('adjustmentLayer'));
+    desc.putReference(sTID('null'), ref);
+    var using = new ActionDescriptor();
+    var vib = new ActionDescriptor();
+    vib.putInteger(sTID('vibrance'), ${vibrance});
+    vib.putInteger(sTID('saturation'), ${saturation});
+    using.putObject(sTID('type'), sTID('vibrance'), vib);
+    desc.putObject(sTID('using'), sTID('adjustmentLayer'), using);
+    executeAction(sTID('make'), desc, DialogModes.NO);
+
+    return {
+      created: true,
+      layer_name: app.activeDocument.activeLayer.name,
+      vibrance: ${vibrance},
+      saturation: ${saturation}
+    };
+  `,
+
+  /**
+   * Exposure adjustment layer.
+   */
+  adjustExposure: (exposure: number, offset: number, gamma: number) => `
+    ${helperFunctions}
+
+    if (app.documents.length === 0) {
+      throw new Error('No active document');
+    }
+    app.displayDialogs = DialogModes.NO;
+
+    var desc = new ActionDescriptor();
+    var ref = new ActionReference();
+    ref.putClass(sTID('adjustmentLayer'));
+    desc.putReference(sTID('null'), ref);
+    var using = new ActionDescriptor();
+    var exp = new ActionDescriptor();
+    exp.putEnumerated(sTID('presetKind'), sTID('presetKindType'), sTID('presetKindCustom'));
+    exp.putDouble(sTID('exposure'), ${exposure});
+    exp.putDouble(sTID('offset'), ${offset});
+    exp.putDouble(sTID('gammaCorrection'), ${gamma});
+    using.putObject(sTID('type'), sTID('exposure'), exp);
+    desc.putObject(sTID('using'), sTID('adjustmentLayer'), using);
+    executeAction(sTID('make'), desc, DialogModes.NO);
+
+    return {
+      created: true,
+      layer_name: app.activeDocument.activeLayer.name,
+      exposure: ${exposure},
+      offset: ${offset},
+      gamma: ${gamma}
+    };
+  `,
+
+  /**
+   * Photo Filter adjustment layer (warming/cooling/tint with density).
+   */
+  applyPhotoFilter: (red: number, green: number, blue: number, density: number, preserveLuminosity: boolean) => `
+    ${helperFunctions}
+
+    if (app.documents.length === 0) {
+      throw new Error('No active document');
+    }
+    app.displayDialogs = DialogModes.NO;
+
+    var rgb = new ActionDescriptor();
+    rgb.putDouble(cTID('Rd  '), ${red});
+    rgb.putDouble(cTID('Grn '), ${green});
+    rgb.putDouble(cTID('Bl  '), ${blue});
+
+    var desc = new ActionDescriptor();
+    var ref = new ActionReference();
+    ref.putClass(sTID('adjustmentLayer'));
+    desc.putReference(sTID('null'), ref);
+    var using = new ActionDescriptor();
+    var filter = new ActionDescriptor();
+    filter.putEnumerated(sTID('type'), sTID('photoFilterType'), sTID('photoFilterColor'));
+    filter.putObject(cTID('Clr '), cTID('RGBC'), rgb);
+    filter.putUnitDouble(cTID('Dns '), cTID('#Prc'), ${density});
+    filter.putBoolean(sTID('preserveLuminosity'), ${preserveLuminosity ? 'true' : 'false'});
+    using.putObject(sTID('type'), sTID('photoFilter'), filter);
+    desc.putObject(sTID('using'), sTID('adjustmentLayer'), using);
+    executeAction(sTID('make'), desc, DialogModes.NO);
+
+    return {
+      created: true,
+      layer_name: app.activeDocument.activeLayer.name,
+      color: { red: ${red}, green: ${green}, blue: ${blue} },
+      density: ${density}
+    };
+  `,
+
+  /**
+   * Gradient Map adjustment layer (black→white custom gradient by default).
+   */
+  applyGradientMap: (reverse: boolean) => `
+    ${helperFunctions}
+
+    if (app.documents.length === 0) {
+      throw new Error('No active document');
+    }
+    app.displayDialogs = DialogModes.NO;
+
+    function grayStop(location, grayValue) {
+      var stop = new ActionDescriptor();
+      var gray = new ActionDescriptor();
+      gray.putDouble(cTID('Gry '), grayValue);
+      stop.putObject(cTID('Clr '), cTID('Grsc'), gray);
+      stop.putEnumerated(cTID('Type'), cTID('Clry'), cTID('UsrS'));
+      stop.putInteger(cTID('Lctn'), location);
+      stop.putInteger(cTID('Mdpn'), 50);
+      return stop;
+    }
+    function xferStop(location) {
+      var stop = new ActionDescriptor();
+      stop.putUnitDouble(cTID('Opct'), cTID('#Prc'), 100);
+      stop.putInteger(cTID('Lctn'), location);
+      stop.putInteger(cTID('Mdpn'), 50);
+      return stop;
+    }
+
+    var grad = new ActionDescriptor();
+    grad.putString(cTID('Nm  '), 'MCP Gradient Map');
+    grad.putEnumerated(cTID('GrdF'), cTID('GrdF'), cTID('CstS'));
+    grad.putDouble(cTID('Intr'), 4096);
+    var colors = new ActionList();
+    colors.putObject(cTID('Clrt'), grayStop(${reverse ? '4096' : '0'}, 0));
+    colors.putObject(cTID('Clrt'), grayStop(${reverse ? '0' : '4096'}, 100));
+    grad.putList(cTID('Clrs'), colors);
+    var xfer = new ActionList();
+    xfer.putObject(cTID('TrnS'), xferStop(0));
+    xfer.putObject(cTID('TrnS'), xferStop(4096));
+    grad.putList(cTID('Trns'), xfer);
+
+    var desc = new ActionDescriptor();
+    var ref = new ActionReference();
+    ref.putClass(sTID('adjustmentLayer'));
+    desc.putReference(sTID('null'), ref);
+    var using = new ActionDescriptor();
+    var gm = new ActionDescriptor();
+    gm.putObject(cTID('Grad'), cTID('Grdn'), grad);
+    using.putObject(sTID('type'), sTID('gradientMapClass'), gm);
+    desc.putObject(sTID('using'), sTID('adjustmentLayer'), using);
+    executeAction(sTID('make'), desc, DialogModes.NO);
+
+    return {
+      created: true,
+      layer_name: app.activeDocument.activeLayer.name,
+      reverse: ${reverse ? 'true' : 'false'}
+    };
+  `,
+
+  /**
+   * List data sets defined on the active document (data-driven graphics).
+   */
+  listDataSets: () => `
+    if (app.documents.length === 0) {
+      throw new Error('No active document');
+    }
+    var doc = app.activeDocument;
+    var names = [];
+    try {
+      for (var i = 0; i < doc.dataSets.length; i++) {
+        names.push(doc.dataSets[i].name);
+      }
+    } catch (e) {}
+    var active = null;
+    try { active = doc.activeDataSet ? doc.activeDataSet.name : null; } catch (eActive) {}
+    return {
+      datasets: names,
+      active: active,
+      count: names.length
+    };
+  `,
+
+  /**
+   * Import variables/data sets XML (Image > Variables > Data Sets > Import).
+   */
+  importDataSets: (xmlPath: string) => {
+    const escaped = jsString(xmlPath);
+    return `
+    if (app.documents.length === 0) {
+      throw new Error('No active document');
+    }
+    var xmlFile = new File("${escaped}");
+    if (!xmlFile.exists) {
+      throw new Error('variables_xml_not_found: ${escaped}');
+    }
+    var doc = app.activeDocument;
+    doc.importVariables(xmlFile);
+    var names = [];
+    try {
+      for (var i = 0; i < doc.dataSets.length; i++) {
+        names.push(doc.dataSets[i].name);
+      }
+    } catch (e) {}
+    return {
+      imported: true,
+      xml_path: "${escaped}",
+      count: names.length,
+      datasets: names
+    };
+  `;
+  },
+
+  /**
+   * Batch-export one file per data set: applies each data set then saves a copy.
+   */
+  applyDataSetsExport: (outputDir: string, format: 'JPEG' | 'PNG' | 'PSD', datasetNames: string[]) => {
+    const escapedDir = jsString(outputDir);
+    const namesJson = JSON.stringify(datasetNames);
+    return `
+    ${helperFunctions}
+
+    if (app.documents.length === 0) {
+      throw new Error('No active document');
+    }
+    var doc = app.activeDocument;
+    if (!doc.dataSets || doc.dataSets.length === 0) {
+      throw new Error('no_datasets: active document has no data sets — import a variables XML first');
+    }
+    var folder = new Folder("${escapedDir}");
+    if (!folder.exists && !folder.create()) {
+      throw new Error('output_dir_not_writable: ${escapedDir}');
+    }
+    var requested = ${namesJson};
+    var outputs = [];
+    var skipped = [];
+    for (var n = 0; n < requested.length; n++) {
+      var name = requested[n];
+      var set = null;
+      try { set = doc.dataSets.getByName(name); } catch (eFind) { set = null; }
+      if (!set) {
+        skipped.push(name);
+        continue;
+      }
+      doc.activeDataSet = set;
+      var base = "${escapedDir}/" + name.replace(/[^a-zA-Z0-9_\\-]+/g, '_');
+      if ('${format}' === 'JPEG') {
+        var jpg = new JPEGSaveOptions();
+        jpg.quality = 10;
+        doc.saveAs(new File(base + '.jpg'), jpg, true, Extension.LOWERCASE);
+        outputs.push(base + '.jpg');
+      } else if ('${format}' === 'PNG') {
+        var png = new PNGSaveOptions();
+        doc.saveAs(new File(base + '.png'), png, true, Extension.LOWERCASE);
+        outputs.push(base + '.png');
+      } else {
+        doc.saveAs(new File(base + '.psd'), new PhotoshopSaveOptions(), true, Extension.LOWERCASE);
+        outputs.push(base + '.psd');
+      }
+    }
+    return {
+      exported: outputs.length,
+      skipped: skipped,
+      output_paths: outputs,
+      output_dir: "${escapedDir}",
+      format: '${format}'
+    };
+  `;
+  },
+
+  /**
+   * Load image files into one document, convert to a smart object and apply a stack mode.
+   * Classic "remove tourists with median stack" without any generative AI.
+   */
+  imageStackMode: (files: string[], mode: string) => {
+    const filesJson = JSON.stringify(files.map((f) => jsString(f)));
+    const modeId = jsString(mode);
+    return `
+    ${helperFunctions}
+
+    var files = [${filesJson}];
+    if (files.length < 2) {
+      throw new Error('stack_needs_two_files: image stack requires at least 2 images');
+    }
+    app.displayDialogs = DialogModes.NO;
+
+    var base = null;
+    var opened = [];
+    for (var i = 0; i < files.length; i++) {
+      var f = new File(files[i]);
+      if (!f.exists) {
+        throw new Error('stack_file_not_found: ' + files[i]);
+      }
+      var d = app.open(f);
+      opened.push(d);
+      if (!base) {
+        base = d;
+      } else {
+        d.selection.selectAll();
+        d.activeLayer.copy();
+        base.paste();
+        d.close(SaveOptions.DONOTSAVECHANGES);
+      }
+    }
+    app.activeDocument = base;
+    base.activeLayer = base.layers[0];
+
+    var selDesc = new ActionDescriptor();
+    var selRef = new ActionReference();
+    selRef.putEnumerated(cTID('Lyr '), cTID('Ordn'), cTID('Trgt'));
+    selDesc.putReference(cTID('null'), selRef);
+    executeAction(sTID('selectAllLayers'), selDesc, DialogModes.NO);
+    executeAction(sTID('newPlacedLayer'), undefined, DialogModes.NO);
+
+    var setDesc = new ActionDescriptor();
+    var setRef = new ActionReference();
+    setRef.putEnumerated(cTID('Lyr '), cTID('Ordn'), cTID('Trgt'));
+    setDesc.putReference(cTID('null'), setRef);
+    var smart = new ActionDescriptor();
+    smart.putEnumerated(sTID('stackMode'), sTID('stackMode'), sTID("${modeId}"));
+    setDesc.putObject(cTID('T   '), sTID('smartObject'), smart);
+    executeAction(cTID('setd'), setDesc, DialogModes.NO);
+
+    return {
+      stacked: true,
+      file_count: files.length,
+      mode: "${modeId}",
+      layer_name: base.activeLayer.name
+    };
+  `;
+  },
+
+  /**
+   * Export a copy of the active document as PNG/JPEG (Save for Web) or WebP/AVIF (native, PS 23.2+).
+   */
+  exportAs: (filePath: string, format: 'PNG' | 'JPEG' | 'WEBP' | 'AVIF', quality: number) => {
+    const escaped = jsString(filePath);
+    const q = Math.max(0, Math.min(100, Math.round(quality)));
+    return `
+    ${helperFunctions}
+
+    if (app.documents.length === 0) {
+      throw new Error('No active document');
+    }
+    var doc = app.activeDocument;
+    app.displayDialogs = DialogModes.NO;
+    var outFile = new File("${escaped}");
+
+    if ('${format}' === 'PNG' || '${format}' === 'JPEG') {
+      var opts = new ExportOptionsSaveForWeb();
+      if ('${format}' === 'PNG') {
+        opts.format = SaveDocumentType.PNG;
+        opts.PNG8 = false;
+      } else {
+        opts.format = SaveDocumentType.JPEG;
+        opts.quality = ${q};
+      }
+      doc.exportDocument(outFile, ExportType.SAVEFORWEB, opts);
+      return {
+        exported: true,
+        path: "${escaped}",
+        format: '${format}',
+        method: 'save_for_web'
+      };
+    }
+
+    // WebP / AVIF: native Save a Copy (PS 23.2+); options classes may not exist
+    // on older DOMs, so cascade candidates and report cleanly when unsupported.
+    var saveCandidates = ${format === 'WEBP' ? `['WebPSaveOptions']` : `['AVIFSaveOptions', 'AvifSaveOptions']`};
+    var saved = false;
+    var lastError = '';
+    for (var c = 0; c < saveCandidates.length; c++) {
+      try {
+        var ctor = saveCandidates[c];
+        var opts2 = eval('new ' + ctor + '()');
+        try { opts2.quality = ${q}; } catch (eQ) {}
+        doc.saveAs(outFile, opts2, true, Extension.LOWERCASE);
+        saved = true;
+        break;
+      } catch (eSave) {
+        lastError = eSave.message || String(eSave);
+      }
+    }
+    if (!saved) {
+      return {
+        ok: false,
+        code: 'version_unsupported',
+        message: '${format} export not available in this Photoshop build: ' + lastError,
+        suggested_next_tool: 'photoshop_save_document'
+      };
+    }
+    return {
+      exported: true,
+      path: "${escaped}",
+      format: '${format}',
+      method: 'native_save_as'
+    };
+  `;
+  },
 };
 
 /**

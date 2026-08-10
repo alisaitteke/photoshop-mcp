@@ -18,6 +18,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-lightgrey.svg)]()
+[![MCP Registry](https://img.shields.io/badge/MCP%20Registry-io.github.alisaitteke%2Fphotoshop--mcp-purple.svg)](https://registry.modelcontextprotocol.io)
 
 A Model Context Protocol (MCP) server that enables AI assistants like Claude and Cursor to control Adobe Photoshop programmatically. This allows you to create designs, manipulate images, and automate Photoshop workflows through natural language commands while working in your IDE — or through the bundled **standalone web UI**, which supports both API keys and CLI subscription accounts (Claude Code / Gemini CLI). The UI also offers an opt-in **Action Plan (beta)** mode that plans every Photoshop step in one LLM call, then runs them in a single pass.
 
@@ -171,16 +172,16 @@ requests into reliable Photoshop actions:
 - **Server `instructions`** — workflow contract advertised on MCP `initialize`
   (ping once, state-before-action, prefer recipes, error recovery). See
   [`src/prompts/instructions.ts`](src/prompts/instructions.ts).
-- **MCP `prompts` primitive** — 22 pre-engineered templates (15 recipe + 7 guide:
+- **MCP `prompts` primitive** — 23 pre-engineered templates (16 recipe + 7 guide:
   `ps.enhance_portrait`, `ps.remove_background`, `ps.generative_fill`, …)
   via `prompts/list` and `prompts/get`.
-- **Recipe tools** — 15 outcome-oriented `photoshop_recipe_*` tools (remove
+- **Recipe tools** — 16 outcome-oriented `photoshop_recipe_*` tools (remove
   background, enhance portrait, prepare for web, export social variants, color
   grade, frequency separation, batch mockup, organize layers, gradient fade,
   sky blend, dodge & burn, remove distraction, split carousel, batch watermark,
-  passport photo). Each wraps steps in a single
-  Photoshop history state (one Undo reverts all). **89 tools total** (74 atomic
-  + 15 recipe).
+  passport photo, csv to cards). Each wraps steps in a single
+  Photoshop history state (one Undo reverts all). **102 tools total** (86 atomic
+  + 16 recipe).
 - **Generative AI** — `photoshop_generative_fill`, `photoshop_generative_remove`,
   `photoshop_generative_expand`, `photoshop_generative_upscale`, `photoshop_sky_replacement`,
   `photoshop_generate_image` (Firefly via ExtendScript; Adobe account + credits required).
@@ -387,6 +388,17 @@ Note: framing is approximated from subject bounds — official acceptance is not
 
 Equivalent MCP prompt template: `ps.passport_photo` with `{ spec: "us_2x2", make_sheet: "true" }`.
 
+#### 🪪 CSV → cards (data-driven graphics)
+
+<img src="./images/recipe-csv-cards.svg" alt="CSV rows become data sets; one personalized card exported per row" width="640" />
+
+```
+Generate a name card for every row in ~/cards/speakers.csv using the open template PSD.
+PNG output to ~/cards/out — one file per row, named after the row.
+```
+
+Equivalent MCP prompt template: `ps.csv_to_cards` with `{ csv_path: "~/cards/speakers.csv", output_dir: "~/cards/out", format: "PNG" }`.
+
 ### More examples
 
 <details>
@@ -585,15 +597,20 @@ Never guess — read get_state after a failure and propose the next single step.
 - **Supports Photoshop 2012-2025+**
 - **ExtendScript API**: Universal compatibility via AppleScript/COM automation
 - **Auto-Detection**: Automatically finds Photoshop installation on your system
-- **89 Tools**: 74 atomic `photoshop_*` + 15 recipe `photoshop_recipe_*`
-- **AI/Prompt Layer**: 22 MCP prompt templates (15 recipe + 7 guide), server instructions, state/preview/capabilities tools
+- **102 Tools**: 86 atomic `photoshop_*` + 16 recipe `photoshop_recipe_*`
+- **AI/Prompt Layer**: 23 MCP prompt templates (16 recipe + 7 guide), server instructions, state/preview/capabilities tools
 - **Document Management**: Create, open, save, close, crop documents
 - **Layer Operations**: Create, delete, duplicate, merge, transform layers
 - **Layer Properties**: Opacity, blend modes, visibility, locking
+- **Layer Styles**: Drop shadow, outer glow, stroke, bevel & emboss
 - **Text Formatting**: Font, size, color, alignment controls
 - **Image Placement**: Place images, open files, fit to document
 - **Filters**: Gaussian Blur, Sharpen, Noise, Motion Blur
 - **Color Adjustments**: Brightness/Contrast, Hue/Saturation, Curves, Auto Levels/Contrast
+- **Color Grading**: 3D LUT (Color Lookup) layers, Vibrance, Exposure, Photo Filter, Gradient Map
+- **Data-Driven Graphics**: CSV/variables XML → one image per row ("mail merge for images")
+- **Image Stacking**: Mean/median stack modes for tourist removal & noise reduction
+- **Modern Export**: PNG/JPEG plus WebP/AVIF (native, PS 23.2+)
 - **Selections & Masks**: Rectangular selections, select subject, content-aware fill, gradient mask, layer masks
 - **History Control**: Undo/Redo operations, view history states
 - **Actions**: Play recorded actions, execute custom scripts
@@ -601,6 +618,17 @@ Never guess — read get_state after a failure and propose the next single step.
 - **Context Tracking**: Returns document/layer state after each operation for AI context awareness
 
 ## Installation
+
+### One-click install
+
+[![Install in Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=photoshop&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIkBhbGlzYWl0dGVrZS9waG90b3Nob3AtbWNwIl19)
+[![Install in VS Code](https://img.shields.io/badge/Install%20in-VS%20Code-0098FF)](https://vscode.dev/redirect/mcp/install?name=photoshop&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40alisaitteke%2Fphotoshop-mcp%22%5D%7D)
+
+Or from a terminal — Claude Code:
+
+```bash
+claude mcp add photoshop -- npx -y @alisaitteke/photoshop-mcp
+```
 
 ### Using NPX (Recommended)
 
