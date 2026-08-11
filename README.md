@@ -1,5 +1,7 @@
 # Photoshop MCP Server
 
+[![MCP Toplist](https://mcptoplist.com/badge/io.github.alisaitteke%2Fphotoshop-mcp.svg)](https://mcptoplist.com/server/io.github.alisaitteke%2Fphotoshop-mcp)
+
 <p align="center">
   <a href="https://github.com/alisaitteke/photoshop-mcp">
     <img src="./images/readme-hero.png" alt="Photoshop MCP — AI-driven Photoshop automation" width="100%" />
