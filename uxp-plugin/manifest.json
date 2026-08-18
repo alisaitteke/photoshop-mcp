@@ -2,14 +2,15 @@
   "id": "com.photoshop-mcp.uxp-bridge",
   "name": "Photoshop MCP UXP Bridge",
   "version": "1.0.0",
-  "main": "main.js",
+  "manifestVersion": 4,
+  "main": "index.html",
   "host": {
     "app": "PS",
     "minVersion": "24.0.0"
   },
   "requiredPermissions": {
     "network": {
-      "domains": ["127.0.0.1", "localhost"]
+      "domains": ["http://127.0.0.1:38452", "http://localhost:38452"]
     },
     "localFileSystem": "request"
   },
