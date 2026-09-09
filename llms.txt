@@ -1,6 +1,6 @@
 # photoshop-mcp
 
-> MCP server for Adobe Photoshop — 1.7.5 — 118 tools (generative AI + recipes), standalone web UI, and state-aware agent workflows. Unofficial; not affiliated with Adobe.
+> MCP server for Adobe Photoshop — 1.7.6 — 118 tools (generative AI + recipes), standalone web UI, and state-aware agent workflows. Unofficial; not affiliated with Adobe.
 
 **Website:** https://photoshop-mcp.com/
 **llms.txt (site):** https://photoshop-mcp.com/llms.txt

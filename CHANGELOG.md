@@ -5,9 +5,17 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.6] - 2026-09-09
+
+[v1.7.5...HEAD](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.5...HEAD)
+
+### Changed
+
+- Replace PostHog with self-hosted Rybbit for MCP, standalone UI, and marketing-site analytics ([#36](https://github.com/alisaitteke/photoshop-mcp/pull/36)). Event names stay the same; MCP/UI traffic uses `/mcp` and `/ui-server`. `ANALYTICS_DISABLED` and the `POSTHOG_DISABLED` alias still opt out; optional `RYBBIT_API_KEY` / `RYBBIT_HOST` / `RYBBIT_SITE_ID` for forks.
+
 ## [1.7.5] - 2026-09-07
 
-[v1.7.4...HEAD](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.4...HEAD)
+[v1.7.4...v1.7.5](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.4...v1.7.5)
 
 ### Fixes
 
