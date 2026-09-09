@@ -89,15 +89,11 @@ const ALLOWED_PROPERTY_KEYS = new Set([
   'last_active_at',
 ]);
 
-const ANALYTICS_RESERVED_PROPERTY_KEYS = new Set([
-  '$current_url',
-  '$pathname',
-  '$screen_name',
-]);
+const ANALYTICS_RESERVED_PROPERTY_KEYS = new Set(['$current_url', '$pathname', '$screen_name']);
 
 const ARRAY_PROPERTY_KEYS = new Set(['tools_used', 'error_codes']);
 
-/** Install-cohort fields written via people.set_once / PostHog $set_once only. */
+/** Install-cohort fields written via identify traits only when not already set. */
 const PERSON_ONCE_PROPERTY_KEYS = new Set([
   'first_install_at',
   'first_usage_surface',

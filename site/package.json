@@ -10,9 +10,6 @@
     "build": "vitepress build && node scripts/generate-sitemap.mjs",
     "preview": "vitepress preview"
   },
-  "dependencies": {
-    "posthog-js": "^1.388.1"
-  },
   "devDependencies": {
     "tsx": "^4.19.2",
     "vitepress": "^1.6.3"

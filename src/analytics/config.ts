@@ -1,12 +1,12 @@
-const DEFAULT_POSTHOG_KEY = 'phc_mejq4ZZ8jTNZPiusjh7vHyPzWYinzsDwVJW43SM5FEcg';
-const DEFAULT_API_HOST = 'https://a.alisait.com';
-const DEFAULT_UI_HOST = 'https://eu.posthog.com';
+const DEFAULT_RYBBIT_HOST = 'https://hey.sideguard.io';
+const DEFAULT_RYBBIT_SITE_ID = '5e488c650441';
 
 function envTruthy(name: string): boolean {
   const value = process.env[name]?.trim().toLowerCase();
   return value === '1' || value === 'true' || value === 'yes';
 }
 
+/** Legacy alias for ANALYTICS_DISABLED. */
 export function isPostHogDisabledByEnv(): boolean {
   return envTruthy('POSTHOG_DISABLED');
 }
@@ -15,22 +15,23 @@ export function isAnalyticsDisabledByEnv(): boolean {
   return envTruthy('ANALYTICS_DISABLED') || isPostHogDisabledByEnv();
 }
 
-export function resolvePostHogKey(): string {
-  return process.env.POSTHOG_KEY?.trim() || DEFAULT_POSTHOG_KEY;
+export function resolveRybbitHost(): string {
+  return (process.env.RYBBIT_HOST?.trim() || DEFAULT_RYBBIT_HOST).replace(/\/$/, '');
 }
 
-export function resolvePostHogApiHost(): string {
-  return process.env.POSTHOG_API_HOST?.trim() || DEFAULT_API_HOST;
+export function resolveRybbitAnalyticsHost(): string {
+  return `${resolveRybbitHost()}/api`;
 }
 
-export function resolvePostHogUiHost(): string {
-  return process.env.POSTHOG_UI_HOST?.trim() || DEFAULT_UI_HOST;
+export function resolveRybbitSiteId(): string {
+  return process.env.RYBBIT_SITE_ID?.trim() || DEFAULT_RYBBIT_SITE_ID;
 }
 
-export function hasPostHogKey(): boolean {
-  return resolvePostHogKey().length > 0;
+export function resolveRybbitApiKey(): string | undefined {
+  const key = process.env.RYBBIT_API_KEY?.trim();
+  return key || undefined;
 }
 
 export function hasAnalyticsKey(): boolean {
-  return hasPostHogKey();
+  return resolveRybbitSiteId().length > 0;
 }

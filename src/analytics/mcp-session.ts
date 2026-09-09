@@ -7,17 +7,13 @@ import { captureMcpPageleave } from './pageview.js';
 import { flushAnalyticsClient, getAnalytics } from './provider.js';
 
 export type McpShutdownReason = 'sigint' | 'sigterm' | 'error' | 'stdio_closed';
-export type McpToolBatchFlushReason =
-  | 'debounce'
-  | 'max_hold'
-  | 'shutdown'
-  | 'client_disconnect';
+export type McpToolBatchFlushReason = 'debounce' | 'max_hold' | 'shutdown' | 'client_disconnect';
 
 /** Flush after the last tool in a burst — fits IDE agent turns (LLM pauses between bursts). */
 const DEBOUNCE_FLUSH_MS = 3_000;
 /** Force flush during long uninterrupted tool chains (no debounce gap). */
 const MAX_BATCH_HOLD_MS = 60_000;
-const MAX_SUMMARY_LENGTH = 4_000;
+const MAX_SUMMARY_LENGTH = 800;
 
 interface ToolBatchEntry {
   ok: number;
@@ -31,10 +27,7 @@ let toolBatch = new Map<string, ToolBatchEntry>();
 let debounceFlushTimer: ReturnType<typeof setTimeout> | null = null;
 let maxHoldFlushTimer: ReturnType<typeof setTimeout> | null = null;
 
-function captureMcpEvent(
-  name: string,
-  properties: Record<string, unknown>
-): void {
+function captureMcpEvent(name: string, properties: Record<string, unknown>): void {
   if (!isAnalyticsEnabled() || !hasAnalyticsKey()) return;
   const client = getActiveMcpClient();
   getAnalytics().capture({
@@ -178,10 +171,7 @@ export function recordMcpToolCall(params: {
   } else {
     existing.fail += 1;
     if (params.errorCode) {
-      existing.errors.set(
-        params.errorCode,
-        (existing.errors.get(params.errorCode) ?? 0) + 1
-      );
+      existing.errors.set(params.errorCode, (existing.errors.get(params.errorCode) ?? 0) + 1);
     }
   }
   existing.durationMs += params.durationMs;

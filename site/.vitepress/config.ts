@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { defineConfig } from 'vitepress';
+import { defineConfig, type HeadConfig } from 'vitepress';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const pkg = JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8'));
@@ -111,7 +111,10 @@ function breadcrumbJsonLd(pageData: {
   return ['script', { type: 'application/ld+json' }, JSON.stringify(json)];
 }
 
-const sharedHead: Array<[string, Record<string, string> | string]> = [
+const RYBBIT_LOCALHOST_GUARD =
+  "(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'){window.__RYBBIT_OPTOUT__=true;try{localStorage.setItem('disable-rybbit','true')}catch(e){}}})();";
+
+const sharedHead: HeadConfig[] = [
   ['link', { rel: 'icon', href: '/ps-logo-icon.svg', type: 'image/svg+xml' }],
   ['link', { rel: 'apple-touch-icon', href: `${SITE_URL}/images/og-social.png` }],
   ['link', { rel: 'describedby', href: LLMS_URL, type: 'text/plain' }],
@@ -128,8 +131,20 @@ const sharedHead: Array<[string, Record<string, string> | string]> = [
   ['meta', { property: 'og:image:alt', content: 'Photoshop MCP — AI-driven Photoshop automation' }],
   ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
   ['meta', { name: 'twitter:image', content: OG_IMAGE }],
-  ['meta', { name: 'twitter:image:alt', content: 'Photoshop MCP — AI-driven Photoshop automation' }],
+  [
+    'meta',
+    { name: 'twitter:image:alt', content: 'Photoshop MCP — AI-driven Photoshop automation' },
+  ],
   ['script', { type: 'application/ld+json' }, JSON.stringify(jsonLd)],
+  ['script', {}, RYBBIT_LOCALHOST_GUARD],
+  [
+    'script',
+    {
+      src: 'https://hey.sideguard.io/api/script.js',
+      'data-site-id': '5e488c650441',
+      defer: '',
+    },
+  ],
   ...(googleVerification
     ? ([['meta', { name: 'google-site-verification', content: googleVerification }]] as const)
     : []),
@@ -188,9 +203,7 @@ export default defineConfig({
   themeConfig: {
     logo: '/ps-logo-icon.svg',
     siteTitle: 'Photoshop MCP',
-    socialLinks: [
-      { icon: 'github', link: 'https://github.com/alisaitteke/photoshop-mcp' },
-    ],
+    socialLinks: [{ icon: 'github', link: 'https://github.com/alisaitteke/photoshop-mcp' }],
 
     nav: [
       { text: 'Home', link: '/' },
@@ -248,7 +261,7 @@ export default defineConfig({
       lang: 'tr',
       link: '/tr/',
       description:
-        'Adobe Photoshop\'u yapay zeka ile kontrol edin — Cursor, Claude ve doğal dil için MCP sunucusu.',
+        "Adobe Photoshop'u yapay zeka ile kontrol edin — Cursor, Claude ve doğal dil için MCP sunucusu.",
       themeConfig: {
         nav: [
           { text: 'Ana Sayfa', link: '/tr/' },
@@ -330,8 +343,7 @@ export default defineConfig({
       label: '日本語',
       lang: 'ja',
       link: '/ja/',
-      description:
-        'AIでAdobe Photoshopを操作 — Cursor、Claude向けMCPサーバー。',
+      description: 'AIでAdobe Photoshopを操作 — Cursor、Claude向けMCPサーバー。',
       themeConfig: {
         nav: [
           { text: 'ホーム', link: '/ja/' },
@@ -381,7 +393,7 @@ export default defineConfig({
       ['meta', { property: 'og:description', content: ogDescription }],
       ['meta', { name: 'twitter:title', content: ogTitle }],
       ['meta', { name: 'twitter:description', content: ogDescription }],
-      ['meta', { name: 'description', content: ogDescription }],
+      ['meta', { name: 'description', content: ogDescription }]
     );
     const breadcrumb = breadcrumbJsonLd(pageData);
     if (breadcrumb) pageData.frontmatter.head.push(breadcrumb);

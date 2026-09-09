@@ -120,9 +120,9 @@ the server. Requests without a valid token get `401 unauthorized`.
 - `PSMCP_UI_TOKEN`: Pin the standalone UI session token (see above)
 - `ANALYTICS_DISABLED`: Set to `1` or `true` to disable anonymous usage analytics entirely
 - `POSTHOG_DISABLED`: Legacy alias for `ANALYTICS_DISABLED`
-- `POSTHOG_KEY`: (Optional) PostHog project key — a default is embedded; override for forks or staging
-- `POSTHOG_API_HOST`: (Optional) PostHog ingest host (default: `https://a.alisait.com`)
-- `POSTHOG_UI_HOST`: (Optional) PostHog UI host (default: `https://eu.posthog.com`)
+- `RYBBIT_API_KEY`: (Optional) Rybbit ingest API key — skips bot detection for server events
+- `RYBBIT_HOST`: (Optional) Rybbit origin (default: `https://hey.sideguard.io`)
+- `RYBBIT_SITE_ID`: (Optional) Rybbit site ID — a default is embedded; override for forks or staging
 
 ## Troubleshooting — CLI account auth
 

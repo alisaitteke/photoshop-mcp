@@ -12,7 +12,7 @@ export function normalizeInstallUsageSurface(surface: string): InstallUsageSurfa
 }
 
 /**
- * PostHog $set_once install cohort fields — safe to call repeatedly.
+ * Install-cohort fields — safe to call repeatedly.
  * See docs/anonymous-usage-analytics.md (person profile cohorts).
  */
 export function applyInstallCohortPersonOnce(params: {

@@ -592,9 +592,9 @@ npx @alisaitteke/photoshop-mcp
 - `LOG_LEVEL`：日志级别（0=DEBUG，1=INFO，2=WARN，3=ERROR）
 - `ANALYTICS_DISABLED`：设置为 `1` 或 `true` 可完全禁用匿名使用分析
 - `POSTHOG_DISABLED`：`ANALYTICS_DISABLED` 的旧版别名
-- `POSTHOG_KEY`：（可选）PostHog 项目密钥 — 已内置默认值；可用于 fork 或预发布环境覆盖
-- `POSTHOG_API_HOST`：（可选）PostHog 数据采集主机（默认：`https://a.alisait.com`）
-- `POSTHOG_UI_HOST`：（可选）PostHog UI 主机（默认：`https://eu.posthog.com`）
+- `RYBBIT_API_KEY`：（可选）Rybbit 采集 API 密钥 — 跳过服务端事件的机器人检测
+- `RYBBIT_HOST`：（可选）Rybbit 源站（默认：`https://hey.sideguard.io`）
+- `RYBBIT_SITE_ID`：（可选）Rybbit 站点 ID — 已内置默认值；可用于 fork 或预发布环境覆盖
 
 ## 可用工具
 

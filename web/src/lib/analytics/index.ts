@@ -44,9 +44,8 @@ export async function setAnalyticsOptOut(optedOut: boolean): Promise<void> {
     optOutBrowserCapturing();
     return;
   }
-  enabled = await refreshAnalyticsState();
   optInBrowserCapturing();
-  await syncAnalyticsContext();
+  enabled = await refreshAnalyticsState();
 }
 
 export async function refreshAnalyticsState(): Promise<boolean> {

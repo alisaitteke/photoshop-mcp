@@ -93,7 +93,6 @@
     "get-port": "^7.1.0",
     "hono": "^4.6.14",
     "open": "^10.1.0",
-    "posthog-node": "^4.18.0",
     "zod": "^4.4.3"
   },
   "mcpName": "io.github.alisaitteke/photoshop-mcp",

@@ -1,16 +1,31 @@
-import posthog from 'posthog-js';
-
-/** Public web token for PostHog project 204088 (photoshop-mcp). Same key as MCP/UI. */
-const POSTHOG_KEY = 'phc_mejq4ZZ8jTNZPiusjh7vHyPzWYinzsDwVJW43SM5FEcg';
-const API_HOST = 'https://a.alisait.com';
-const UI_HOST = 'https://eu.posthog.com';
-
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
 const SITE_LOCALES = new Set(['tr', 'zh', 'es', 'de', 'ja']);
 
 let initialized = false;
 let productEventsBound = false;
-let lastPageviewKey = '';
+let rybbitReady: Promise<NonNullable<Window['rybbit']> | null> | null = null;
+
+function waitForRybbit(): Promise<NonNullable<Window['rybbit']> | null> {
+  if (window.rybbit?.event) return Promise.resolve(window.rybbit);
+  if (!rybbitReady) {
+    rybbitReady = new Promise((resolve) => {
+      const started = Date.now();
+      const tick = (): void => {
+        if (window.rybbit?.event) {
+          resolve(window.rybbit);
+          return;
+        }
+        if (Date.now() - started > 10_000) {
+          resolve(null);
+          return;
+        }
+        window.setTimeout(tick, 50);
+      };
+      tick();
+    });
+  }
+  return rybbitReady;
+}
 
 function isLocalHost(): boolean {
   return LOCAL_HOSTS.has(window.location.hostname);
@@ -28,48 +43,22 @@ export function localeFromPath(pathOrUrl: string): string {
   return locale && SITE_LOCALES.has(locale) ? locale : 'en';
 }
 
-function resolveHref(to: string): URL {
-  return new URL(to, window.location.origin);
-}
-
 export function initSiteAnalytics(): void {
-  if (initialized || isLocalHost() || !POSTHOG_KEY) return;
-
-  posthog.init(POSTHOG_KEY, {
-    api_host: API_HOST,
-    ui_host: UI_HOST,
-    defaults: '2026-05-30',
-    person_profiles: 'identified_only',
-    capture_pageview: false,
-    capture_pageleave: true,
-    autocapture: true,
-    persistence: 'localStorage+cookie',
-  });
-  posthog.register({
-    event_source: 'site',
-    usage_surface: 'site',
-    site_locale: localeFromPath(window.location.pathname),
-  });
+  if (initialized || isLocalHost()) return;
   initialized = true;
-}
-
-export function registerSiteLocale(to: string): void {
-  if (!initialized) return;
-  posthog.register({ site_locale: localeFromPath(to) });
-}
-
-export function captureSitePageview(to: string): void {
-  if (!initialized) return;
-  const url = resolveHref(to);
-  const key = `${url.pathname}${url.search}`;
-  if (key === lastPageviewKey) return;
-  lastPageviewKey = key;
-  posthog.capture('$pageview', { $current_url: url.href });
 }
 
 function capture(name: string, properties: Record<string, string>): void {
   if (!initialized) return;
-  posthog.capture(name, properties);
+  const payload = {
+    event_source: 'site',
+    usage_surface: 'site',
+    site_locale: localeFromPath(window.location.pathname),
+    ...properties,
+  };
+  void waitForRybbit().then((rybbit) => {
+    rybbit?.event(name, payload);
+  });
 }
 
 function ctaLocation(el: Element): 'hero' | 'nav' | 'footer' | 'body' {
@@ -173,6 +162,6 @@ export function bindSiteProductEvents(): void {
       if (handleLocaleClick(anchor)) return;
       handleLinkClick(anchor);
     },
-    true,
+    true
   );
 }

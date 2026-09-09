@@ -48,7 +48,7 @@ flowchart TB
 | **Prompt layer** | Server instructions, 23 MCP prompt templates | `src/prompts/` |
 | **Errors** | Structured envelopes for agent self-correction | `src/errors/envelope.ts` |
 | **Standalone UI** | Hono API, multi-provider agent, chat persistence | `src/ui/`, `web/` |
-| **Analytics** | Opt-out anonymous usage (PostHog) | `src/analytics/` |
+| **Analytics** | Opt-out anonymous usage (Rybbit) | `src/analytics/` |
 
 ---
 

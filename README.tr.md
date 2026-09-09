@@ -683,9 +683,9 @@ const q = query({
 - `ANALYTICS_DISABLED`: Anonim kullanım analizlerini tamamen devre dışı bırakmak için `1` veya `true`
   olarak ayarlayın
 - `POSTHOG_DISABLED`: `ANALYTICS_DISABLED` için eski takma ad
-- `POSTHOG_KEY`: (İsteğe bağlı) PostHog proje anahtarı — varsayılan gömülüdür; fork veya staging için geçersiz kılın
-- `POSTHOG_API_HOST`: (İsteğe bağlı) PostHog ingest host'u (varsayılan: `https://a.alisait.com`)
-- `POSTHOG_UI_HOST`: (İsteğe bağlı) PostHog UI host'u (varsayılan: `https://eu.posthog.com`)
+- `RYBBIT_API_KEY`: (İsteğe bağlı) Rybbit ingest API anahtarı — sunucu event'lerinde bot tespitini atlar
+- `RYBBIT_HOST`: (İsteğe bağlı) Rybbit origin (varsayılan: `https://hey.sideguard.io`)
+- `RYBBIT_SITE_ID`: (İsteğe bağlı) Rybbit site ID — varsayılan gömülüdür; fork veya staging için geçersiz kılın
 
 ## Mevcut Araçlar
 

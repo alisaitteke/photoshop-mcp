@@ -8,13 +8,11 @@ import {
 } from './identity.js';
 import { getAnalytics } from './provider.js';
 
-export type AnalyticsMilestone =
-  | 'mcp_first_tool_success'
-  | 'mcp_photoshop_first_connected';
+export type AnalyticsMilestone = 'mcp_first_tool_success' | 'mcp_photoshop_first_connected';
 
 /**
- * Fires a one-time funnel milestone per install. Uses a persisted flag plus a
- * deterministic uuid so PostHog deduplicates accidental double-sends.
+ * Fires a one-time funnel milestone per install. Uses a persisted local flag
+ * so a process restart does not send the same milestone twice.
  */
 export function captureAnalyticsMilestoneOnce(
   milestone: AnalyticsMilestone,

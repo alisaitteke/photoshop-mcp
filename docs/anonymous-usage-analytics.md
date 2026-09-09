@@ -22,23 +22,26 @@ MCP server and standalone UI are used and to improve the product. Analytics are
   on the anonymous person profile when a chat is created or the model changes
 - **Browser UI** events (app loaded, setup completed, SPA page views on route
   changes). When analytics are enabled, the browser records named UI events via
-  PostHog (see [Browser tracking](#browser-tracking))
+  Rybbit (see [Browser tracking](#browser-tracking))
 
 Events use a random anonymous identifier stored locally at
 `~/.photoshop-mcp/` (SQLite `kv` table and/or `analytics-store.json`). That ID
-is registered with PostHog via `identify()` so MCP, UI server, and browser
-events merge under one anonymous person per install — no email, name, or other
+is registered with Rybbit via `identify()` so MCP, UI server, and browser
+events merge under one anonymous user per install — no email, name, or other
 PII.
 
-The person profile also stores **install cohort** fields (via PostHog `$set_once`):
-`first_install_at`, `first_usage_surface` (`mcp` | `server` | `web`), and
-`first_mcp_client_name` when an MCP client first connects. It also stores **total
-installed RAM (GB)**, **memory tier (bucketed GB)**, and the **detected Photoshop
-version** when available — these hardware fields are on the person profile only,
-not repeated on every event.
+The user profile also stores **install cohort** fields (persisted locally, then
+sent as identify traits): `first_install_at`, `first_usage_surface`
+(`mcp` | `server` | `web`), and `first_mcp_client_name` when an MCP client first
+connects. It also stores **total installed RAM (GB)**, **memory tier (bucketed GB)**,
+and the **detected Photoshop version** when available — these hardware fields are
+on the person profile only, not repeated on every event.
 
-Country/region signals come from PostHog GeoIP on ingest and from
+Country/region signals come from Rybbit GeoIP on ingest and from
 `system_locale_region` / `browser_locale_region` as a secondary hint.
+
+Rybbit custom-event properties are capped at **2KB**. Long fields such as
+`tool_usage_summary` and beta chat text are truncated to fit.
 
 ## Configuration
 
@@ -46,38 +49,42 @@ Country/region signals come from PostHog GeoIP on ingest and from
 | --- | --- | --- |
 | `ANALYTICS_DISABLED` | off | Set `1` or `true` to disable all analytics for that process |
 | `POSTHOG_DISABLED` | — | Legacy alias for `ANALYTICS_DISABLED` |
-| `POSTHOG_KEY` | embedded in `config.ts` | PostHog project API key (`DEFAULT_POSTHOG_KEY`) — override for forks or staging |
-| `POSTHOG_API_HOST` | `https://a.alisait.com` | Ingest host (managed reverse proxy to PostHog) |
-| `POSTHOG_UI_HOST` | `https://eu.posthog.com` | PostHog project UI host |
+| `RYBBIT_API_KEY` | unset | Optional Bearer token with `ingest:write` — skips bot detection on server events |
+| `RYBBIT_HOST` | `https://hey.sideguard.io` | Self-hosted Rybbit origin (forks/staging) |
+| `RYBBIT_SITE_ID` | embedded in `config.ts` | Rybbit site ID |
 
-A default project key is embedded in the server config so MCP and UI analytics work
-on every `npx` install without user configuration. Forks or staging environments can
-override `POSTHOG_KEY` and the host variables (see `.env.example`).
+A default site ID and host are embedded so MCP and UI analytics work on every
+`npx` install without user configuration. Forks or staging environments can
+override `RYBBIT_HOST` / `RYBBIT_SITE_ID` (see `.env.example`).
+
+If MCP/UI server events do not appear in the dashboard, create an organization
+API key in Rybbit (**Settings → Organization**) and set `RYBBIT_API_KEY`, or
+turn off bot blocking for the site.
 
 ## Browser tracking
 
-When anonymous usage analytics are **enabled**, the standalone browser UI initializes
-[posthog-js](https://posthog.com/docs/libraries/js) with:
+When anonymous usage analytics are **enabled**, the standalone browser UI injects
+the [Rybbit tracking script](https://rybbit.com/docs/script) and identifies the
+anonymous install ID:
 
-- `capture_pageview: 'history_change'` — automatic page views on SPA route changes
-- `autocapture: false` — no automatic click/input capture
-- `person_profiles: 'identified_only'` — person profiles only after `identify()`
-
-Named custom events are captured explicitly for setup and app lifecycle. **Session
-replay is not enabled** in this configuration.
+- Pageviews follow dashboard **SPA Navigation** / **Automatic Initial Pageview**
+- Named custom events via `window.rybbit.event`
+- **Session replay is not enabled** in this configuration
 
 These features are **disabled** when you turn off anonymous usage analytics
-(Settings → Privacy, or `ANALYTICS_DISABLED=1` / `POSTHOG_DISABLED=1`).
+(Settings → Privacy, or `ANALYTICS_DISABLED=1` / `POSTHOG_DISABLED=1`). Opt-out
+also sets `localStorage.disable-rybbit`.
 
 ## MCP events
 
 When you run `photoshop-mcp` directly (e.g. via Cursor MCP config), these events
-are sent via [posthog-node](https://posthog.com/docs/libraries/node) using the
-embedded project key.
+are sent via `POST https://hey.sideguard.io/api/track` using the embedded site ID.
+Server events use `hostname: photoshop-mcp.com` and `pathname: /mcp` so they can
+be filtered apart from marketing-site traffic.
 
 | Event | When | Key properties |
 | --- | --- | --- |
-| `$pageview` | MCP session start | Virtual URL `photoshop-mcp://mcp`, `usage_surface: mcp` |
+| pageview (`/mcp`) | MCP session start | `usage_surface: mcp` |
 | `mcp_session_started` | MCP process start (stdio server up) | `app_version`, `photoshop_detected`, `tools_registered_count` |
 | `mcp_client_connected` | MCP client completed initialize handshake | `mcp_client_name`, `mcp_client_version`, `mcp_client_connect_count` |
 | `mcp_client_disconnected` | MCP transport closed | `mcp_client_name?`, `mcp_client_version?` |
@@ -87,7 +94,7 @@ embedded project key.
 | `mcp_first_tool_success` | First successful tool call (once per install) | `tool_name`, `event_source: mcp` |
 | `mcp_tool_batch` | 3s after last tool, 60s max hold, client disconnect, or session end | `tools_called_count`, `tools_error_count`, `unique_tools_count`, `tool_usage_summary`, `tools_used[]`, `had_errors`, `error_codes[]?`, `error_codes_summary?`, `batch_flush_reason`, `mcp_client_name?` |
 | `mcp_prompt_requested` | Prompt template fetch | `prompt_name` |
-| `$pageleave` | Graceful shutdown (SIGINT/SIGTERM/stdio close) | `duration_ms`, `shutdown_reason` |
+| `pageleave` | Graceful shutdown (SIGINT/SIGTERM/stdio close) | `duration_ms`, `shutdown_reason` |
 | `mcp_session_ended` | Graceful shutdown | `duration_ms`, `shutdown_reason` |
 
 Tool usage is **not** sent per call. Calls are aggregated in memory and flushed as
@@ -96,7 +103,7 @@ burst (typical IDE agent turn), after 60 seconds of continuous tool activity, or
 when the session ends or the MCP client disconnects.
 
 One-time funnel milestones (`mcp_first_tool_success`, `mcp_photoshop_first_connected`)
-use a persisted local flag plus PostHog `uuid` deduplication.
+use a persisted local flag only.
 
 ## Model tracking
 
@@ -120,8 +127,9 @@ use a persisted local flag plus PostHog `uuid` deduplication.
 | `setup_completed` | Onboarding finished (browser) | `provider_id`, `auth_method` |
 | `app_loaded` | Browser UI ready | `has_auth` |
 
-MCP-only installs appear in PostHog via the virtual `$pageview` at
-`photoshop-mcp://mcp`, even when the standalone UI is never opened.
+MCP-only installs appear in Rybbit as pageviews on `/mcp`, even when the
+standalone UI is never opened. UI server events use pathname `/ui-server`;
+the browser UI uses `/ui`.
 
 ## What we do **not** collect (unless you opt into beta team sharing)
 
@@ -139,9 +147,9 @@ beta team**. This is separate from anonymous usage analytics above.
 If you accept:
 
 - Your **prompts**, **assistant responses**, **reasoning text**, and **tool names**
-  (not arguments or results) may be sent to PostHog after each chat turn via
+  (not arguments or results) may be sent to Rybbit after each chat turn via
   `getAnalytics().capture()` (`beta_chat_turn`)
-- Content is truncated for very long messages
+- Content is truncated (Rybbit properties are limited to 2KB)
 - Requires anonymous analytics to remain enabled
 
 If you decline, no chat content is logged. You can change this later in
@@ -151,35 +159,30 @@ Existing installs that have not answered yet are prompted once on the next launc
 
 ## Processor and hosting
 
-Analytics are processed by [PostHog](https://posthog.com/).
+Analytics are processed by a self-hosted [Rybbit](https://rybbit.com/) instance
+at [hey.sideguard.io](https://hey.sideguard.io).
 
-- **Browser UI:** posthog-js → ingest via `POSTHOG_API_HOST` (default reverse proxy
-  at `https://a.alisait.com`)
-- **Marketing / docs site** ([photoshop-mcp.com](https://photoshop-mcp.com/)): posthog-js
-  in the VitePress theme → same reverse proxy and project
-- **MCP stdio and UI server:** posthog-node with the embedded project key — works on
+- **Browser UI:** Rybbit tracking script (`/api/script.js`) with the embedded site ID
+- **Marketing / docs site** ([photoshop-mcp.com](https://photoshop-mcp.com/)): the
+  same script in the VitePress `<head>`
+- **MCP stdio and UI server:** `POST /api/track` and `POST /api/identify` — works on
   every `npx` install without user env configuration
-- **Project UI:** `https://eu.posthog.com` (override with `POSTHOG_UI_HOST`)
+- **Dashboard:** [hey.sideguard.io](https://hey.sideguard.io)
 
-Server-side events include a per-event `uuid` for ingest deduplication; one-time
-milestones use a deterministic `uuid` per install. Person profile fields are written
-via PostHog `identify()` and `$set_once`.
+Install-cohort fields are stored locally and sent as Rybbit identify traits.
 
-See the [PostHog privacy policy](https://posthog.com/privacy) for how PostHog
+See the [Rybbit privacy policy](https://rybbit.com/privacy) for how Rybbit
 handles data on their side.
 
 ### Marketing / documentation site
 
 The GitHub Pages site (VitePress under `site/`, [photoshop-mcp.com](https://photoshop-mcp.com/))
-loads posthog-js in production and sends events to the same PostHog project as MCP and
-the standalone UI, via `https://a.alisait.com`.
+loads the Rybbit script in production (localhost is opted out). Pageviews are
+automatic (enable **SPA Navigation** in the Rybbit site settings). Custom events
+carry `event_source: site`, `usage_surface: site`, and `site_locale`.
 
-- Super properties: `event_source: site`, `usage_surface: site`, `site_locale`
-- `$pageview` / `$pageleave` on VitePress client navigation (hash-only changes are ignored)
-- Autocapture is on (heatmaps / web vitals); session replay is **not** enabled
-- Visitors are **not** identified — `person_profiles: 'identified_only'` so site traffic
-  does not create person profiles or merge with MCP install IDs
-- Localhost / `127.0.0.1` does not initialize the SDK
+- Visitors are **not** identified — site traffic does not merge with MCP install IDs
+- Session replay is **not** enabled from this repo
 
 Named conversion events (no command text or PII):
 
@@ -192,24 +195,26 @@ Named conversion events (no command text or PII):
 
 ### Geolocation
 
-PostHog enriches events with country/region from the client IP on ingest (GeoIP).
+Rybbit enriches events with country/region from the client IP on ingest (GeoIP).
 Browser events also send `browser_locale_region` as a secondary hint.
 
-## PostHog dashboard recipes (maintainers)
+## Rybbit dashboard recipes (maintainers)
 
-| Insight | PostHog approach |
+Filter marketing-site traffic by pathname **not** in `/mcp`, `/ui`, `/ui-server`.
+
+| Insight | Rybbit approach |
 | --- | --- |
-| MCP active users | Filter `$pageview` where `$current_url` contains `photoshop-mcp://mcp` |
+| MCP active users | Pageviews where pathname is `/mcp` |
 | MCP client breakdown | `mcp_client_connected` segmented by `mcp_client_name` |
-| Install cohorts | Person property `first_usage_surface`, `first_mcp_client_name`, `first_install_at` |
+| Install cohorts | User traits `first_usage_surface`, `first_mcp_client_name`, `first_install_at` |
 | First tool / Photoshop reach | Funnel on `mcp_first_tool_success`, `mcp_photoshop_first_connected` |
-| Country breakdown | Segment `mcp_tool_batch` or `$pageview` by country dimension |
+| Country breakdown | Segment `mcp_tool_batch` or `/mcp` pageviews by country |
 | Tool error rate | `mcp_tool_batch` where `had_errors = true`, segment by `error_codes` or `error_codes_summary` |
 | Photoshop reachability | `mcp_photoshop_connection` where `ok = false` |
 | Session duration | Average `duration_ms` on `mcp_session_ended` or `ui_server_ended` |
-| MCP vs UI usage | Person property `usage_surfaces` (comma-separated: `mcp`, `server`, `web`) |
-| Standalone UI model | Person `active_provider` / `active_model` or event `ui_model_selected` |
-| Marketing site traffic | Filter `$pageview` where `event_source = site` (or host `photoshop-mcp.com`) |
+| MCP vs UI usage | User trait `usage_surfaces` (comma-separated: `mcp`, `server`, `web`) |
+| Standalone UI model | User `active_provider` / `active_model` or event `ui_model_selected` |
+| Marketing site traffic | Pageviews excluding `/mcp`, `/ui`, `/ui-server` |
 | Install copy conversion | `site_code_copied` segmented by `command` |
 | Site CTA funnel | `site_cta_clicked` segmented by `cta_id` / `cta_location` |
 
