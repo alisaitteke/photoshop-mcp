@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Replace PostHog with self-hosted Rybbit for MCP, standalone UI, and marketing-site analytics ([#36](https://github.com/alisaitteke/photoshop-mcp/pull/36)). Event names stay the same; MCP/UI traffic uses `/mcp` and `/ui-server`. `ANALYTICS_DISABLED` and the `POSTHOG_DISABLED` alias still opt out; optional `RYBBIT_API_KEY` / `RYBBIT_HOST` / `RYBBIT_SITE_ID` for forks.
+- Update anonymous usage analytics for the MCP server, standalone UI, and marketing site ([#36](https://github.com/alisaitteke/photoshop-mcp/pull/36)).
 
 ## [1.7.5] - 2026-09-07
 
