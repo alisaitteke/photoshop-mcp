@@ -176,7 +176,7 @@ handles data on their side.
 
 ### Marketing / documentation site
 
-The GitHub Pages site (VitePress under `site/`, [photoshop-mcp.com](https://photoshop-mcp.com/))
+The website ([photoshop-mcp.com](https://photoshop-mcp.com/))
 loads the Rybbit script in production (localhost is opted out). Pageviews are
 automatic (enable **SPA Navigation** in the Rybbit site settings). Custom events
 carry `event_source: site`, `usage_surface: site`, and `site_locale`.
