@@ -1,0 +1,299 @@
+/* ── VitePress chrome ─────────────────────────────────────────────────── */
+
+.VPNavBar {
+  backdrop-filter: saturate(160%) blur(14px);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+}
+
+.VPNavBarTitle .title {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.VPNavBarMenuLink {
+  font-weight: 500;
+}
+
+.VPNavBarMenuLink.active {
+  color: var(--vp-c-brand-1);
+}
+
+/* docs pages */
+.vp-doc h1 {
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+
+.vp-doc h2 {
+  letter-spacing: -0.015em;
+  font-weight: 600;
+  border-top: none;
+  margin-top: 40px;
+  padding-top: 0;
+}
+
+.vp-doc h3 {
+  font-weight: 600;
+}
+
+.vp-doc p,
+.vp-doc li {
+  font-size: var(--ps-text-md);
+}
+
+.vp-doc div[class*='language-'] {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: var(--ps-radius-sm);
+}
+
+.vp-doc .custom-block {
+  border-radius: var(--ps-radius-sm);
+}
+
+.VPSidebarItem.level-0 .text {
+  font-weight: 600;
+}
+
+/* ── Shared building blocks ───────────────────────────────────────────── */
+
+.ps-container {
+  width: 100%;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+@media (min-width: 768px) {
+  .ps-container {
+    padding: 0 40px;
+  }
+}
+
+.ps-section {
+  padding: 88px 0;
+}
+
+@media (max-width: 767px) {
+  .ps-section {
+    padding: 64px 0;
+  }
+}
+
+.ps-section + .ps-section {
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.ps-h2 {
+  font-size: var(--ps-text-2xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  margin: 0 0 12px;
+  max-width: 22ch;
+}
+
+.ps-lead {
+  font-size: var(--ps-text-lg);
+  line-height: 1.5;
+  color: var(--vp-c-text-2);
+  max-width: 60ch;
+  margin: 0;
+}
+
+.ps-section-head {
+  margin-bottom: 40px;
+}
+
+/* the Photoshop transparency grid */
+.ps-checker {
+  background-color: var(--vp-c-bg);
+  background-image:
+    linear-gradient(45deg, var(--ps-checker) 25%, transparent 25%, transparent 75%, var(--ps-checker) 75%),
+    linear-gradient(45deg, var(--ps-checker) 25%, transparent 25%, transparent 75%, var(--ps-checker) 75%);
+  background-size: 24px 24px;
+  background-position:
+    0 0,
+    12px 12px;
+}
+
+/* marching ants — selection outline, used on primary install controls only */
+.ps-ants {
+  position: relative;
+}
+
+.ps-ants::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: calc(var(--ps-radius-sm) + 4px);
+  pointer-events: none;
+  opacity: 0;
+  background:
+    linear-gradient(90deg, var(--ps-accent) 50%, transparent 50%) 0 0 / 10px 1.5px repeat-x,
+    linear-gradient(90deg, var(--ps-accent) 50%, transparent 50%) 0 100% / 10px 1.5px repeat-x,
+    linear-gradient(0deg, var(--ps-accent) 50%, transparent 50%) 0 0 / 1.5px 10px repeat-y,
+    linear-gradient(0deg, var(--ps-accent) 50%, transparent 50%) 100% 0 / 1.5px 10px repeat-y;
+  transition: opacity 0.15s ease;
+}
+
+.ps-ants:hover::after,
+.ps-ants:focus-visible::after {
+  opacity: 1;
+  animation: ps-ants 0.7s linear infinite;
+}
+
+@keyframes ps-ants {
+  to {
+    background-position:
+      10px 0,
+      -10px 100%,
+      0 -10px,
+      100% 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ps-ants:hover::after,
+  .ps-ants:focus-visible::after {
+    animation: none;
+  }
+}
+
+/* buttons */
+.ps-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: var(--ps-radius-sm);
+  font-size: var(--ps-text-sm);
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none !important;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+  white-space: nowrap;
+}
+
+.ps-btn:focus-visible {
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 2px;
+}
+
+.ps-btn-primary {
+  background: var(--vp-button-brand-bg);
+  color: var(--vp-button-brand-text) !important;
+}
+
+.ps-btn-primary:hover {
+  background: var(--vp-button-brand-hover-bg);
+}
+
+.ps-btn-secondary {
+  background: var(--ps-panel);
+  color: var(--vp-c-text-1) !important;
+  border-color: var(--vp-c-border);
+}
+
+.ps-btn-secondary:hover {
+  border-color: var(--vp-c-brand-1);
+}
+
+.ps-btn-ghost {
+  background: transparent;
+  color: var(--vp-c-text-1) !important;
+  padding: 0 8px;
+}
+
+.ps-btn-ghost:hover {
+  color: var(--vp-c-brand-1) !important;
+}
+
+.ps-btn-sm {
+  height: 36px;
+  padding: 0 12px;
+  font-size: var(--ps-text-xs);
+}
+
+/* inline mono */
+.ps-mono {
+  font-family: var(--vp-font-family-mono);
+  font-size: var(--ps-mono-size);
+}
+
+.ps-kbd {
+  font-family: var(--vp-font-family-mono);
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 5px;
+  border: 1px solid var(--vp-c-border);
+  background: var(--ps-panel-2);
+  color: var(--vp-c-text-2);
+}
+
+/* small caution */
+.ps-caution {
+  border-left: 3px solid #f59e0b;
+  padding: 10px 14px;
+  border-radius: 0 var(--ps-radius-sm) var(--ps-radius-sm) 0;
+  background: rgba(245, 158, 11, 0.08);
+  font-size: var(--ps-text-sm);
+  color: var(--vp-c-text-1);
+}
+
+/* visually hidden */
+.ps-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* nav CTA */
+.ps-nav-cta {
+  display: none;
+  margin-left: 12px;
+}
+
+@media (min-width: 960px) {
+  .ps-nav-cta {
+    display: inline-flex;
+  }
+}
+
+/* Catalog pages use layout: page, which has no .vp-doc wrapper — style their markdown here. */
+.ps-page h1 {
+  font-size: var(--ps-text-2xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  margin: 0 0 12px;
+}
+
+.ps-page > p {
+  font-size: var(--ps-text-lg);
+  line-height: 1.5;
+  color: var(--vp-c-text-2);
+  max-width: 60ch;
+  margin: 0 0 32px;
+}
+
+/* embedded components inside vp-doc get normal line-height */
+.vp-doc .ps-embed {
+  line-height: 1.45;
+}
+
+.vp-doc .ps-embed p {
+  margin: 0;
+}
+
+.vp-doc .ps-embed pre {
+  margin: 0;
+}

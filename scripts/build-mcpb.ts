@@ -79,13 +79,18 @@ function main(): void {
   run('npm install --omit=dev --no-audit --no-fund', SERVER_DIR);
 
   const outFile = join(RELEASE_DIR, `photoshop-mcp-${pkg.version}.mcpb`);
+  // The site links to .../releases/latest/download/photoshop-mcp.mcpb, so ship a
+  // version-less copy alongside the versioned one.
+  const stableFile = join(RELEASE_DIR, 'photoshop-mcp.mcpb');
   rmSync(outFile, { force: true });
+  rmSync(stableFile, { force: true });
 
   console.log(`Packing ${outFile}…`);
   run(`zip -rq "${outFile}" manifest.json server`, STAGING);
+  copyFileSync(outFile, stableFile);
 
   rmSync(STAGING, { recursive: true, force: true });
-  console.log(`MCPB ready: ${outFile}`);
+  console.log(`MCPB ready: ${outFile} (+ ${stableFile})`);
   console.log('Publish: smithery mcp publish "./release/photoshop-mcp-' + pkg.version + '.mcpb" -n alisaitteke/photoshop-mcp');
 }
 

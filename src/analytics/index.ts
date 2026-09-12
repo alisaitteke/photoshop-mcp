@@ -1,11 +1,6 @@
 import { captureBetaChatTurn } from './beta-telemetry.js';
 import { getAppVersion } from './app-version.js';
-import {
-  hasAnalyticsKey,
-  resolvePostHogApiHost,
-  resolvePostHogKey,
-  resolvePostHogUiHost,
-} from './config.js';
+import { hasAnalyticsKey, resolveRybbitAnalyticsHost, resolveRybbitSiteId } from './config.js';
 import { buildPersonIdentifyProperties, buildRuntimeProperties } from './events.js';
 import { applyInstallCohortPersonOnce } from './install-cohorts.js';
 import {
@@ -15,10 +10,7 @@ import {
   recordUsageSurface,
   setBetaTelemetryChoice,
 } from './identity.js';
-import {
-  onMcpClientConnected,
-  onMcpClientDisconnected,
-} from './mcp-client.js';
+import { onMcpClientConnected, onMcpClientDisconnected } from './mcp-client.js';
 import {
   endMcpAnalyticsSession,
   recordMcpToolCall,
@@ -55,22 +47,17 @@ export function capture(
   });
 }
 
-export function identifyAnalyticsPerson(
-  properties?: Record<string, unknown>
-): void {
+export function identifyAnalyticsPerson(properties?: Record<string, unknown>): void {
   if (!isAnalyticsEnabled() || !hasAnalyticsKey()) return;
   const props = { ...(properties ?? {}) };
-  const usageSurface =
-    typeof props.usage_surface === 'string' ? props.usage_surface : undefined;
+  const usageSurface = typeof props.usage_surface === 'string' ? props.usage_surface : undefined;
   if (usageSurface) {
     props.usage_surfaces = recordUsageSurface(usageSurface);
     delete props.usage_surface;
   }
   applyInstallCohortPersonOnce({
     ...(usageSurface ? { usageSurface } : {}),
-    ...(typeof props.mcp_client_name === 'string'
-      ? { mcpClientName: props.mcp_client_name }
-      : {}),
+    ...(typeof props.mcp_client_name === 'string' ? { mcpClientName: props.mcp_client_name } : {}),
   });
   getAnalytics().identify(buildPersonIdentifyProperties(props));
 }
@@ -105,18 +92,15 @@ export function getAnalyticsRuntimeConfig(): AnalyticsRuntimeConfig {
   const beta = getBetaTelemetryState();
   return {
     enabled,
-    provider: 'posthog',
-    key: resolvePostHogKey(),
-    apiHost: resolvePostHogApiHost(),
-    uiHost: resolvePostHogUiHost(),
+    provider: 'rybbit',
+    siteId: resolveRybbitSiteId(),
+    analyticsHost: resolveRybbitAnalyticsHost(),
     distinctId: getOrCreateDistinctId(),
     betaTelemetryOptIn: beta.betaTelemetryOptIn,
     betaTelemetryPromptAnswered: beta.betaTelemetryPromptAnswered,
   };
 }
-export {
-  captureAnalyticsMilestoneOnce,
-} from './milestones.js';
+export { captureAnalyticsMilestoneOnce } from './milestones.js';
 export type { AnalyticsMilestone } from './milestones.js';
 export {
   captureBetaChatTurn,

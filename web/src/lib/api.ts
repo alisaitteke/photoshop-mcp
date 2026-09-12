@@ -1,5 +1,9 @@
 export class ApiError extends Error {
-  constructor(public status: number, message: string, public data?: unknown) {
+  constructor(
+    public status: number,
+    message: string,
+    public data?: unknown
+  ) {
     super(message);
     this.name = 'ApiError';
   }
@@ -29,10 +33,7 @@ function withAuthHeaders(init: HeadersInit | undefined): Headers {
   return headers;
 }
 
-export async function api<T = unknown>(
-  path: string,
-  init: RequestInit = {}
-): Promise<T> {
+export async function api<T = unknown>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = withAuthHeaders(init.headers);
   if (init.body && !headers.has('content-type')) {
     headers.set('content-type', 'application/json');
@@ -176,11 +177,10 @@ export interface ChatDetail {
 
 export interface AnalyticsConfig {
   enabled: boolean;
-  provider: 'posthog';
+  provider: 'rybbit';
   distinctId: string;
-  key: string;
-  apiHost: string;
-  uiHost: string;
+  siteId: string;
+  analyticsHost: string;
   betaTelemetryOptIn: boolean;
   betaTelemetryPromptAnswered: boolean;
 }

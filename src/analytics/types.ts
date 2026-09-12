@@ -1,17 +1,11 @@
 export type AnalyticsEventSource = 'ui' | 'server' | 'mcp';
 
-export type AnalyticsPropertyValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | null
-  | undefined;
+export type AnalyticsPropertyValue = string | number | boolean | string[] | null | undefined;
 
 export interface AnalyticsEvent {
   name: string;
   properties?: Record<string, AnalyticsPropertyValue>;
-  /** PostHog uuid for deduplication. */
+  /** Local milestone id (not sent to Rybbit). */
   insertId?: string;
 }
 
@@ -22,10 +16,9 @@ export interface BetaTelemetryState {
 
 export interface AnalyticsRuntimeConfig {
   enabled: boolean;
-  provider: 'posthog';
-  key: string;
-  apiHost: string;
-  uiHost: string;
+  provider: 'rybbit';
+  siteId: string;
+  analyticsHost: string;
   distinctId: string;
   betaTelemetryOptIn: boolean;
   betaTelemetryPromptAnswered: boolean;

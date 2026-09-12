@@ -1,0 +1,205 @@
+{
+  "nav": {
+    "getStarted": "はじめる"
+  },
+  "hero": {
+    "title": "やりたいことを、Photoshop に伝えるだけ。",
+    "lead": "Photoshop MCP は Claude や Cursor をはじめ、あらゆる MCP クライアントを Adobe Photoshop につなぎます。背景の切り抜き、レタッチ、カラーグレーディング、一括書き出しを、チャットから、取り消し 1 回分の操作で。",
+    "trust": "MIT ライセンスの無料オープンソース。macOS と Windows、Photoshop 2012〜2025 に対応。",
+    "installIn": "インストール先",
+    "setupGuide": "詳しいセットアップ",
+    "demo": {
+      "you": "あなた",
+      "prompt": "このポートレートの背景を消して、1080×1350 の Instagram 用も書き出して。",
+      "assistant": "Claude",
+      "steps": [
+        "get_state",
+        "recipe_remove_background · ぼかし 2px",
+        "recipe_export_social_variants · instagram_post"
+      ],
+      "done": "完了",
+      "result": "1080×1350 を ~/.photoshop-mcp/exports に書き出しました。取り消しは 1 回分です。",
+      "before": "変更前",
+      "after": "変更後"
+    }
+  },
+  "install": {
+    "installIn": "{name} にインストール",
+    "downloadFor": "{name} 用をダウンロード",
+    "open": "{name} で開く",
+    "copy": "コピー",
+    "copied": "コピーしました",
+    "command": "ターミナルで実行",
+    "configFile": "設定ファイル",
+    "configWhere": "貼り付ける場所",
+    "fallback": "ボタンが反応しない場合は、代わりにこれを設定へ貼り付けてください",
+    "verify": "動作を確認する",
+    "verifyPrompt": "Photoshop に ping して、開いているドキュメントを一覧にして。",
+    "verifyExpect": "Photoshop のバージョンと、開いているドキュメント名が表示されます。",
+    "docs": "{name} の MCP ドキュメント",
+    "tier1": "よく使われる",
+    "tier2": "その他のクライアント",
+    "other": "その他",
+    "notAvailable": "{os} では利用できません",
+    "os": {
+      "mac": "macOS",
+      "windows": "Windows",
+      "linux": "Linux"
+    },
+    "mcpbNote": ".mcpb パッケージは各 GitHub リリースに添付されています。"
+  },
+  "works": {
+    "title": "いま使っているツールでそのまま動きます",
+    "more": "ローカルの MCP サーバーを起動できるクライアントなら何でも"
+  },
+  "how": {
+    "title": "3 ステップ、コード不要",
+    "steps": [
+      {
+        "title": "インストール",
+        "text": "クライアントで 1 クリック、またはコマンド 1 行。サーバーは自分のマシンで動きます。"
+      },
+      {
+        "title": "Photoshop を開く",
+        "text": "2012 以降ならどのバージョンでも。Photoshop 側に読み込むものはなく、サーバーが直接やり取りします。"
+      },
+      {
+        "title": "プロンプトを書く",
+        "text": "普段の言葉で頼むだけ。アシスタントがドキュメントを読み、手順を実行し、プレビューを見せます。"
+      }
+    ]
+  },
+  "recipes": {
+    "title": "頼めること",
+    "lead": "すぐ使えるワークフローが 16 種類。どれも取り消し 1 回分として実行されるので、中途半端な状態が残りません。",
+    "all": "すべて",
+    "copyPrompt": "プロンプトをコピー",
+    "promptCopied": "コピーしました",
+    "seeAll": "レシピをすべて見る",
+    "badge": "取り消し 1 回分",
+    "tool": "ツール",
+    "template": "プロンプトテンプレート",
+    "params": "パラメータ例"
+  },
+  "run": {
+    "title": "2 つの使い方",
+    "ide": {
+      "title": "エディタやアシスタントの中で",
+      "text": "Cursor、Claude Desktop、VS Code などのクライアントに MCP サーバーを追加します。アシスタントは {n} 個の Photoshop ツールを受け取り、依頼ごとに適切なものを選びます。",
+      "link": "設定する"
+    },
+    "ui": {
+      "title": "単体の Web UI で",
+      "text": "エディタは不要です。コマンド 1 つでローカルのチャットが立ち上がり、Photoshop を操作します。Claude・GPT・Gemini・OpenRouter の API キー、または Claude Code アカウントを使えます。",
+      "link": "Web UI について",
+      "caption": "アクションプラン: 最初に 1 回計画し、あとは各ステップが順に実行されます。"
+    }
+  },
+  "agents": {
+    "title": "使い捨てスクリプトではなく、エージェントのために",
+    "lead": "言語モデルに生のスクリプトを書かせる方法は脆いものです。レイヤーの種類を推測し、やり直しでトークンを浪費し、途中で失敗するとドキュメントの状態が分からなくなります。本サーバーはこれをプロトコルの段階で解決します。",
+    "items": [
+      {
+        "title": "行動の前に状態を",
+        "text": "get_state、get_preview、get_capabilities が、何が開いているか、どのレイヤーがアクティブか、この Photoshop で何ができるかを伝えます。"
+      },
+      {
+        "title": "レシピは取り消し 1 回分",
+        "text": "複数手順の処理も 1 つのヒストリー状態にまとめられます。1 回取り消せばレシピ全体が元に戻ります。"
+      },
+      {
+        "title": "次の一手を示すエラー",
+        "text": "失敗はコードと suggested_next_tool を含む構造化 JSON で返るため、アシスタントは推測ではなく復帰できます。"
+      },
+      {
+        "title": "アクションプラン",
+        "text": "Web UI では 1 回の計画呼び出しで全手順が決まり、その後はモデルへの往復なしに実行されます。"
+      },
+      {
+        "title": "生成 AI と Neural Filters",
+        "text": "Firefly による生成塗りつぶし・削除・拡張・アップスケール、空の置き換え、そして任意の UXP ブリッジ経由の Neural Filters。"
+      },
+      {
+        "title": "macOS と Windows",
+        "text": "macOS では AppleScript、Windows では COM。複数バージョンが入っていても Photoshop を自動検出します。"
+      }
+    ],
+    "sampleTitle": "ツール呼び出しの戻り値"
+  },
+  "toolsTeaser": {
+    "title": "{n} 個のツール、すべて検索できます",
+    "lead": "細かい編集向けの atomic ツールが {atomic} 個、完成形まで仕上げるレシピが {recipes} 個 — ドキュメント、レイヤー、マスク、フィルター、カラー、テキスト、書き出し、生成 AI。",
+    "placeholder": "ツールを検索 — ぼかし、マスク、書き出し…",
+    "browse": "カタログを見る",
+    "noResults": "「{q}」に一致するツールはありません。",
+    "results": "{n} 個のツール",
+    "params": "パラメータ",
+    "kinds": {
+      "atomic": "Atomic",
+      "recipe": "レシピ"
+    },
+    "allCategories": "すべてのカテゴリ",
+    "paramsOne": "パラメータ"
+  },
+  "faq": {
+    "title": "よくある質問",
+    "items": [
+      {
+        "q": "これは Adobe 公式の製品ですか？",
+        "a": "いいえ。Photoshop MCP はコミュニティが維持する独立したオープンソースプロジェクトです。Adobe とは無関係で、承認も受けていません。Photoshop は Adobe Inc. の商標です。"
+      },
+      {
+        "q": "API キーは必要ですか？",
+        "a": "MCP サーバー自体には不要です。ローカルで動作し、クライアント（Cursor、Claude Desktop、VS Code など）がすでにモデルと通信しています。単体の Web UI には、プロバイダーの API キーか Claude Code アカウントが必要です。"
+      },
+      {
+        "q": "対応する Photoshop のバージョンは？",
+        "a": "macOS と Windows の Photoshop 2012〜2025 です。一部のツールはより新しい版が必要で、被写体を選択は 23 以降、WebP/AVIF 書き出しは 23.2 以降、生成系ツールは Firefly 対応の Photoshop とクレジットのある Adobe アカウントが必要です。"
+      },
+      {
+        "q": "Firefly のクレジットを消費しますか？",
+        "a": "消費するのは生成系ツール（塗りつぶし、削除、拡張、アップスケール、空の置き換え、画像生成）だけで、依頼したときのみです。それ以外は通常の Photoshop 自動化です。"
+      },
+      {
+        "q": "データはどこへ行きますか？",
+        "a": "Photoshop のコマンドは手元のマシンで実行されます。あなたが求めたプレビューを自分のモデルプロバイダーが受け取る場合を除き、画像が外に出ることはありません。サーバーは既定で匿名の利用イベントを送信します。ANALYTICS_DISABLED=1 で無効にできます。"
+      },
+      {
+        "q": "ブラウザの ChatGPT や claude.ai から使えないのはなぜ？",
+        "a": "ブラウザのアシスタントはリモートコネクタしか受け付けませんが、Photoshop は手元のコンピューターにあります。デスクトップのクライアントか、ローカルで動く Web UI を使ってください。"
+      }
+    ]
+  },
+  "cta": {
+    "title": "Photoshop を開いて、書き始める。",
+    "lead": "インストールは 1 分。最初のプロンプトは 10 秒です。",
+    "button": "はじめる"
+  },
+  "footer": {
+    "product": "プロダクト",
+    "docs": "ドキュメント",
+    "community": "コミュニティ",
+    "gettingStarted": "はじめかた",
+    "recipes": "レシピ",
+    "tools": "ツール",
+    "webUi": "Web UI",
+    "changelog": "変更履歴",
+    "troubleshooting": "トラブルシューティング",
+    "architecture": "アーキテクチャ",
+    "privacy": "プライバシーと分析",
+    "issues": "問題を報告",
+    "disclaimer": "非公式のコミュニティプロジェクトであり、Adobe Inc. とは無関係で承認も受けていません。Adobe および Photoshop は Adobe Inc. の商標です。",
+    "builtBy": "制作",
+    "license": "MIT ライセンス"
+  },
+  "gs": {
+    "prereqTitle": "はじめる前に",
+    "prereqs": [
+      "Adobe Photoshop がインストールされ、起動していること（macOS または Windows）。",
+      "Node.js 18 以上 — Claude Desktop のパッケージを使う場合は不要です。"
+    ],
+    "pickClient": "クライアントを選ぶ",
+    "firstPrompts": "最初のプロンプト",
+    "next": "次のステップ"
+  }
+}

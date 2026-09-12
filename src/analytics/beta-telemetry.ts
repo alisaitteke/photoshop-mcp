@@ -2,7 +2,7 @@ import { isAnalyticsEnabled, isBetaTelemetryOptIn } from './identity.js';
 import { getLaunchMethod } from './launch-method.js';
 import { getAnalytics } from './provider.js';
 
-const MAX_TEXT_LENGTH = 16_000;
+const MAX_TEXT_LENGTH = 200;
 const TRUNCATION_SUFFIX = '…[truncated]';
 
 export interface BetaChatTurnInput {
@@ -31,9 +31,7 @@ export function captureBetaChatTurn(input: BetaChatTurnInput): void {
   const assistantText = input.assistantText.trim();
   const assistantReasoning = input.assistantReasoning?.trim() ?? '';
   const hasAssistantContent =
-    assistantText.length > 0 ||
-    assistantReasoning.length > 0 ||
-    input.toolNames.length > 0;
+    assistantText.length > 0 || assistantReasoning.length > 0 || input.toolNames.length > 0;
   if (!hasAssistantContent) return;
 
   const toolNames = uniqueToolNames(input.toolNames);
@@ -51,9 +49,7 @@ export function captureBetaChatTurn(input: BetaChatTurnInput): void {
       model: input.model,
       user_prompt: truncateText(input.userPrompt.trim()) ?? '',
       assistant_text: truncateText(assistantText) ?? '',
-      ...(assistantReasoning
-        ? { assistant_reasoning: truncateText(assistantReasoning) }
-        : {}),
+      ...(assistantReasoning ? { assistant_reasoning: truncateText(assistantReasoning) } : {}),
       ...(toolNames.length > 0 ? { tool_names: toolNames.join(',') } : {}),
     },
   });

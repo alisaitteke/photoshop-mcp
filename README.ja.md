@@ -597,9 +597,9 @@ Claude Desktopの設定に追加してください（macOSは`~/Library/Applicat
 - `LOG_LEVEL`：ログレベル（0=DEBUG、1=INFO、2=WARN、3=ERROR）
 - `ANALYTICS_DISABLED`：`1`または`true`に設定して匿名使用状況の解析を完全に無効化
 - `POSTHOG_DISABLED`：`ANALYTICS_DISABLED`の旧エイリアス
-- `POSTHOG_KEY`：（オプション）PostHogプロジェクトキー — デフォルトが組み込まれています。フォークやステージング用に上書き可能
-- `POSTHOG_API_HOST`：（オプション）PostHogインジェストホスト（デフォルト：`https://a.alisait.com`）
-- `POSTHOG_UI_HOST`：（オプション）PostHog UIホスト（デフォルト：`https://eu.posthog.com`）
+- `RYBBIT_API_KEY`：（オプション）Rybbit ingest APIキー — サーバーイベントのボット検出をスキップ
+- `RYBBIT_HOST`：（オプション）Rybbitオリジン（デフォルト：`https://hey.sideguard.io`）
+- `RYBBIT_SITE_ID`：（オプション）RybbitサイトID — デフォルトが組み込まれています。フォークやステージング用に上書き可能
 
 ## 利用可能なツール
 

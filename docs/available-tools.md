@@ -1,6 +1,6 @@
 # Available Tools
 
-**118 tools total** — 102 atomic `photoshop_*` tools plus 16 recipe `photoshop_recipe_*` workflows (single undo step each).
+**116 tools total** — 100 atomic `photoshop_*` tools plus 16 recipe `photoshop_recipe_*` workflows (single undo step each).
 
 Reference for all atomic `photoshop_*` MCP tools exposed by this server (parameters, examples, and return shapes).
 

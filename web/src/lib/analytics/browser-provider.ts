@@ -1,42 +1,41 @@
 /**
- * Browser analytics — PostHog only.
+ * Browser analytics — Rybbit script injection.
  */
-import * as posthogBrowser from './posthog-browser';
+import * as rybbitBrowser from './rybbit-browser';
 
 export interface BrowserAnalyticsConfig {
   enabled: boolean;
-  provider: 'posthog';
-  key: string;
-  apiHost: string;
-  uiHost: string;
+  provider: 'rybbit';
+  siteId: string;
+  analyticsHost: string;
   distinctId: string;
 }
 
 export function initBrowserAnalytics(config: BrowserAnalyticsConfig): void {
-  posthogBrowser.initPostHogBrowser(config);
+  rybbitBrowser.initRybbitBrowser(config);
 }
 
 export function registerBrowserAnalyticsContext(
   properties: Record<string, string | number | boolean>
 ): void {
-  posthogBrowser.registerBrowserAnalyticsContext(properties);
+  rybbitBrowser.registerBrowserAnalyticsContext(properties);
 }
 
 export function captureBrowserEvent(
   name: string,
   properties?: Record<string, string | number | boolean>
 ): void {
-  posthogBrowser.captureBrowserEvent(name, properties);
+  rybbitBrowser.captureBrowserEvent(name, properties);
 }
 
 export function optOutBrowserCapturing(): void {
-  posthogBrowser.optOutBrowserCapturing();
+  rybbitBrowser.optOutBrowserCapturing();
 }
 
 export function optInBrowserCapturing(): void {
-  posthogBrowser.optInBrowserCapturing();
+  rybbitBrowser.optInBrowserCapturing();
 }
 
 export function isBrowserAnalyticsInitialized(): boolean {
-  return posthogBrowser.isBrowserAnalyticsInitialized();
+  return rybbitBrowser.isBrowserAnalyticsInitialized();
 }

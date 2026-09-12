@@ -1,18 +1,18 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.alisaitteke/photoshop-mcp",
-  "description": "MCP server for Adobe Photoshop — 118 tools (generative AI + recipes), standalone web UI. Control Ph…",
+  "description": "MCP server for Adobe Photoshop — 116 tools (generative AI + recipes), standalone web UI. Control Ph…",
   "repository": {
     "url": "https://github.com/alisaitteke/photoshop-mcp",
     "source": "github"
   },
-  "version": "1.7.5",
+  "version": "1.7.6",
   "mcpName": "io.github.alisaitteke/photoshop-mcp",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@alisaitteke/photoshop-mcp",
-      "version": "1.7.5",
+      "version": "1.7.6",
       "transport": {
         "type": "stdio"
       }

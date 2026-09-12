@@ -4,17 +4,19 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "prebuild": "tsx ../scripts/sync-site-content.ts && tsx ../scripts/generate-site-discoverability.ts",
-    "predev": "tsx ../scripts/sync-site-content.ts",
+    "prebuild": "tsx ../scripts/generate-site-data.ts && tsx ../scripts/sync-site-content.ts && tsx ../scripts/generate-site-discoverability.ts",
+    "predev": "tsx ../scripts/generate-site-data.ts && tsx ../scripts/sync-site-content.ts",
     "dev": "vitepress dev",
     "build": "vitepress build && node scripts/generate-sitemap.mjs",
     "preview": "vitepress preview"
   },
   "dependencies": {
-    "posthog-js": "^1.388.1"
+    "@fontsource-variable/ibm-plex-sans": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0"
   },
   "devDependencies": {
     "tsx": "^4.19.2",
+    "typescript": "^5.9.3",
     "vitepress": "^1.6.3"
   }
 }

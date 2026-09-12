@@ -33,12 +33,23 @@ jobs:
           BODY=$(bash scripts/build-release-notes.sh "${GITHUB_REF_NAME}" "${PREV}")
           { echo "body<<EOF"; echo "$BODY"; echo "EOF"; } >> "$GITHUB_OUTPUT"
 
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build Claude Desktop bundle
+        run: npm run build:mcpb
+
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
           body: ${{ steps.notes.outputs.body }}
           skip_if_release_exists: true
+          # photoshop-mcp.mcpb is the stable filename the site's one-click
+          # Claude Desktop button points at (releases/latest/download/...).
+          files: |
+            release/photoshop-mcp-*.mcpb
+            release/photoshop-mcp.mcpb
 
   publish:
     needs: github-release
@@ -72,6 +83,9 @@ jobs:
 
       - name: Verify prompt coverage
         run: npm run verify:photoshop-prompts
+
+      - name: Verify tool counts in docs
+        run: npm run verify:tool-counts
 
       - name: Sync server.json with package.json
         run: npm run sync:server-version

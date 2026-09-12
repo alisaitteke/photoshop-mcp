@@ -39,7 +39,11 @@ When LLMs call Photoshop one command at a time, they burn tokens, guess layer ty
 
 **What I built (open source)**
 
-- **Photoshop MCP** — 118 tools incl. 16 recipe workflows (single-undo outcomes)
+- **Photoshop MCP** — 116 tools incl. 16 recipe workflows (single-undo outcomes)
+
+> `images/og-social.png` is generated: `npx playwright install chromium` once, then
+> `npx tsx scripts/generate-og-image.ts`. It reads the tool counts from
+> `site/data/meta.json`, so regenerate it after adding tools.
 - Cross-platform: macOS (AppleScript) + Windows (COM)
 - Bundled **standalone web UI** — chat with Claude, GPT, or Gemini; drive Photoshop without an IDE
 - **Action Plan (beta)** — plan all steps in one LLM call, execute without per-step round-trips
@@ -62,6 +66,6 @@ Feedback and contributors welcome. If your team builds agent tooling or creative
 
 Set in repository **About** sidebar:
 
-- **Description:** `MCP server + local UI for AI-driven Photoshop automation. 80 tools, recipe workflows, cross-platform.`
+- **Description:** `MCP server + local UI for AI-driven Photoshop automation. 116 tools, recipe workflows, cross-platform.`
 - **Website:** `https://alisait.com`
 - **Topics:** `mcp`, `model-context-protocol`, `typescript`, `ai-agents`, `photoshop`, `automation`, `vue`, `hono`, `developer-tools`, `cursor`, `claude`, `extendscript`

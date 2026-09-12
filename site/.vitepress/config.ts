@@ -1,89 +1,114 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { defineConfig } from 'vitepress';
+import { defineConfig, type DefaultTheme } from 'vitepress';
 
-const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const SITE_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
+const REPO_ROOT = join(SITE_DIR, '..');
 const pkg = JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8'));
+const meta = JSON.parse(readFileSync(join(SITE_DIR, 'data', 'meta.json'), 'utf8')) as {
+  toolsTotal: number;
+  toolsAtomic: number;
+  toolsRecipes: number;
+};
+const en = JSON.parse(readFileSync(join(SITE_DIR, 'i18n', 'en.json'), 'utf8')) as {
+  faq: { items: Array<{ q: string; a: string }> };
+};
 
 const SITE_URL = 'https://photoshop-mcp.com';
 const OG_IMAGE = `${SITE_URL}/images/og-social.png`;
 const LLMS_URL = `${SITE_URL}/llms.txt`;
 const LLMS_FULL_URL = `${SITE_URL}/llms-full.txt`;
+const REPO = 'https://github.com/alisaitteke/photoshop-mcp';
+const NPM = 'https://www.npmjs.com/package/@alisaitteke/photoshop-mcp';
 
 const SITE_NAME = 'Photoshop MCP';
-const DEFAULT_TITLE = 'Photoshop MCP — Control Adobe Photoshop with AI';
-const DEFAULT_DESCRIPTION =
-  'MCP server for Cursor, Claude Desktop, and natural language. 118 tools, recipe workflows, generative AI, and standalone web UI. Windows and macOS.';
+const DEFAULT_TITLE = 'Photoshop MCP — Tell Photoshop what you want';
+const DEFAULT_DESCRIPTION = `Connect Claude, Cursor and any MCP client to Adobe Photoshop. ${meta.toolsTotal} tools and ${meta.toolsRecipes} one-step recipes for background removal, retouching, color grading and batch export. macOS and Windows.`;
 const KEYWORDS =
-  'photoshop mcp, cursor photoshop, claude photoshop, adobe photoshop automation, model context protocol, mcp server, ai photoshop, extendscript, generative fill';
+  'photoshop mcp, cursor photoshop, claude photoshop, adobe photoshop automation, model context protocol, mcp server, ai photoshop, remove background, generative fill';
 
 const LOCALES = ['en', 'tr', 'zh', 'es', 'de', 'ja'] as const;
+type Locale = (typeof LOCALES)[number];
 
-const HREFLANG_PATHS = [
-  { path: '/', pages: ['index'] },
-  { path: '/readme', pages: ['readme'] },
-];
+/** Pages that exist in every language (docs stay English). */
+const TRANSLATED_PAGES = ['index', 'recipes', 'tools', 'changelog', 'docs/getting-started'];
 
 function hreflangTags(): Array<[string, Record<string, string>]> {
   const tags: Array<[string, Record<string, string>]> = [];
-  for (const { path, pages } of HREFLANG_PATHS) {
-    for (const page of pages) {
-      for (const locale of LOCALES) {
-        const prefix = locale === 'en' ? '' : `/${locale}`;
-        const pagePath = page === 'index' ? prefix || '/' : `${prefix}/${page}`;
-        const href =
-          pagePath === '/' ? `${SITE_URL}/` : `${SITE_URL}${pagePath.replace(/\/$/, '')}/`;
-        tags.push([
-          'link',
-          {
-            rel: 'alternate',
-            hreflang: locale === 'zh' ? 'zh-CN' : locale,
-            href,
-          },
-        ]);
-      }
-      tags.push([
-        'link',
-        {
-          rel: 'alternate',
-          hreflang: 'x-default',
-          href: page === 'index' ? `${SITE_URL}/` : `${SITE_URL}/${page}/`,
-        },
-      ]);
+  for (const page of TRANSLATED_PAGES) {
+    for (const locale of LOCALES) {
+      const prefix = locale === 'en' ? '' : `/${locale}`;
+      const pagePath = page === 'index' ? prefix || '/' : `${prefix}/${page}`;
+      const href = pagePath === '/' ? `${SITE_URL}/` : `${SITE_URL}${pagePath.replace(/\/$/, '')}/`;
+      tags.push(['link', { rel: 'alternate', hreflang: locale === 'zh' ? 'zh-CN' : locale, href }]);
     }
+    tags.push([
+      'link',
+      {
+        rel: 'alternate',
+        hreflang: 'x-default',
+        href: page === 'index' ? `${SITE_URL}/` : `${SITE_URL}/${page}/`,
+      },
+    ]);
   }
   return tags;
 }
 
-const jsonLd = {
+const softwareJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
-  name: 'Photoshop MCP',
+  name: SITE_NAME,
   applicationCategory: 'DeveloperApplication',
   operatingSystem: 'Windows, macOS',
-  description:
-    'MCP server for Adobe Photoshop — 118 tools, generative AI, recipe workflows, and standalone web UI. Control Photoshop from Cursor, Claude, or natural language.',
+  description: DEFAULT_DESCRIPTION,
   url: SITE_URL,
-  downloadUrl: 'https://www.npmjs.com/package/@alisaitteke/photoshop-mcp',
-  codeRepository: 'https://github.com/alisaitteke/photoshop-mcp',
+  downloadUrl: NPM,
+  codeRepository: REPO,
   softwareHelp: `${SITE_URL}/docs/troubleshooting/`,
   screenshot: OG_IMAGE,
   softwareVersion: pkg.version,
-  author: {
-    '@type': 'Person',
-    name: 'Ali Sait Teke',
-    url: 'https://alisait.com',
-  },
-  offers: {
-    '@type': 'Offer',
-    price: '0',
-    priceCurrency: 'USD',
-  },
+  license: 'https://opensource.org/licenses/MIT',
+  author: { '@type': 'Person', name: 'Ali Sait Teke', url: 'https://alisait.com' },
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
 };
 
-// Search Console verification — set GOOGLE_SITE_VERIFICATION at build time
-// to emit the verification meta tag.
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: en.faq.items.map((item) => ({
+    '@type': 'Question',
+    name: item.q,
+    acceptedAnswer: { '@type': 'Answer', text: item.a },
+  })),
+};
+
+const howToJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  name: 'Install Photoshop MCP',
+  description: 'Connect Adobe Photoshop to Claude, Cursor or any other MCP client.',
+  totalTime: 'PT2M',
+  step: [
+    {
+      '@type': 'HowToStep',
+      name: 'Install the server',
+      text: 'Use the one-click install link for your client, or run: npx -y @alisaitteke/photoshop-mcp',
+      url: `${SITE_URL}/docs/getting-started/`,
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'Open Photoshop',
+      text: 'Launch Adobe Photoshop (2012 or newer) on macOS or Windows.',
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'Send a prompt',
+      text: 'Ask your assistant: "Ping Photoshop and list open documents."',
+    },
+  ],
+};
+
 const googleVerification = process.env.GOOGLE_SITE_VERIFICATION;
 
 function breadcrumbJsonLd(pageData: {
@@ -103,13 +128,16 @@ function breadcrumbJsonLd(pageData: {
         '@type': 'ListItem',
         position: 2,
         name: 'Documentation',
-        item: `${SITE_URL}/docs/architecture/`,
+        item: `${SITE_URL}/docs/getting-started/`,
       },
       { '@type': 'ListItem', position: 3, name: title, item: `${SITE_URL}/${slug}/` },
     ],
   };
   return ['script', { type: 'application/ld+json' }, JSON.stringify(json)];
 }
+
+const RYBBIT_LOCALHOST_GUARD =
+  "(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'){window.__RYBBIT_OPTOUT__=true;try{localStorage.setItem('disable-rybbit','true')}catch(e){}}})();";
 
 const sharedHead: Array<[string, Record<string, string> | string]> = [
   ['link', { rel: 'icon', href: '/ps-logo-icon.svg', type: 'image/svg+xml' }],
@@ -120,16 +148,27 @@ const sharedHead: Array<[string, Record<string, string> | string]> = [
   ['meta', { name: 'keywords', content: KEYWORDS }],
   ['meta', { name: 'author', content: 'Ali Sait Teke' }],
   ['meta', { name: 'robots', content: 'index, follow, max-image-preview:large' }],
+  ['meta', { name: 'theme-color', content: '#0a1020' }],
   ['meta', { property: 'og:site_name', content: SITE_NAME }],
   ['meta', { property: 'og:locale', content: 'en_US' }],
   ['meta', { property: 'og:image', content: OG_IMAGE }],
   ['meta', { property: 'og:image:width', content: '1200' }],
   ['meta', { property: 'og:image:height', content: '630' }],
-  ['meta', { property: 'og:image:alt', content: 'Photoshop MCP — AI-driven Photoshop automation' }],
+  ['meta', { property: 'og:image:alt', content: 'Photoshop MCP — tell Photoshop what you want' }],
   ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
   ['meta', { name: 'twitter:image', content: OG_IMAGE }],
-  ['meta', { name: 'twitter:image:alt', content: 'Photoshop MCP — AI-driven Photoshop automation' }],
-  ['script', { type: 'application/ld+json' }, JSON.stringify(jsonLd)],
+  ['meta', { name: 'twitter:image:alt', content: 'Photoshop MCP — tell Photoshop what you want' }],
+  ['script', { type: 'application/ld+json' }, JSON.stringify(softwareJsonLd)],
+  ['script', { type: 'application/ld+json' }, JSON.stringify(howToJsonLd)],
+  ['script', {}, RYBBIT_LOCALHOST_GUARD],
+  [
+    'script',
+    {
+      src: 'https://hey.sideguard.io/api/script.js',
+      'data-site-id': '5e488c650441',
+      defer: '',
+    },
+  ],
   ...(googleVerification
     ? ([['meta', { name: 'google-site-verification', content: googleVerification }]] as const)
     : []),
@@ -137,8 +176,6 @@ const sharedHead: Array<[string, Record<string, string> | string]> = [
 ];
 
 function pageOgTitle(pageData: { title?: string; frontmatter: Record<string, unknown> }): string {
-  const hero = pageData.frontmatter.hero as { name?: string; text?: string } | undefined;
-  if (hero?.name && hero?.text) return `${hero.name} — ${hero.text}`;
   const fmTitle = pageData.frontmatter.title as string | undefined;
   if (fmTitle) return fmTitle;
   if (pageData.title) return `${pageData.title} | ${SITE_NAME}`;
@@ -149,210 +186,188 @@ function pageOgDescription(pageData: {
   description?: string;
   frontmatter: Record<string, unknown>;
 }): string {
-  const hero = pageData.frontmatter.hero as { tagline?: string } | undefined;
-  if (hero?.tagline) return hero.tagline;
   const fmDesc = pageData.frontmatter.description as string | undefined;
   if (fmDesc) return fmDesc;
   if (pageData.description) return pageData.description;
   return DEFAULT_DESCRIPTION;
 }
 
-const docsSidebar = [
+/* ── navigation ─────────────────────────────────────────────────────────── */
+
+const NAV_STRINGS: Record<Locale, { docs: string; recipes: string; tools: string; changelog: string }> = {
+  en: { docs: 'Docs', recipes: 'Recipes', tools: 'Tools', changelog: 'Changelog' },
+  tr: { docs: 'Dokümantasyon', recipes: 'Tarifler', tools: 'Araçlar', changelog: 'Sürüm notları' },
+  zh: { docs: '文档', recipes: '配方', tools: '工具', changelog: '更新日志' },
+  es: { docs: 'Docs', recipes: 'Recetas', tools: 'Herramientas', changelog: 'Cambios' },
+  de: { docs: 'Doku', recipes: 'Rezepte', tools: 'Tools', changelog: 'Änderungen' },
+  ja: { docs: 'ドキュメント', recipes: 'レシピ', tools: 'ツール', changelog: '変更履歴' },
+};
+
+function nav(locale: Locale): DefaultTheme.NavItem[] {
+  const p = locale === 'en' ? '' : `/${locale}`;
+  const s = NAV_STRINGS[locale];
+  return [
+    { text: s.docs, link: `${p}/docs/getting-started`, activeMatch: `^${p}/docs/` },
+    { text: s.recipes, link: `${p}/recipes` },
+    { text: s.tools, link: `${p}/tools` },
+    { text: s.changelog, link: `${p}/changelog` },
+  ];
+}
+
+const docsSidebar: DefaultTheme.SidebarItem[] = [
   {
-    text: 'Documentation',
+    text: 'Start here',
+    items: [
+      { text: 'Getting started', link: '/docs/getting-started' },
+      { text: 'Recipes', link: '/recipes' },
+      { text: 'Tool catalog', link: '/tools' },
+    ],
+  },
+  {
+    text: 'Clients',
+    items: [
+      { text: 'Cursor', link: '/docs/clients/cursor' },
+      { text: 'Claude Desktop', link: '/docs/clients/claude-desktop' },
+      { text: 'Claude Code', link: '/docs/clients/claude-code' },
+      { text: 'VS Code', link: '/docs/clients/vscode' },
+      { text: 'Windsurf', link: '/docs/clients/windsurf' },
+      { text: 'Zed', link: '/docs/clients/zed' },
+      { text: 'Codex CLI', link: '/docs/clients/codex' },
+      { text: 'Antigravity', link: '/docs/clients/antigravity' },
+      { text: 'Other clients', link: '/docs/clients/other' },
+    ],
+  },
+  {
+    text: 'Guides',
+    items: [
+      { text: 'Web UI', link: '/docs/web-ui' },
+      { text: 'Generative AI', link: '/docs/generative-ai' },
+      { text: 'Prompts & agents', link: '/docs/prompt-layer' },
+      { text: 'Tool reference', link: '/docs/available-tools' },
+      { text: 'Troubleshooting', link: '/docs/troubleshooting' },
+    ],
+  },
+  {
+    text: 'Advanced',
+    collapsed: true,
     items: [
       { text: 'Architecture', link: '/docs/architecture' },
-      { text: 'Available Tools', link: '/docs/available-tools' },
-      { text: 'Prompt Layer', link: '/docs/prompt-layer' },
-      { text: 'Standalone UI', link: '/docs/standalone-ui' },
       { text: 'Development', link: '/docs/development' },
-      { text: 'Troubleshooting', link: '/docs/troubleshooting' },
-      { text: 'Usage Analytics', link: '/docs/anonymous-usage-analytics' },
+      { text: 'Privacy & analytics', link: '/docs/privacy' },
     ],
   },
 ];
 
+/** Non-English locales get a translated setup page; the rest of the docs stay English. */
+function localeSidebar(locale: Locale): DefaultTheme.Sidebar {
+  if (locale === 'en') return { '/docs/': docsSidebar };
+  const p = `/${locale}`;
+  return {
+    [`${p}/docs/`]: [
+      {
+        text: NAV_STRINGS[locale].docs,
+        items: [
+          { text: 'Getting started', link: `${p}/docs/getting-started` },
+          { text: NAV_STRINGS[locale].recipes, link: `${p}/recipes` },
+          { text: NAV_STRINGS[locale].tools, link: `${p}/tools` },
+          { text: 'All documentation (English)', link: '/docs/getting-started' },
+        ],
+      },
+    ],
+    '/docs/': docsSidebar,
+  };
+}
+
+function localeTheme(locale: Locale): { themeConfig: DefaultTheme.Config } {
+  const p = locale === 'en' ? '' : `/${locale}`;
+  return {
+    themeConfig: {
+      logo: '/ps-logo-icon.svg',
+      siteTitle: 'Photoshop MCP',
+      socialLinks: [{ icon: 'github', link: REPO }],
+      nav: nav(locale),
+      sidebar: localeSidebar(locale),
+      search: { provider: 'local' },
+      outline: { level: [2, 3] },
+      docFooter: { prev: false, next: false },
+      editLink: {
+        pattern: `${REPO}/edit/master/site/content/:path`,
+        text: 'Edit this page on GitHub',
+      },
+      // Docs exist only in English, so the language switcher goes to the locale home
+      // instead of mapping the current path into a locale that has no such page.
+      i18nRouting: false,
+    },
+  };
+}
+
 export default defineConfig({
-  title: 'Photoshop MCP',
-  description:
-    'Control Adobe Photoshop with AI — MCP server for Cursor, Claude Desktop, and natural language. 118 tools, recipes, standalone web UI.',
+  title: SITE_NAME,
+  description: DEFAULT_DESCRIPTION,
   lang: 'en-US',
   srcDir: 'content',
   cleanUrls: true,
   lastUpdated: true,
   base: '/',
   outDir: '.vitepress/dist',
+  appearance: 'dark',
+  metaChunk: true,
 
   head: sharedHead,
 
-  themeConfig: {
-    logo: '/ps-logo-icon.svg',
-    siteTitle: 'Photoshop MCP',
-    socialLinks: [
-      { icon: 'github', link: 'https://github.com/alisaitteke/photoshop-mcp' },
-    ],
-
-    nav: [
-      { text: 'Home', link: '/' },
-      { text: 'Full README', link: '/readme' },
-      { text: 'Docs', link: '/docs/architecture' },
-      {
-        text: 'Links',
-        items: [
-          { text: 'npm', link: 'https://www.npmjs.com/package/@alisaitteke/photoshop-mcp' },
-          { text: 'MCP Registry', link: 'https://registry.modelcontextprotocol.io' },
-          { text: 'GitHub', link: 'https://github.com/alisaitteke/photoshop-mcp' },
-        ],
-      },
-    ],
-
-    sidebar: {
-      '/docs/': docsSidebar,
-    },
-
-    footer: {
-      message: 'Unofficial project — not affiliated with Adobe Inc.',
-      copyright:
-        'Built by <a href="https://alisait.com" rel="noopener noreferrer" target="_blank">Ali Sait Teke</a> · <a href="https://www.linkedin.com/in/alisait/" rel="noopener noreferrer" target="_blank">LinkedIn</a>',
-    },
-
-    editLink: {
-      pattern: 'https://github.com/alisaitteke/photoshop-mcp/edit/main/:path',
-      text: 'Edit this page on GitHub',
-    },
-  },
+  themeConfig: localeTheme('en').themeConfig,
 
   locales: {
-    root: {
-      label: 'English',
-      lang: 'en',
-      link: '/',
-      themeConfig: {
-        nav: [
-          { text: 'Home', link: '/' },
-          { text: 'Full README', link: '/readme' },
-          { text: 'Docs', link: '/docs/architecture' },
-          {
-            text: 'Links',
-            items: [
-              { text: 'npm', link: 'https://www.npmjs.com/package/@alisaitteke/photoshop-mcp' },
-              { text: 'MCP Registry', link: 'https://registry.modelcontextprotocol.io' },
-              { text: 'GitHub', link: 'https://github.com/alisaitteke/photoshop-mcp' },
-            ],
-          },
-        ],
-      },
-    },
+    root: { label: 'English', lang: 'en', link: '/', ...localeTheme('en') },
     tr: {
       label: 'Türkçe',
       lang: 'tr',
       link: '/tr/',
       description:
-        'Adobe Photoshop\'u yapay zeka ile kontrol edin — Cursor, Claude ve doğal dil için MCP sunucusu.',
-      themeConfig: {
-        nav: [
-          { text: 'Ana Sayfa', link: '/tr/' },
-          { text: 'Tam README', link: '/tr/readme' },
-          { text: 'Dokümantasyon', link: '/docs/architecture' },
-          {
-            text: 'Bağlantılar',
-            items: [
-              { text: 'npm', link: 'https://www.npmjs.com/package/@alisaitteke/photoshop-mcp' },
-              { text: 'GitHub', link: 'https://github.com/alisaitteke/photoshop-mcp' },
-            ],
-          },
-        ],
-      },
+        'Photoshop’a ne istediğinizi yazın. Claude, Cursor ve diğer MCP istemcilerini Adobe Photoshop’a bağlayan açık kaynak sunucu.',
+      ...localeTheme('tr'),
     },
     zh: {
       label: '简体中文',
       lang: 'zh-CN',
       link: '/zh/',
-      description: '用 AI 控制 Adobe Photoshop — 适用于 Cursor、Claude 的 MCP 服务器。',
-      themeConfig: {
-        nav: [
-          { text: '首页', link: '/zh/' },
-          { text: '完整 README', link: '/zh/readme' },
-          { text: '文档', link: '/docs/architecture' },
-          {
-            text: '链接',
-            items: [
-              { text: 'npm', link: 'https://www.npmjs.com/package/@alisaitteke/photoshop-mcp' },
-              { text: 'GitHub', link: 'https://github.com/alisaitteke/photoshop-mcp' },
-            ],
-          },
-        ],
-      },
+      description:
+        '把想做的事告诉 Photoshop。将 Claude、Cursor 等 MCP 客户端连接到 Adobe Photoshop 的开源服务器。',
+      ...localeTheme('zh'),
     },
     es: {
       label: 'Español',
       lang: 'es',
       link: '/es/',
       description:
-        'Controla Adobe Photoshop con IA — servidor MCP para Cursor, Claude y lenguaje natural.',
-      themeConfig: {
-        nav: [
-          { text: 'Inicio', link: '/es/' },
-          { text: 'README completo', link: '/es/readme' },
-          { text: 'Documentación', link: '/docs/architecture' },
-          {
-            text: 'Enlaces',
-            items: [
-              { text: 'npm', link: 'https://www.npmjs.com/package/@alisaitteke/photoshop-mcp' },
-              { text: 'GitHub', link: 'https://github.com/alisaitteke/photoshop-mcp' },
-            ],
-          },
-        ],
-      },
+        'Dile a Photoshop lo que quieres. Servidor de código abierto que conecta Claude, Cursor y cualquier cliente MCP con Adobe Photoshop.',
+      ...localeTheme('es'),
     },
     de: {
       label: 'Deutsch',
       lang: 'de',
       link: '/de/',
       description:
-        'Adobe Photoshop mit KI steuern — MCP-Server für Cursor, Claude und natürliche Sprache.',
-      themeConfig: {
-        nav: [
-          { text: 'Start', link: '/de/' },
-          { text: 'Vollständiges README', link: '/de/readme' },
-          { text: 'Dokumentation', link: '/docs/architecture' },
-          {
-            text: 'Links',
-            items: [
-              { text: 'npm', link: 'https://www.npmjs.com/package/@alisaitteke/photoshop-mcp' },
-              { text: 'GitHub', link: 'https://github.com/alisaitteke/photoshop-mcp' },
-            ],
-          },
-        ],
-      },
+        'Sag Photoshop, was du willst. Open-Source-Server, der Claude, Cursor und jeden MCP-Client mit Adobe Photoshop verbindet.',
+      ...localeTheme('de'),
     },
     ja: {
       label: '日本語',
       lang: 'ja',
       link: '/ja/',
       description:
-        'AIでAdobe Photoshopを操作 — Cursor、Claude向けMCPサーバー。',
-      themeConfig: {
-        nav: [
-          { text: 'ホーム', link: '/ja/' },
-          { text: 'README全文', link: '/ja/readme' },
-          { text: 'ドキュメント', link: '/docs/architecture' },
-          {
-            text: 'リンク',
-            items: [
-              { text: 'npm', link: 'https://www.npmjs.com/package/@alisaitteke/photoshop-mcp' },
-              { text: 'GitHub', link: 'https://github.com/alisaitteke/photoshop-mcp' },
-            ],
-          },
-        ],
-      },
+        'やりたいことを Photoshop に伝えるだけ。Claude や Cursor などの MCP クライアントと Adobe Photoshop をつなぐオープンソースサーバー。',
+      ...localeTheme('ja'),
     },
   },
 
   vite: {
+    // srcDir is `content/`, so Vite's default publicDir would miss `site/public/`.
+    publicDir: join(SITE_DIR, 'public'),
     plugins: [
       {
-        name: 'vitepress-public-images',
+        // Files under site/public are served as-is; keep Rollup from trying to bundle them.
+        name: 'vitepress-public-assets',
         enforce: 'pre',
         resolveId(source) {
           if (source.startsWith('/images/')) {
@@ -381,8 +396,18 @@ export default defineConfig({
       ['meta', { property: 'og:description', content: ogDescription }],
       ['meta', { name: 'twitter:title', content: ogTitle }],
       ['meta', { name: 'twitter:description', content: ogDescription }],
-      ['meta', { name: 'description', content: ogDescription }],
+      ['meta', { name: 'description', content: ogDescription }]
     );
+
+    // FAQ rich result belongs to the landing pages only.
+    if (/^(?:[a-z]{2}\/)?index\.md$/.test(pageData.relativePath)) {
+      pageData.frontmatter.head.push([
+        'script',
+        { type: 'application/ld+json' },
+        JSON.stringify(faqJsonLd),
+      ]);
+    }
+
     const breadcrumb = breadcrumbJsonLd(pageData);
     if (breadcrumb) pageData.frontmatter.head.push(breadcrumb);
   },

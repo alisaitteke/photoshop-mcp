@@ -148,9 +148,8 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
       enabled: config.enabled,
       provider: config.provider,
       distinctId: config.distinctId,
-      key: config.key,
-      apiHost: config.apiHost,
-      uiHost: config.uiHost,
+      siteId: config.siteId,
+      analyticsHost: config.analyticsHost,
       betaTelemetryOptIn: config.betaTelemetryOptIn,
       betaTelemetryPromptAnswered: config.betaTelemetryPromptAnswered,
     });

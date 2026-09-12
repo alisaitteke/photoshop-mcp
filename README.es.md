@@ -595,9 +595,9 @@ Añada a su configuración de Claude Desktop (`~/Library/Application Support/Cla
 - `LOG_LEVEL`: Nivel de registro (0=DEBUG, 1=INFO, 2=WARN, 3=ERROR)
 - `ANALYTICS_DISABLED`: Establezca en `1` o `true` para deshabilitar completamente el análisis de uso anónimo
 - `POSTHOG_DISABLED`: Alias heredado de `ANALYTICS_DISABLED`
-- `POSTHOG_KEY`: (Opcional) Clave del proyecto PostHog — hay una predeterminada integrada; anule para forks o staging
-- `POSTHOG_API_HOST`: (Opcional) Host de ingesta de PostHog (predeterminado: `https://a.alisait.com`)
-- `POSTHOG_UI_HOST`: (Opcional) Host de UI de PostHog (predeterminado: `https://eu.posthog.com`)
+- `RYBBIT_API_KEY`: (Opcional) Clave de ingesta de Rybbit — omite la detección de bots en eventos del servidor
+- `RYBBIT_HOST`: (Opcional) Origen de Rybbit (predeterminado: `https://hey.sideguard.io`)
+- `RYBBIT_SITE_ID`: (Opcional) ID del sitio Rybbit — hay un valor predeterminado integrado; anule para forks o staging
 
 ## Herramientas disponibles
 

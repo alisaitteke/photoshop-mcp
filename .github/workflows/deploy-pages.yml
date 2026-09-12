@@ -9,8 +9,12 @@ on:
       - 'docs/**'
       - 'README*.md'
       - 'images/**'
+      - 'src/tools/**'
+      - 'CHANGELOG.md'
+      - 'package.json'
       - 'scripts/sync-site-content.ts'
       - 'scripts/generate-site-discoverability.ts'
+      - 'scripts/generate-site-data.ts'
   workflow_dispatch:
 
 permissions:
@@ -41,6 +45,9 @@ jobs:
       - name: Build site
         run: npm run build
         working-directory: site
+        env:
+          # Star count is rendered at build time; without a token the API caps at 60/hour.
+          GITHUB_TOKEN: ${{ github.token }}
 
       - uses: actions/upload-pages-artifact@v3
         with:
