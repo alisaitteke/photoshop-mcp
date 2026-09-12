@@ -1,0 +1,205 @@
+{
+  "nav": {
+    "getStarted": "Loslegen"
+  },
+  "hero": {
+    "title": "Sag Photoshop, was du willst.",
+    "lead": "Photoshop MCP verbindet Claude, Cursor und jeden anderen MCP-Client mit Adobe Photoshop. Hintergrund entfernen, retuschieren, Farben angleichen, stapelweise exportieren — aus dem Chat, in einem einzigen Rückgängig-Schritt.",
+    "trust": "Kostenlos und quelloffen (MIT). Läuft unter macOS und Windows mit Photoshop 2012 bis 2025.",
+    "installIn": "Installieren in",
+    "setupGuide": "Vollständige Anleitung",
+    "demo": {
+      "you": "Du",
+      "prompt": "Entferne den Hintergrund dieses Porträts und exportiere eine Instagram-Version in 1080×1350.",
+      "assistant": "Claude",
+      "steps": [
+        "get_state",
+        "recipe_remove_background · 2 px weiche Kante",
+        "recipe_export_social_variants · instagram_post"
+      ],
+      "done": "Fertig",
+      "result": "1080×1350 nach ~/.photoshop-mcp/exports exportiert. Ein Rückgängig-Schritt.",
+      "before": "Vorher",
+      "after": "Nachher"
+    }
+  },
+  "install": {
+    "installIn": "In {name} installieren",
+    "downloadFor": "Für {name} herunterladen",
+    "open": "In {name} öffnen",
+    "copy": "Kopieren",
+    "copied": "Kopiert",
+    "command": "Im Terminal ausführen",
+    "configFile": "Konfigurationsdatei",
+    "configWhere": "Wo es hingehört",
+    "fallback": "Falls die Schaltfläche nichts bewirkt, füge dies stattdessen in deine Konfiguration ein",
+    "verify": "Prüfen, ob es funktioniert",
+    "verifyPrompt": "Pinge Photoshop an und liste die geöffneten Dokumente auf.",
+    "verifyExpect": "Du solltest die Photoshop-Version und die Namen geöffneter Dokumente sehen.",
+    "docs": "{name} MCP-Dokumentation",
+    "tier1": "Beliebt",
+    "tier2": "Weitere Clients",
+    "other": "Andere",
+    "notAvailable": "Unter {os} nicht verfügbar",
+    "os": {
+      "mac": "macOS",
+      "windows": "Windows",
+      "linux": "Linux"
+    },
+    "mcpbNote": "Das .mcpb-Paket hängt an jedem GitHub-Release."
+  },
+  "works": {
+    "title": "Funktioniert mit den Werkzeugen, die du schon nutzt",
+    "more": "und jedem Client, der lokale MCP-Server startet"
+  },
+  "how": {
+    "title": "Drei Schritte, kein Code",
+    "steps": [
+      {
+        "title": "Installieren",
+        "text": "Ein Klick im Client oder ein Befehl. Der Server läuft auf deinem eigenen Rechner."
+      },
+      {
+        "title": "Photoshop öffnen",
+        "text": "Jede Version ab 2012. In Photoshop selbst ist nichts zu laden — der Server spricht direkt mit ihm."
+      },
+      {
+        "title": "Prompt schreiben",
+        "text": "Frag in normaler Sprache. Der Assistent liest das Dokument, führt die Schritte aus und zeigt eine Vorschau."
+      }
+    ]
+  },
+  "recipes": {
+    "title": "Was du verlangen kannst",
+    "lead": "Sechzehn fertige Arbeitsabläufe. Jeder läuft als ein einziger Rückgängig-Schritt, damit nichts halbfertig zurückbleibt.",
+    "all": "Alle",
+    "copyPrompt": "Prompt kopieren",
+    "promptCopied": "Prompt kopiert",
+    "seeAll": "Alle Rezepte ansehen",
+    "badge": "Ein Rückgängig-Schritt",
+    "tool": "Werkzeug",
+    "template": "Prompt-Vorlage",
+    "params": "Beispielparameter"
+  },
+  "run": {
+    "title": "Zwei Wege, es zu nutzen",
+    "ide": {
+      "title": "In deinem Editor oder Assistenten",
+      "text": "Füge den MCP-Server zu Cursor, Claude Desktop, VS Code oder einem anderen Client hinzu. Dein Assistent bekommt {n} Photoshop-Werkzeuge und wählt für jede Anfrage die passenden.",
+      "link": "Einrichten"
+    },
+    "ui": {
+      "title": "In der eigenständigen Web-Oberfläche",
+      "text": "Kein Editor nötig. Ein Befehl startet einen lokalen Chat, der Photoshop steuert. Bring einen API-Schlüssel für Claude, GPT, Gemini oder OpenRouter mit — oder nutze dein Claude-Code-Konto.",
+      "link": "Mehr zur Web-Oberfläche",
+      "caption": "Aktionsplan-Modus: ein Planungsaufruf, danach laufen alle Schritte nacheinander."
+    }
+  },
+  "agents": {
+    "title": "Für Agenten gebaut, nicht für Einmal-Skripte",
+    "lead": "Rohes Skripting aus einem Sprachmodell ist brüchig: Es rät Ebenentypen, verbrennt Token bei Wiederholungen, und ein fehlgeschlagener Schritt hinterlässt das Dokument in unklarem Zustand. Der Server löst das auf Protokollebene.",
+    "items": [
+      {
+        "title": "Erst Zustand, dann Aktion",
+        "text": "get_state, get_preview und get_capabilities sagen dem Assistenten, was geöffnet ist, welche Ebene aktiv ist und was diese Photoshop-Version kann."
+      },
+      {
+        "title": "Rezepte sind ein Rückgängig-Schritt",
+        "text": "Mehrstufige Ergebnisse stecken in einem einzigen Protokollzustand. Einmal rückgängig, und das ganze Rezept ist weg."
+      },
+      {
+        "title": "Fehler, die den nächsten Schritt nennen",
+        "text": "Fehlschläge kommen als strukturiertes JSON mit Code und suggested_next_tool zurück, damit der Assistent sich erholt statt zu raten."
+      },
+      {
+        "title": "Aktionsplan",
+        "text": "In der Web-Oberfläche erzeugt ein Planungsaufruf die komplette Schrittliste, die dann ohne Modellrunde dazwischen läuft."
+      },
+      {
+        "title": "Generative KI und Neural Filters",
+        "text": "Firefly für generatives Füllen, Entfernen, Erweitern und Hochskalieren; Himmelaustausch; Neural Filters über eine optionale UXP-Brücke."
+      },
+      {
+        "title": "macOS und Windows",
+        "text": "AppleScript unter macOS, COM unter Windows. Photoshop wird automatisch erkannt, auch bei mehreren installierten Versionen."
+      }
+    ],
+    "sampleTitle": "Was ein Werkzeugaufruf zurückgibt"
+  },
+  "toolsTeaser": {
+    "title": "{n} Werkzeuge, alle durchsuchbar",
+    "lead": "{atomic} atomare Werkzeuge für präzise Eingriffe plus {recipes} Rezepte für ganze Ergebnisse — Dokumente, Ebenen, Masken, Filter, Farbe, Text, Export, generative KI.",
+    "placeholder": "Werkzeuge durchsuchen — Weichzeichnen, Maske, Export…",
+    "browse": "Katalog öffnen",
+    "noResults": "Keine Werkzeuge passen zu „{q}“.",
+    "results": "{n} Werkzeuge",
+    "params": "Parameter",
+    "kinds": {
+      "atomic": "Atomar",
+      "recipe": "Rezept"
+    },
+    "allCategories": "Alle Kategorien",
+    "paramsOne": "Parameter"
+  },
+  "faq": {
+    "title": "Häufige Fragen",
+    "items": [
+      {
+        "q": "Ist das ein offizielles Adobe-Produkt?",
+        "a": "Nein. Photoshop MCP ist ein unabhängiges, von der Community gepflegtes Open-Source-Projekt. Es steht in keiner Verbindung zu Adobe und wird von Adobe nicht unterstützt. Photoshop ist eine Marke von Adobe Inc."
+      },
+      {
+        "q": "Brauche ich einen API-Schlüssel?",
+        "a": "Für den MCP-Server nicht — er läuft lokal. Dein Client (Cursor, Claude Desktop, VS Code…) spricht ohnehin mit einem Modell. Die eigenständige Web-Oberfläche braucht entweder einen Anbieter-API-Schlüssel oder ein Claude-Code-Konto."
+      },
+      {
+        "q": "Welche Photoshop-Versionen funktionieren?",
+        "a": "Photoshop 2012 bis 2025 unter macOS und Windows. Einige Werkzeuge brauchen neuere Versionen: Motiv auswählen ab 23, WebP/AVIF-Export ab 23.2, generative Werkzeuge ein Firefly-fähiges Photoshop und ein Adobe-Konto mit Guthaben."
+      },
+      {
+        "q": "Verbraucht es Firefly-Credits?",
+        "a": "Nur die generativen Werkzeuge (Füllen, Entfernen, Erweitern, Hochskalieren, Himmelaustausch, Bilderzeugung) und nur, wenn du sie anforderst. Alles andere ist normale Photoshop-Automatisierung."
+      },
+      {
+        "q": "Wohin gehen meine Daten?",
+        "a": "Photoshop-Befehle laufen auf deinem Rechner. Deine Bilder verlassen ihn nicht, außer dein eigener Modellanbieter erhält eine Vorschau, die du angefordert hast. Der Server sendet standardmäßig anonyme Nutzungsereignisse; mit ANALYTICS_DISABLED=1 schaltest du sie ab."
+      },
+      {
+        "q": "Warum geht es nicht mit ChatGPT oder claude.ai im Browser?",
+        "a": "Browser-Assistenten akzeptieren nur entfernte Connectors, und Photoshop liegt auf deinem Computer. Nutze einen Desktop-Client oder die Web-Oberfläche, die lokal läuft."
+      }
+    ]
+  },
+  "cta": {
+    "title": "Photoshop öffnen. Losschreiben.",
+    "lead": "Die Installation dauert eine Minute. Der erste Prompt zehn Sekunden.",
+    "button": "Loslegen"
+  },
+  "footer": {
+    "product": "Produkt",
+    "docs": "Dokumentation",
+    "community": "Community",
+    "gettingStarted": "Erste Schritte",
+    "recipes": "Rezepte",
+    "tools": "Werkzeuge",
+    "webUi": "Web-Oberfläche",
+    "changelog": "Änderungen",
+    "troubleshooting": "Fehlerbehebung",
+    "architecture": "Architektur",
+    "privacy": "Datenschutz & Analyse",
+    "issues": "Problem melden",
+    "disclaimer": "Inoffizielles Community-Projekt, weder mit Adobe Inc. verbunden noch von Adobe unterstützt. Adobe und Photoshop sind Marken von Adobe Inc.",
+    "builtBy": "Gebaut von",
+    "license": "MIT-Lizenz"
+  },
+  "gs": {
+    "prereqTitle": "Bevor du anfängst",
+    "prereqs": [
+      "Adobe Photoshop installiert und geöffnet (macOS oder Windows).",
+      "Node.js 18 oder neuer — entfällt, wenn du das Claude-Desktop-Paket nutzt."
+    ],
+    "pickClient": "Wähle deinen Client",
+    "firstPrompts": "Deine ersten Prompts",
+    "next": "Nächste Schritte"
+  }
+}

@@ -4,27 +4,35 @@
   "name": "photoshop-mcp",
   "display_name": "Photoshop MCP",
   "version": "0.0.0",
-  "description": "MCP server for Adobe Photoshop — tools, recipes, generative AI, and standalone UI.",
-  "long_description": "Control Adobe Photoshop from AI assistants (Cursor, Claude Desktop, etc.). Requires Photoshop running on macOS or Windows and Node.js 18+.",
+  "description": "Control Adobe Photoshop from chat — atomic tools plus one-step recipes.",
+  "long_description": "Connect Claude Desktop to Adobe Photoshop. Remove backgrounds, retouch portraits, color grade, and batch export by asking in plain language. Requires Photoshop running on macOS or Windows. Unofficial community project, not affiliated with Adobe Inc.",
   "author": {
     "name": "Ali Sait Teke",
     "url": "https://alisait.com"
   },
-  "homepage": "https://github.com/alisaitteke/photoshop-mcp",
+  "homepage": "https://photoshop-mcp.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/alisaitteke/photoshop-mcp"
   },
-  "documentation": "https://github.com/alisaitteke/photoshop-mcp#readme",
+  "documentation": "https://photoshop-mcp.com/docs/getting-started",
   "support": "https://github.com/alisaitteke/photoshop-mcp/issues",
   "license": "MIT",
-  "keywords": ["mcp", "photoshop", "adobe", "image-editing", "automation"],
+  "keywords": [
+    "mcp",
+    "photoshop",
+    "adobe",
+    "image-editing",
+    "automation"
+  ],
   "server": {
     "type": "node",
     "entry_point": "server/dist/index.js",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/server/dist/index.js"],
+      "args": [
+        "${__dirname}/server/dist/index.js"
+      ],
       "env": {
         "LOG_LEVEL": "${user_config.logLevel}",
         "PHOTOSHOP_PATH": "${user_config.photoshopPath}"
@@ -37,7 +45,12 @@
       "title": "Log level",
       "description": "0=DEBUG, 1=INFO, 2=WARN, 3=ERROR",
       "default": "1",
-      "enum": ["0", "1", "2", "3"]
+      "enum": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ]
     },
     "photoshopPath": {
       "type": "string",
@@ -48,7 +61,10 @@
   },
   "compatibility": {
     "claude_desktop": ">=1.0.0",
-    "platforms": ["darwin", "win32"],
+    "platforms": [
+      "darwin",
+      "win32"
+    ],
     "runtimes": {
       "node": ">=18.0.0"
     }

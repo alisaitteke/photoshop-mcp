@@ -1,0 +1,205 @@
+{
+  "nav": {
+    "getStarted": "Get started"
+  },
+  "hero": {
+    "title": "Tell Photoshop what you want.",
+    "lead": "Photoshop MCP connects Claude, Cursor and any MCP client to Adobe Photoshop. Remove backgrounds, retouch, color grade, batch export — from a chat, in one undo step.",
+    "trust": "Free and open source (MIT). Runs on macOS and Windows with Photoshop 2012 through 2025.",
+    "installIn": "Install in",
+    "setupGuide": "Full setup guide",
+    "demo": {
+      "you": "You",
+      "prompt": "Remove the background from this portrait and export a 1080×1350 Instagram version.",
+      "assistant": "Claude",
+      "steps": [
+        "get_state",
+        "recipe_remove_background · feather 2px",
+        "recipe_export_social_variants · instagram_post"
+      ],
+      "done": "Done",
+      "result": "Exported 1080×1350 to ~/.photoshop-mcp/exports. One undo step.",
+      "before": "Before",
+      "after": "After"
+    }
+  },
+  "install": {
+    "installIn": "Install in {name}",
+    "downloadFor": "Download for {name}",
+    "open": "Open in {name}",
+    "copy": "Copy",
+    "copied": "Copied",
+    "command": "Run in a terminal",
+    "configFile": "Config file",
+    "configWhere": "Where to paste it",
+    "fallback": "If the button does nothing, paste this into your config instead",
+    "verify": "Check that it works",
+    "verifyPrompt": "Ping Photoshop and list open documents.",
+    "verifyExpect": "You should see the Photoshop version and the names of any open documents.",
+    "docs": "{name} MCP documentation",
+    "tier1": "Popular",
+    "tier2": "More clients",
+    "other": "Other",
+    "notAvailable": "Not available on {os}",
+    "os": {
+      "mac": "macOS",
+      "windows": "Windows",
+      "linux": "Linux"
+    },
+    "mcpbNote": "The .mcpb bundle is attached to every GitHub release."
+  },
+  "works": {
+    "title": "Works with the tools you already use",
+    "more": "and any client that runs local MCP servers"
+  },
+  "how": {
+    "title": "Three steps, no code",
+    "steps": [
+      {
+        "title": "Install",
+        "text": "One click in your client, or one command. The server runs on your own machine."
+      },
+      {
+        "title": "Open Photoshop",
+        "text": "Any version from 2012 on. Nothing to load inside Photoshop — the server talks to it directly."
+      },
+      {
+        "title": "Type a prompt",
+        "text": "Ask in plain language. The assistant reads the document, does the steps, and shows you a preview."
+      }
+    ]
+  },
+  "recipes": {
+    "title": "What you can ask for",
+    "lead": "Sixteen ready-made workflows. Each one runs as a single undo step, so nothing is ever left half-done.",
+    "all": "All",
+    "copyPrompt": "Copy prompt",
+    "promptCopied": "Prompt copied",
+    "seeAll": "Browse all recipes",
+    "badge": "One undo step",
+    "tool": "Tool",
+    "template": "Prompt template",
+    "params": "Example parameters"
+  },
+  "run": {
+    "title": "Two ways to run it",
+    "ide": {
+      "title": "Inside your editor or assistant",
+      "text": "Add the MCP server to Cursor, Claude Desktop, VS Code or any other client. Your assistant gets {n} Photoshop tools and picks the right ones for each request.",
+      "link": "Set it up"
+    },
+    "ui": {
+      "title": "In the standalone Web UI",
+      "text": "No editor needed. One command starts a local chat that drives Photoshop. Bring an API key for Claude, GPT, Gemini or OpenRouter, or reuse your Claude Code account.",
+      "link": "Learn about the Web UI",
+      "caption": "Action Plan mode: one planning call, then every step runs in sequence."
+    }
+  },
+  "agents": {
+    "title": "Built for agents, not one-off scripts",
+    "lead": "Raw scripting from a language model is brittle: it guesses at layer types, wastes tokens on retries, and one failed step leaves the document in an unknown state. The server fixes that at the protocol level.",
+    "items": [
+      {
+        "title": "State before action",
+        "text": "get_state, get_preview and get_capabilities tell the assistant what is open, what layer is active and which features this Photoshop version supports."
+      },
+      {
+        "title": "Recipes are one undo step",
+        "text": "Multi-step outcomes are wrapped in a single history state. Undo once and the whole recipe is gone."
+      },
+      {
+        "title": "Errors that say what to try next",
+        "text": "Failures come back as structured JSON with a code and a suggested_next_tool, so the assistant can recover instead of guessing."
+      },
+      {
+        "title": "Action Plan",
+        "text": "In the Web UI, one planning call produces the full list of steps, which then run without a model round-trip in between."
+      },
+      {
+        "title": "Generative AI and Neural Filters",
+        "text": "Firefly generative fill, remove, expand and upscale; sky replacement; and Neural Filters through an optional UXP bridge."
+      },
+      {
+        "title": "macOS and Windows",
+        "text": "AppleScript on macOS, COM on Windows. Photoshop is auto-detected, including multiple installed versions."
+      }
+    ],
+    "sampleTitle": "What a tool call returns"
+  },
+  "toolsTeaser": {
+    "title": "{n} tools, all searchable",
+    "lead": "{atomic} atomic tools for precise edits plus {recipes} recipes for whole outcomes — documents, layers, masks, filters, color, text, export, generative AI.",
+    "placeholder": "Search tools — blur, mask, export…",
+    "browse": "Browse the catalog",
+    "noResults": "No tools match “{q}”.",
+    "results": "{n} tools",
+    "params": "parameters",
+    "kinds": {
+      "atomic": "Atomic",
+      "recipe": "Recipe"
+    },
+    "allCategories": "All categories",
+    "paramsOne": "parameter"
+  },
+  "faq": {
+    "title": "Questions people ask",
+    "items": [
+      {
+        "q": "Is this an official Adobe product?",
+        "a": "No. Photoshop MCP is an independent, community-maintained open-source project. It is not affiliated with or endorsed by Adobe. Photoshop is a trademark of Adobe Inc."
+      },
+      {
+        "q": "Do I need an API key?",
+        "a": "Not for the MCP server itself — it runs locally. Your client (Cursor, Claude Desktop, VS Code…) already talks to a model. The standalone Web UI needs either a provider API key or a Claude Code account."
+      },
+      {
+        "q": "Which Photoshop versions work?",
+        "a": "Photoshop 2012 through 2025 on macOS and Windows. Some tools need newer versions: Select Subject needs 23+, WebP/AVIF export needs 23.2+, generative tools need a Firefly-enabled Photoshop and an Adobe account with credits."
+      },
+      {
+        "q": "Does it use Firefly credits?",
+        "a": "Only the generative tools (fill, remove, expand, upscale, sky replacement, image generation) do, and only when you ask for them. Everything else is regular Photoshop automation."
+      },
+      {
+        "q": "Where does my data go?",
+        "a": "Photoshop commands run on your machine. Your images never leave it unless your own model provider receives a preview you asked for. The server sends anonymous usage events by default; set ANALYTICS_DISABLED=1 to turn them off."
+      },
+      {
+        "q": "Why can't I use it from ChatGPT or claude.ai in the browser?",
+        "a": "Browser assistants only accept remote connectors, and Photoshop lives on your computer. Use a desktop client, or the Web UI, which runs locally."
+      }
+    ]
+  },
+  "cta": {
+    "title": "Open Photoshop. Start typing.",
+    "lead": "Install takes a minute. The first prompt takes ten seconds.",
+    "button": "Get started"
+  },
+  "footer": {
+    "product": "Product",
+    "docs": "Docs",
+    "community": "Community",
+    "gettingStarted": "Getting started",
+    "recipes": "Recipes",
+    "tools": "Tools",
+    "webUi": "Web UI",
+    "changelog": "Changelog",
+    "troubleshooting": "Troubleshooting",
+    "architecture": "Architecture",
+    "privacy": "Privacy & analytics",
+    "issues": "Report an issue",
+    "disclaimer": "Unofficial community project, not affiliated with or endorsed by Adobe Inc. Adobe and Photoshop are trademarks of Adobe Inc.",
+    "builtBy": "Built by",
+    "license": "MIT license"
+  },
+  "gs": {
+    "prereqTitle": "Before you start",
+    "prereqs": [
+      "Adobe Photoshop installed and open (macOS or Windows).",
+      "Node.js 18 or newer — not needed if you use the Claude Desktop bundle."
+    ],
+    "pickClient": "Pick your client",
+    "firstPrompts": "Your first prompts",
+    "next": "Next steps"
+  }
+}

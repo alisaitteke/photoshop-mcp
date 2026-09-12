@@ -1,0 +1,182 @@
+{
+  "en": {
+    "landing": {
+      "title": "Photoshop MCP — Tell Photoshop what you want",
+      "description": "Connect Claude, Cursor and any MCP client to Adobe Photoshop. Remove backgrounds, retouch, color grade and batch export from a chat — in one undo step. Free and open source, macOS and Windows."
+    },
+    "recipes": {
+      "title": "Photoshop MCP recipes — 16 ready-made workflows",
+      "heading": "Recipes",
+      "lead": "Each recipe turns a whole outcome into one Photoshop history state: one undo reverts everything it did. Copy a prompt and paste it into your assistant.",
+      "description": "Sixteen one-step Photoshop workflows: background removal, portrait retouching, color grading, passport photos, social variants, batch watermarking and CSV-driven cards."
+    },
+    "tools": {
+      "title": "Photoshop MCP tool catalog",
+      "heading": "Tool catalog",
+      "lead": "Every tool the server exposes, with its parameters. Search by name, description or parameter.",
+      "description": "Searchable catalog of every Photoshop MCP tool — documents, layers, masks, filters, color, text, Smart Objects, export, generative AI and recipes."
+    },
+    "changelog": {
+      "title": "Photoshop MCP changelog",
+      "heading": "Changelog",
+      "lead": "Release notes, newest first. Versions follow semantic versioning.",
+      "description": "Release notes for Photoshop MCP — new tools, recipes, fixes and breaking changes by version."
+    },
+    "gettingStarted": {
+      "title": "Getting started with Photoshop MCP",
+      "heading": "Getting started",
+      "lead": "Pick your client, install, and send a first prompt. It takes about a minute.",
+      "description": "Install Photoshop MCP in Cursor, Claude Desktop, Claude Code, VS Code, Windsurf, Zed, Codex or Antigravity. One-click links, config snippets and file paths for macOS and Windows."
+    }
+  },
+  "tr": {
+    "landing": {
+      "title": "Photoshop MCP — Photoshop’a ne istediğinizi yazın",
+      "description": "Claude, Cursor ve diğer MCP istemcilerini Adobe Photoshop’a bağlayın. Arka plan silme, rötuş, renk düzenleme ve toplu dışa aktarma; sohbetten, tek geri alma adımıyla. Ücretsiz ve açık kaynak, macOS ve Windows."
+    },
+    "recipes": {
+      "title": "Photoshop MCP tarifleri — 16 hazır iş akışı",
+      "heading": "Tarifler",
+      "lead": "Her tarif, tüm bir sonucu tek Photoshop geçmiş durumuna dönüştürür: bir kez geri alın, yaptığı her şey geri alınır. İstemi kopyalayıp asistanınıza yapıştırın.",
+      "description": "Tek adımlık on altı Photoshop iş akışı: arka plan silme, portre rötuşu, renk düzenleme, biyometrik fotoğraf, sosyal medya varyantları, toplu filigran ve CSV’den kart üretimi."
+    },
+    "tools": {
+      "title": "Photoshop MCP araç kataloğu",
+      "heading": "Araç kataloğu",
+      "lead": "Sunucunun sunduğu tüm araçlar ve parametreleri. Ada, açıklamaya veya parametreye göre arayın.",
+      "description": "Tüm Photoshop MCP araçlarının aranabilir kataloğu — belgeler, katmanlar, maskeler, filtreler, renk, metin, Akıllı Nesneler, dışa aktarma, üretken yapay zeka ve tarifler."
+    },
+    "changelog": {
+      "title": "Photoshop MCP sürüm notları",
+      "heading": "Sürüm notları",
+      "lead": "En yeniden eskiye sürüm notları. Sürümler semantic versioning kurallarına uyar.",
+      "description": "Photoshop MCP sürüm notları — sürüme göre yeni araçlar, tarifler, düzeltmeler ve kırıcı değişiklikler."
+    },
+    "gettingStarted": {
+      "title": "Photoshop MCP’ye başlangıç",
+      "heading": "Başlangıç",
+      "lead": "İstemcinizi seçin, kurun ve ilk istemi gönderin. Yaklaşık bir dakika sürer.",
+      "description": "Photoshop MCP’yi Cursor, Claude Desktop, Claude Code, VS Code, Windsurf, Zed, Codex veya Antigravity üzerinde kurun. Tek tık bağlantılar, yapılandırma parçacıkları ve macOS ile Windows dosya yolları."
+    }
+  },
+  "zh": {
+    "landing": {
+      "title": "Photoshop MCP — 把想做的事告诉 Photoshop",
+      "description": "把 Claude、Cursor 等 MCP 客户端连接到 Adobe Photoshop。在聊天里完成抠图、修图、调色与批量导出，只占一步撤销。免费开源，支持 macOS 与 Windows。"
+    },
+    "recipes": {
+      "title": "Photoshop MCP 配方 — 16 个开箱即用流程",
+      "heading": "配方",
+      "lead": "每个配方把完整结果收进一个 Photoshop 历史状态：撤销一次，它做的一切都会还原。复制提示词，粘贴给你的助手。",
+      "description": "十六个一步到位的 Photoshop 流程：抠图、人像精修、调色、证件照、社交平台尺寸、批量水印以及按 CSV 生成卡片。"
+    },
+    "tools": {
+      "title": "Photoshop MCP 工具目录",
+      "heading": "工具目录",
+      "lead": "服务器提供的全部工具及其参数。可按名称、说明或参数搜索。",
+      "description": "可搜索的 Photoshop MCP 工具目录——文档、图层、蒙版、滤镜、颜色、文字、智能对象、导出、生成式 AI 与配方。"
+    },
+    "changelog": {
+      "title": "Photoshop MCP 更新日志",
+      "heading": "更新日志",
+      "lead": "版本说明，最新在前。版本号遵循语义化版本规范。",
+      "description": "Photoshop MCP 的版本说明——按版本列出新增工具、配方、修复与不兼容变更。"
+    },
+    "gettingStarted": {
+      "title": "Photoshop MCP 快速上手",
+      "heading": "快速上手",
+      "lead": "选择客户端、完成安装、发出第一条提示词。大约一分钟。",
+      "description": "在 Cursor、Claude Desktop、Claude Code、VS Code、Windsurf、Zed、Codex 或 Antigravity 中安装 Photoshop MCP。包含一键链接、配置片段以及 macOS 与 Windows 的文件路径。"
+    }
+  },
+  "es": {
+    "landing": {
+      "title": "Photoshop MCP — Dile a Photoshop lo que quieres",
+      "description": "Conecta Claude, Cursor y cualquier cliente MCP con Adobe Photoshop. Quita fondos, retoca, ajusta color y exporta en lote desde un chat, en un solo paso de deshacer. Gratis y de código abierto, macOS y Windows."
+    },
+    "recipes": {
+      "title": "Recetas de Photoshop MCP — 16 flujos listos para usar",
+      "heading": "Recetas",
+      "lead": "Cada receta convierte un resultado completo en un único estado del historial de Photoshop: deshaces una vez y se revierte todo. Copia un prompt y pégalo en tu asistente.",
+      "description": "Dieciséis flujos de Photoshop en un paso: quitar fondos, retoque de retrato, etalonaje de color, fotos de pasaporte, variantes para redes, marca de agua en lote y tarjetas desde CSV."
+    },
+    "tools": {
+      "title": "Catálogo de herramientas de Photoshop MCP",
+      "heading": "Catálogo de herramientas",
+      "lead": "Todas las herramientas que expone el servidor, con sus parámetros. Busca por nombre, descripción o parámetro.",
+      "description": "Catálogo buscable de todas las herramientas de Photoshop MCP: documentos, capas, máscaras, filtros, color, texto, objetos inteligentes, exportación, IA generativa y recetas."
+    },
+    "changelog": {
+      "title": "Cambios de Photoshop MCP",
+      "heading": "Cambios",
+      "lead": "Notas de versión, de la más reciente a la más antigua. Las versiones siguen versionado semántico.",
+      "description": "Notas de versión de Photoshop MCP: nuevas herramientas, recetas, correcciones y cambios incompatibles por versión."
+    },
+    "gettingStarted": {
+      "title": "Primeros pasos con Photoshop MCP",
+      "heading": "Primeros pasos",
+      "lead": "Elige tu cliente, instala y envía un primer prompt. Lleva alrededor de un minuto.",
+      "description": "Instala Photoshop MCP en Cursor, Claude Desktop, Claude Code, VS Code, Windsurf, Zed, Codex o Antigravity. Enlaces de un clic, fragmentos de configuración y rutas para macOS y Windows."
+    }
+  },
+  "de": {
+    "landing": {
+      "title": "Photoshop MCP — Sag Photoshop, was du willst",
+      "description": "Verbinde Claude, Cursor und jeden MCP-Client mit Adobe Photoshop. Hintergrund entfernen, retuschieren, Farben angleichen und stapelweise exportieren — aus dem Chat, in einem Rückgängig-Schritt. Kostenlos und quelloffen, macOS und Windows."
+    },
+    "recipes": {
+      "title": "Photoshop-MCP-Rezepte — 16 fertige Arbeitsabläufe",
+      "heading": "Rezepte",
+      "lead": "Jedes Rezept fasst ein ganzes Ergebnis in einen Protokollzustand: Einmal rückgängig, und alles ist zurückgenommen. Kopiere einen Prompt und füge ihn in deinen Assistenten ein.",
+      "description": "Sechzehn einstufige Photoshop-Abläufe: Hintergrund entfernen, Porträtretusche, Color Grading, Passfotos, Social-Varianten, Stapel-Wasserzeichen und Karten aus CSV."
+    },
+    "tools": {
+      "title": "Photoshop-MCP-Werkzeugkatalog",
+      "heading": "Werkzeugkatalog",
+      "lead": "Alle Werkzeuge des Servers samt Parametern. Suche nach Name, Beschreibung oder Parameter.",
+      "description": "Durchsuchbarer Katalog aller Photoshop-MCP-Werkzeuge — Dokumente, Ebenen, Masken, Filter, Farbe, Text, Smartobjekte, Export, generative KI und Rezepte."
+    },
+    "changelog": {
+      "title": "Photoshop-MCP-Änderungen",
+      "heading": "Änderungen",
+      "lead": "Release Notes, neueste zuerst. Versionen folgen Semantic Versioning.",
+      "description": "Release Notes für Photoshop MCP — neue Werkzeuge, Rezepte, Fehlerbehebungen und Breaking Changes nach Version."
+    },
+    "gettingStarted": {
+      "title": "Erste Schritte mit Photoshop MCP",
+      "heading": "Erste Schritte",
+      "lead": "Client wählen, installieren, ersten Prompt senden. Dauert etwa eine Minute.",
+      "description": "Photoshop MCP in Cursor, Claude Desktop, Claude Code, VS Code, Windsurf, Zed, Codex oder Antigravity installieren. Ein-Klick-Links, Konfigurationsschnipsel und Dateipfade für macOS und Windows."
+    }
+  },
+  "ja": {
+    "landing": {
+      "title": "Photoshop MCP — やりたいことを Photoshop に伝えるだけ",
+      "description": "Claude、Cursor など MCP クライアントを Adobe Photoshop につなぎます。背景の切り抜き、レタッチ、カラーグレーディング、一括書き出しをチャットから、取り消し 1 回分で。無料・オープンソース、macOS と Windows に対応。"
+    },
+    "recipes": {
+      "title": "Photoshop MCP のレシピ — すぐ使える 16 のワークフロー",
+      "heading": "レシピ",
+      "lead": "各レシピは仕上がりまでを 1 つのヒストリー状態にまとめます。1 回取り消せば、行った処理はすべて元に戻ります。プロンプトをコピーしてアシスタントに貼り付けてください。",
+      "description": "1 ステップで完結する 16 の Photoshop ワークフロー: 背景切り抜き、ポートレート修整、カラーグレーディング、証明写真、SNS 用サイズ、一括ウォーターマーク、CSV からのカード生成。"
+    },
+    "tools": {
+      "title": "Photoshop MCP ツールカタログ",
+      "heading": "ツールカタログ",
+      "lead": "サーバーが提供する全ツールとパラメータ。名前・説明・パラメータで検索できます。",
+      "description": "Photoshop MCP の全ツールを検索できるカタログ — ドキュメント、レイヤー、マスク、フィルター、カラー、テキスト、スマートオブジェクト、書き出し、生成 AI、レシピ。"
+    },
+    "changelog": {
+      "title": "Photoshop MCP の変更履歴",
+      "heading": "変更履歴",
+      "lead": "リリースノート（新しい順）。バージョンはセマンティックバージョニングに従います。",
+      "description": "Photoshop MCP のリリースノート — バージョンごとの新ツール、レシピ、修正、破壊的変更。"
+    },
+    "gettingStarted": {
+      "title": "Photoshop MCP をはじめる",
+      "heading": "はじめかた",
+      "lead": "クライアントを選び、インストールし、最初のプロンプトを送るだけ。1 分ほどで終わります。",
+      "description": "Cursor、Claude Desktop、Claude Code、VS Code、Windsurf、Zed、Codex、Antigravity への Photoshop MCP 導入手順。ワンクリックリンク、設定スニペット、macOS と Windows のファイルパス付き。"
+    }
+  }
+}

@@ -44,7 +44,9 @@
     "sync:server-version": "tsx scripts/sync-server-version.ts",
     "build:mcpb": "tsx scripts/build-mcpb.ts",
     "prepublishOnly": "npm run build && npm run sync:server-version",
-    "test:unit": "vitest run"
+    "test:unit": "vitest run",
+    "verify:tool-counts": "tsx scripts/verify-tool-counts.ts",
+    "site:data": "tsx scripts/generate-site-data.ts"
   },
   "keywords": [
     "mcp",

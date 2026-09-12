@@ -31,9 +31,13 @@ function collectHtmlFiles(dir, acc = []) {
   return acc;
 }
 
+/** /readme pages are noindex redirects kept for old inbound links. */
+const EXCLUDE = /^(?:[a-z]{2}\/)?readme(?:\/index)?\.html$/;
+
 function toUrl(htmlPath) {
   const rel = relative(DIST, htmlPath).replace(/\\/g, '/');
   if (rel === '404.html') return null;
+  if (EXCLUDE.test(rel)) return null;
   if (rel === 'index.html') return `${BASE_URL}/`;
   if (rel.endsWith('/index.html')) {
     return `${BASE_URL}/${rel.slice(0, -'/index.html'.length)}/`;

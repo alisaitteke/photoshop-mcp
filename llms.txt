@@ -1,6 +1,6 @@
 # photoshop-mcp
 
-> MCP server for Adobe Photoshop — 1.7.6 — 118 tools (generative AI + recipes), standalone web UI, and state-aware agent workflows. Unofficial; not affiliated with Adobe.
+> MCP server for Adobe Photoshop — 1.7.6 — 116 tools (generative AI + 16 recipes), standalone web UI, and state-aware agent workflows. Unofficial; not affiliated with Adobe.
 
 **Website:** https://photoshop-mcp.com/
 **llms.txt (site):** https://photoshop-mcp.com/llms.txt
@@ -48,7 +48,7 @@ claude mcp add photoshop -- npx -y @alisaitteke/photoshop-mcp
 
 ## Tool surface
 
-- **118 tools** — 102 atomic + 16 recipe (`photoshop_recipe_*`)
+- **116 tools** — 100 atomic + 16 recipe (`photoshop_recipe_*`)
 - **23 MCP prompts** — `ps.remove_background`, `ps.enhance_portrait`, `ps.generative_fill`, …
 - **Generative AI** — fill, remove, expand, upscale, sky replacement, generate image (Adobe account)
 - **State** — `photoshop_get_state`, `photoshop_get_preview`, `photoshop_get_capabilities`
@@ -63,10 +63,12 @@ claude mcp add photoshop -- npx -y @alisaitteke/photoshop-mcp
 ## Documentation (web)
 
 - [Home](https://photoshop-mcp.com/)
-- [Full README](https://photoshop-mcp.com/readme/)
+- [Getting started](https://photoshop-mcp.com/docs/getting-started/)
 - [Architecture](https://photoshop-mcp.com/docs/architecture/)
 - [Available tools](https://photoshop-mcp.com/docs/available-tools/)
 - [Prompt layer](https://photoshop-mcp.com/docs/prompt-layer/)
+- [Web UI](https://photoshop-mcp.com/docs/web-ui/)
+- [Generative AI](https://photoshop-mcp.com/docs/generative-ai/)
 - [Development](https://photoshop-mcp.com/docs/development/)
 - [Troubleshooting](https://photoshop-mcp.com/docs/troubleshooting/)
-- [AGENTS.md](https://github.com/alisaitteke/photoshop-mcp/blob/main/AGENTS.md)
+- [AGENTS.md](https://github.com/alisaitteke/photoshop-mcp/blob/master/AGENTS.md)

@@ -1,0 +1,126 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Photoshop MCP — design tokens
+   Palette: deep navy canvas, cyan accent. Two Photoshop motifs only:
+   the transparency checkerboard and the marching-ants selection outline.
+   ───────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --vp-font-family-base:
+    'IBM Plex Sans Variable', 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', Roboto, sans-serif;
+  --vp-font-family-mono:
+    'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --vp-nav-height: 64px;
+  --vp-layout-max-width: 1320px;
+
+  /* light */
+  --vp-c-bg: #f6f8fb;
+  --vp-c-bg-alt: #edf1f6;
+  --vp-c-bg-elv: #ffffff;
+  --vp-c-bg-soft: #edf1f6;
+
+  --vp-c-text-1: #0f1a2e;
+  --vp-c-text-2: #4b5a72;
+  --vp-c-text-3: #5f6d85;
+
+  --vp-c-divider: #dde4ee;
+  --vp-c-border: #c9d3e1;
+  --vp-c-gutter: #dde4ee;
+
+  --vp-c-brand-1: #0891b2;
+  --vp-c-brand-2: #0e7490;
+  --vp-c-brand-3: #06b6d4;
+  --vp-c-brand-soft: rgba(6, 182, 212, 0.14);
+
+  --vp-c-tip-1: var(--vp-c-brand-1);
+  --vp-c-tip-2: var(--vp-c-brand-2);
+  --vp-c-tip-3: var(--vp-c-brand-3);
+  --vp-c-tip-soft: var(--vp-c-brand-soft);
+
+  --vp-button-brand-bg: #0891b2;
+  --vp-button-brand-hover-bg: #0e7490;
+  --vp-button-brand-active-bg: #155e75;
+  --vp-button-brand-text: #ffffff;
+  --vp-button-brand-hover-text: #ffffff;
+  --vp-button-brand-active-text: #ffffff;
+  --vp-button-brand-border: transparent;
+  --vp-button-brand-hover-border: transparent;
+  --vp-button-brand-active-border: transparent;
+
+  --vp-code-bg: #eef2f7;
+  --vp-code-block-bg: #0f172a;
+  --vp-code-color: #0e7490;
+
+  --vp-nav-bg-color: rgba(246, 248, 251, 0.82);
+  --vp-sidebar-bg-color: var(--vp-c-bg);
+
+  /* site tokens */
+  --ps-checker: rgba(15, 26, 46, 0.055);
+  --ps-panel: #ffffff;
+  --ps-panel-2: #f1f4f9;
+  --ps-ink: #0b1220;
+  --ps-accent: #0891b2;
+  --ps-accent-bright: #06b6d4;
+  --ps-accent-ink: #062a36;
+  --ps-ok: #16a34a;
+  --ps-radius: 12px;
+  --ps-radius-sm: 8px;
+  --ps-shadow: 0 1px 2px rgba(15, 26, 46, 0.06), 0 12px 32px -16px rgba(15, 26, 46, 0.25);
+  --ps-mono-size: 0.875rem;
+}
+
+.dark {
+  --vp-c-bg: #0a1020;
+  --vp-c-bg-alt: #0d1527;
+  --vp-c-bg-elv: #111a2e;
+  --vp-c-bg-soft: #111a2e;
+
+  --vp-c-text-1: #e6ebf4;
+  --vp-c-text-2: #a4afc3;
+  --vp-c-text-3: #7d8ba4;
+
+  --vp-c-divider: #1c2740;
+  --vp-c-border: #263352;
+  --vp-c-gutter: #1c2740;
+
+  --vp-c-brand-1: #22d3ee;
+  --vp-c-brand-2: #06b6d4;
+  --vp-c-brand-3: #67e8f9;
+  --vp-c-brand-soft: rgba(34, 211, 238, 0.16);
+
+  --vp-button-brand-bg: #22d3ee;
+  --vp-button-brand-hover-bg: #67e8f9;
+  --vp-button-brand-active-bg: #06b6d4;
+  --vp-button-brand-text: #04131c;
+  --vp-button-brand-hover-text: #04131c;
+  --vp-button-brand-active-text: #04131c;
+
+  --vp-code-bg: #141d33;
+  --vp-code-block-bg: #0b1220;
+  --vp-code-color: #67e8f9;
+
+  --vp-nav-bg-color: rgba(10, 16, 32, 0.78);
+  --vp-sidebar-bg-color: var(--vp-c-bg);
+
+  --ps-checker: rgba(148, 163, 184, 0.075);
+  --ps-panel: #101a2f;
+  --ps-panel-2: #16213a;
+  --ps-ink: #0b1220;
+  --ps-accent: #22d3ee;
+  --ps-accent-bright: #67e8f9;
+  --ps-accent-ink: #04131c;
+  --ps-ok: #34d399;
+  --ps-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 24px 48px -24px rgba(0, 0, 0, 0.6);
+}
+
+/* Type scale — Elements of Typographic Style: modest ratio, tight display */
+:root {
+  --ps-text-xs: 0.8125rem;
+  --ps-text-sm: 0.9375rem;
+  --ps-text-md: 1.0625rem;
+  --ps-text-lg: 1.25rem;
+  --ps-text-xl: 1.625rem;
+  --ps-text-2xl: clamp(2rem, 1.4rem + 2.2vw, 2.75rem);
+  --ps-text-display: clamp(2.6rem, 1.6rem + 4.2vw, 4.75rem);
+}

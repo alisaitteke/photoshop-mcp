@@ -1,0 +1,205 @@
+{
+  "nav": {
+    "getStarted": "开始使用"
+  },
+  "hero": {
+    "title": "把想做的事告诉 Photoshop。",
+    "lead": "Photoshop MCP 把 Claude、Cursor 以及任何 MCP 客户端连接到 Adobe Photoshop。抠图、修图、调色、批量导出——在聊天里完成，只占一步撤销。",
+    "trust": "免费开源（MIT）。支持 macOS 与 Windows，兼容 Photoshop 2012 至 2025。",
+    "installIn": "安装到",
+    "setupGuide": "完整安装指南",
+    "demo": {
+      "you": "你",
+      "prompt": "把这张人像的背景去掉，再导出一张 1080×1350 的 Instagram 版本。",
+      "assistant": "Claude",
+      "steps": [
+        "get_state",
+        "recipe_remove_background · 羽化 2px",
+        "recipe_export_social_variants · instagram_post"
+      ],
+      "done": "完成",
+      "result": "已导出 1080×1350 到 ~/.photoshop-mcp/exports，只占一步撤销。",
+      "before": "处理前",
+      "after": "处理后"
+    }
+  },
+  "install": {
+    "installIn": "安装到 {name}",
+    "downloadFor": "下载 {name} 版本",
+    "open": "在 {name} 中打开",
+    "copy": "复制",
+    "copied": "已复制",
+    "command": "在终端运行",
+    "configFile": "配置文件",
+    "configWhere": "粘贴位置",
+    "fallback": "如果按钮没有反应，请改为把下面内容粘贴到配置中",
+    "verify": "确认是否可用",
+    "verifyPrompt": "ping 一下 Photoshop，并列出已打开的文档。",
+    "verifyExpect": "你应当看到 Photoshop 版本号以及已打开文档的名称。",
+    "docs": "{name} 的 MCP 文档",
+    "tier1": "常用",
+    "tier2": "更多客户端",
+    "other": "其他",
+    "notAvailable": "在 {os} 上不可用",
+    "os": {
+      "mac": "macOS",
+      "windows": "Windows",
+      "linux": "Linux"
+    },
+    "mcpbNote": "每个 GitHub 发布版都附带 .mcpb 安装包。"
+  },
+  "works": {
+    "title": "与你正在用的工具配合",
+    "more": "以及任何能运行本地 MCP 服务器的客户端"
+  },
+  "how": {
+    "title": "三步搞定，无需写代码",
+    "steps": [
+      {
+        "title": "安装",
+        "text": "在客户端里点一下，或执行一条命令。服务器运行在你自己的电脑上。"
+      },
+      {
+        "title": "打开 Photoshop",
+        "text": "2012 及以后的任意版本。无需在 Photoshop 里加载插件，服务器直接与它通信。"
+      },
+      {
+        "title": "写下需求",
+        "text": "用日常语言提出要求。助手会读取文档、执行步骤，并给你看预览。"
+      }
+    ]
+  },
+  "recipes": {
+    "title": "你可以这样提要求",
+    "lead": "十六个开箱即用的流程。每个都作为一步撤销执行，不会留下做了一半的结果。",
+    "all": "全部",
+    "copyPrompt": "复制提示词",
+    "promptCopied": "已复制提示词",
+    "seeAll": "查看全部配方",
+    "badge": "一步撤销",
+    "tool": "工具",
+    "template": "提示词模板",
+    "params": "参数示例"
+  },
+  "run": {
+    "title": "两种使用方式",
+    "ide": {
+      "title": "在编辑器或助手里",
+      "text": "把 MCP 服务器添加到 Cursor、Claude Desktop、VS Code 或其他客户端。助手会获得 {n} 个 Photoshop 工具，并为每个请求挑选合适的那些。",
+      "link": "去配置"
+    },
+    "ui": {
+      "title": "在独立的 Web 界面里",
+      "text": "无需编辑器。一条命令启动本地聊天界面来驱动 Photoshop。可使用 Claude、GPT、Gemini 或 OpenRouter 的 API Key，也可复用 Claude Code 账号。",
+      "link": "了解 Web 界面",
+      "caption": "行动计划模式：先做一次规划调用，随后各步骤依次执行。"
+    }
+  },
+  "agents": {
+    "title": "为智能体设计，而非一次性脚本",
+    "lead": "让语言模型直接写脚本很脆弱：它会猜测图层类型、在重试中浪费 token，而中途失败会让文档处于未知状态。本服务器在协议层解决了这些问题。",
+    "items": [
+      {
+        "title": "先看状态，再动手",
+        "text": "get_state、get_preview 和 get_capabilities 会告诉助手：打开了什么、当前图层是哪个、这个 Photoshop 版本支持什么。"
+      },
+      {
+        "title": "配方只占一步撤销",
+        "text": "多步骤的结果被包进单个历史状态。撤销一次，整个配方即被还原。"
+      },
+      {
+        "title": "会给出下一步的错误信息",
+        "text": "失败会返回带有错误码和 suggested_next_tool 的结构化 JSON，助手可以据此恢复，而不是靠猜。"
+      },
+      {
+        "title": "行动计划",
+        "text": "在 Web 界面中，一次规划调用生成完整步骤列表，之后各步骤无需再往返模型。"
+      },
+      {
+        "title": "生成式 AI 与 Neural Filters",
+        "text": "Firefly 生成填充、移除、扩展与放大；天空替换；以及通过可选 UXP 桥接使用 Neural Filters。"
+      },
+      {
+        "title": "macOS 与 Windows",
+        "text": "macOS 使用 AppleScript，Windows 使用 COM。自动检测 Photoshop，包括同时安装多个版本的情况。"
+      }
+    ],
+    "sampleTitle": "一次工具调用的返回"
+  },
+  "toolsTeaser": {
+    "title": "{n} 个工具，全部可搜索",
+    "lead": "{atomic} 个原子工具用于精确编辑，另有 {recipes} 个配方直接产出完整结果——文档、图层、蒙版、滤镜、颜色、文字、导出、生成式 AI。",
+    "placeholder": "搜索工具——模糊、蒙版、导出…",
+    "browse": "浏览目录",
+    "noResults": "没有与“{q}”匹配的工具。",
+    "results": "{n} 个工具",
+    "params": "个参数",
+    "kinds": {
+      "atomic": "原子",
+      "recipe": "配方"
+    },
+    "allCategories": "全部分类",
+    "paramsOne": "个参数"
+  },
+  "faq": {
+    "title": "常见问题",
+    "items": [
+      {
+        "q": "这是 Adobe 官方产品吗？",
+        "a": "不是。Photoshop MCP 是由社区维护的独立开源项目，与 Adobe 无关，也未获得 Adobe 认可。Photoshop 是 Adobe Inc. 的商标。"
+      },
+      {
+        "q": "需要 API Key 吗？",
+        "a": "MCP 服务器本身不需要，它在本地运行；你的客户端（Cursor、Claude Desktop、VS Code 等）本来就在与模型通信。独立的 Web 界面则需要一个服务商的 API Key，或一个 Claude Code 账号。"
+      },
+      {
+        "q": "支持哪些 Photoshop 版本？",
+        "a": "macOS 与 Windows 上的 Photoshop 2012 至 2025。部分工具需要更新的版本：主体选择需 23 及以上，WebP/AVIF 导出需 23.2 及以上，生成类工具需要支持 Firefly 的 Photoshop 以及有额度的 Adobe 账号。"
+      },
+      {
+        "q": "会消耗 Firefly 额度吗？",
+        "a": "只有生成类工具（填充、移除、扩展、放大、替换天空、生成图像）会消耗，并且只在你主动要求时。其余都是普通的 Photoshop 自动化。"
+      },
+      {
+        "q": "我的数据会去哪里？",
+        "a": "Photoshop 命令在你的电脑上执行。除非你要求的预览被自己的模型服务商接收，否则图像不会离开本机。服务器默认发送匿名使用事件，可用 ANALYTICS_DISABLED=1 关闭。"
+      },
+      {
+        "q": "为什么不能在浏览器版 ChatGPT 或 claude.ai 里使用？",
+        "a": "浏览器里的助手只接受远程连接器，而 Photoshop 在你的电脑上。请使用桌面客户端，或使用本地运行的 Web 界面。"
+      }
+    ]
+  },
+  "cta": {
+    "title": "打开 Photoshop，开始输入。",
+    "lead": "安装只要一分钟，第一条提示词只要十秒。",
+    "button": "开始使用"
+  },
+  "footer": {
+    "product": "产品",
+    "docs": "文档",
+    "community": "社区",
+    "gettingStarted": "快速上手",
+    "recipes": "配方",
+    "tools": "工具",
+    "webUi": "Web 界面",
+    "changelog": "更新日志",
+    "troubleshooting": "疑难解答",
+    "architecture": "架构",
+    "privacy": "隐私与分析",
+    "issues": "反馈问题",
+    "disclaimer": "非官方社区项目，与 Adobe Inc. 无关，也未获其认可。Adobe 和 Photoshop 是 Adobe Inc. 的商标。",
+    "builtBy": "作者",
+    "license": "MIT 许可证"
+  },
+  "gs": {
+    "prereqTitle": "开始之前",
+    "prereqs": [
+      "已安装并打开 Adobe Photoshop（macOS 或 Windows）。",
+      "Node.js 18 或更高版本——使用 Claude Desktop 安装包时不需要。"
+    ],
+    "pickClient": "选择你的客户端",
+    "firstPrompts": "你的第一批提示词",
+    "next": "接下来"
+  }
+}

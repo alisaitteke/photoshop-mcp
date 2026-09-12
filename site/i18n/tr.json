@@ -1,0 +1,205 @@
+{
+  "nav": {
+    "getStarted": "Başla"
+  },
+  "hero": {
+    "title": "Photoshop’a ne istediğinizi yazın.",
+    "lead": "Photoshop MCP; Claude, Cursor ve diğer MCP istemcilerini Adobe Photoshop’a bağlar. Arka plan silme, rötuş, renk düzenleme, toplu dışa aktarma — sohbetten, tek geri alma adımıyla.",
+    "trust": "Ücretsiz ve açık kaynak (MIT). macOS ve Windows’ta, Photoshop 2012–2025 ile çalışır.",
+    "installIn": "Şuraya kur",
+    "setupGuide": "Ayrıntılı kurulum",
+    "demo": {
+      "you": "Siz",
+      "prompt": "Bu portrenin arka planını sil ve 1080×1350 Instagram versiyonunu dışa aktar.",
+      "assistant": "Claude",
+      "steps": [
+        "get_state",
+        "recipe_remove_background · 2px yumuşatma",
+        "recipe_export_social_variants · instagram_post"
+      ],
+      "done": "Tamam",
+      "result": "1080×1350 dosya ~/.photoshop-mcp/exports klasörüne aktarıldı. Tek geri alma adımı.",
+      "before": "Önce",
+      "after": "Sonra"
+    }
+  },
+  "install": {
+    "installIn": "{name} içine kur",
+    "downloadFor": "{name} için indir",
+    "open": "{name} ile aç",
+    "copy": "Kopyala",
+    "copied": "Kopyalandı",
+    "command": "Terminalde çalıştırın",
+    "configFile": "Yapılandırma dosyası",
+    "configWhere": "Nereye yapıştırılır",
+    "fallback": "Buton işe yaramazsa bunu yapılandırmanıza yapıştırın",
+    "verify": "Çalıştığını doğrulayın",
+    "verifyPrompt": "Photoshop’a ping at ve açık belgeleri listele.",
+    "verifyExpect": "Photoshop sürümünü ve açık belgelerin adlarını görmelisiniz.",
+    "docs": "{name} MCP dokümantasyonu",
+    "tier1": "Popüler",
+    "tier2": "Diğer istemciler",
+    "other": "Diğer",
+    "notAvailable": "{os} üzerinde kullanılamıyor",
+    "os": {
+      "mac": "macOS",
+      "windows": "Windows",
+      "linux": "Linux"
+    },
+    "mcpbNote": ".mcpb paketi her GitHub sürümüne eklenir."
+  },
+  "works": {
+    "title": "Zaten kullandığınız araçlarla çalışır",
+    "more": "ve yerel MCP sunucusu çalıştıran her istemci"
+  },
+  "how": {
+    "title": "Üç adım, kod yok",
+    "steps": [
+      {
+        "title": "Kurun",
+        "text": "İstemcinizde tek tık ya da tek komut. Sunucu kendi bilgisayarınızda çalışır."
+      },
+      {
+        "title": "Photoshop’u açın",
+        "text": "2012 ve sonrası her sürüm. Photoshop içine bir şey yüklemeniz gerekmez; sunucu doğrudan konuşur."
+      },
+      {
+        "title": "Yazın",
+        "text": "Gündelik dille isteyin. Asistan belgeyi okur, adımları uygular ve önizleme gösterir."
+      }
+    ]
+  },
+  "recipes": {
+    "title": "Neler isteyebilirsiniz",
+    "lead": "On altı hazır iş akışı. Her biri tek geri alma adımı olarak çalışır; hiçbir iş yarım kalmaz.",
+    "all": "Tümü",
+    "copyPrompt": "İstemi kopyala",
+    "promptCopied": "İstem kopyalandı",
+    "seeAll": "Tüm tarifler",
+    "badge": "Tek geri alma",
+    "tool": "Araç",
+    "template": "İstem şablonu",
+    "params": "Örnek parametreler"
+  },
+  "run": {
+    "title": "İki kullanım yolu",
+    "ide": {
+      "title": "Editörünüzün veya asistanınızın içinde",
+      "text": "MCP sunucusunu Cursor, Claude Desktop, VS Code ya da başka bir istemciye ekleyin. Asistanınız {n} Photoshop aracına erişir ve her istek için doğru olanları seçer.",
+      "link": "Kurulumu yapın"
+    },
+    "ui": {
+      "title": "Bağımsız Web arayüzünde",
+      "text": "Editör gerekmez. Tek komut, Photoshop’u süren yerel bir sohbet başlatır. Claude, GPT, Gemini veya OpenRouter için bir API anahtarı getirin ya da Claude Code hesabınızı kullanın.",
+      "link": "Web arayüzünü inceleyin",
+      "caption": "Eylem planı modu: tek planlama çağrısı, ardından tüm adımlar sırayla çalışır."
+    }
+  },
+  "agents": {
+    "title": "Tek seferlik betikler için değil, ajanlar için",
+    "lead": "Dil modelinin ham betik yazması kırılgandır: katman türlerini tahmin eder, denemelerle token harcar ve başarısız tek adım belgeyi belirsiz bir durumda bırakır. Sunucu bunu protokol düzeyinde çözer.",
+    "items": [
+      {
+        "title": "Önce durum, sonra eylem",
+        "text": "get_state, get_preview ve get_capabilities; neyin açık olduğunu, hangi katmanın etkin olduğunu ve bu Photoshop sürümünün neleri desteklediğini söyler."
+      },
+      {
+        "title": "Tarifler tek geri alma adımıdır",
+        "text": "Çok adımlı sonuçlar tek bir geçmiş durumuna sarılır. Bir kez geri alın, tarifin tamamı geri alınır."
+      },
+      {
+        "title": "Ne yapılacağını söyleyen hatalar",
+        "text": "Hatalar; kod ve suggested_next_tool içeren yapılandırılmış JSON olarak döner, böylece asistan tahmin yerine toparlanır."
+      },
+      {
+        "title": "Eylem planı",
+        "text": "Web arayüzünde tek planlama çağrısı tüm adım listesini üretir; adımlar arada modele dönmeden çalışır."
+      },
+      {
+        "title": "Üretken yapay zeka ve Neural Filters",
+        "text": "Firefly ile üretken doldurma, silme, genişletme ve büyütme; gökyüzü değiştirme; isteğe bağlı UXP köprüsüyle Neural Filters."
+      },
+      {
+        "title": "macOS ve Windows",
+        "text": "macOS’ta AppleScript, Windows’ta COM. Birden fazla kurulu sürüm dahil Photoshop otomatik bulunur."
+      }
+    ],
+    "sampleTitle": "Bir araç çağrısı ne döndürür"
+  },
+  "toolsTeaser": {
+    "title": "{n} araç, tamamı aranabilir",
+    "lead": "Hassas düzenlemeler için {atomic} atomik araç ve tam sonuç üreten {recipes} tarif — belgeler, katmanlar, maskeler, filtreler, renk, metin, dışa aktarma, üretken yapay zeka.",
+    "placeholder": "Araçlarda arayın — bulanıklık, maske, dışa aktar…",
+    "browse": "Kataloğa git",
+    "noResults": "“{q}” ile eşleşen araç yok.",
+    "results": "{n} araç",
+    "params": "parametre",
+    "kinds": {
+      "atomic": "Atomik",
+      "recipe": "Tarif"
+    },
+    "allCategories": "Tüm kategoriler",
+    "paramsOne": "parametre"
+  },
+  "faq": {
+    "title": "Sık sorulanlar",
+    "items": [
+      {
+        "q": "Bu resmi bir Adobe ürünü mü?",
+        "a": "Hayır. Photoshop MCP bağımsız, topluluk tarafından geliştirilen açık kaynak bir projedir. Adobe ile bağlantılı değildir ve Adobe tarafından onaylanmamıştır. Photoshop, Adobe Inc.’in ticari markasıdır."
+      },
+      {
+        "q": "API anahtarı gerekiyor mu?",
+        "a": "MCP sunucusu için hayır — yerel çalışır. İstemciniz (Cursor, Claude Desktop, VS Code…) zaten bir modelle konuşuyor. Bağımsız Web arayüzü ise ya bir sağlayıcı API anahtarı ya da Claude Code hesabı ister."
+      },
+      {
+        "q": "Hangi Photoshop sürümleri destekleniyor?",
+        "a": "macOS ve Windows’ta Photoshop 2012–2025. Bazı araçlar daha yeni sürüm ister: Konu Seç için 23+, WebP/AVIF dışa aktarma için 23.2+, üretken araçlar için Firefly destekli Photoshop ve kredili bir Adobe hesabı."
+      },
+      {
+        "q": "Firefly kredisi harcar mı?",
+        "a": "Yalnızca üretken araçlar (doldurma, silme, genişletme, büyütme, gökyüzü değiştirme, görsel üretme) ve yalnızca siz istediğinizde. Geri kalan her şey sıradan Photoshop otomasyonudur."
+      },
+      {
+        "q": "Verilerim nereye gidiyor?",
+        "a": "Photoshop komutları kendi bilgisayarınızda çalışır. Sizin istediğiniz bir önizlemeyi kendi model sağlayıcınız almadıkça görselleriniz cihazdan çıkmaz. Sunucu varsayılan olarak anonim kullanım olayları gönderir; kapatmak için ANALYTICS_DISABLED=1 yapın."
+      },
+      {
+        "q": "Neden tarayıcıdaki ChatGPT veya claude.ai ile kullanamıyorum?",
+        "a": "Tarayıcıdaki asistanlar yalnızca uzak bağlayıcı kabul eder, Photoshop ise sizin bilgisayarınızda. Masaüstü bir istemci ya da yerel çalışan Web arayüzünü kullanın."
+      }
+    ]
+  },
+  "cta": {
+    "title": "Photoshop’u açın. Yazmaya başlayın.",
+    "lead": "Kurulum bir dakika sürer. İlk istem on saniye.",
+    "button": "Başla"
+  },
+  "footer": {
+    "product": "Ürün",
+    "docs": "Dokümantasyon",
+    "community": "Topluluk",
+    "gettingStarted": "Başlangıç",
+    "recipes": "Tarifler",
+    "tools": "Araçlar",
+    "webUi": "Web arayüzü",
+    "changelog": "Sürüm notları",
+    "troubleshooting": "Sorun giderme",
+    "architecture": "Mimari",
+    "privacy": "Gizlilik ve analitik",
+    "issues": "Sorun bildir",
+    "disclaimer": "Resmi olmayan topluluk projesi; Adobe Inc. ile bağlantılı değildir ve Adobe tarafından onaylanmamıştır. Adobe ve Photoshop, Adobe Inc.’in ticari markalarıdır.",
+    "builtBy": "Geliştiren",
+    "license": "MIT lisansı"
+  },
+  "gs": {
+    "prereqTitle": "Başlamadan önce",
+    "prereqs": [
+      "Adobe Photoshop kurulu ve açık (macOS veya Windows).",
+      "Node.js 18 veya üzeri — Claude Desktop paketini kullanıyorsanız gerekmez."
+    ],
+    "pickClient": "İstemcinizi seçin",
+    "firstPrompts": "İlk istemleriniz",
+    "next": "Sonraki adımlar"
+  }
+}

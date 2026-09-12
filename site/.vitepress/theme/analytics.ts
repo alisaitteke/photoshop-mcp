@@ -62,13 +62,15 @@ function capture(name: string, properties: Record<string, string>): void {
 }
 
 function ctaLocation(el: Element): 'hero' | 'nav' | 'footer' | 'body' {
-  if (el.closest('.VPHero, .VPHomeHero')) return 'hero';
+  if (el.closest('.hero, .VPHero, .VPHomeHero')) return 'hero';
+  if (el.closest('.ft, .cta')) return 'footer';
   if (el.closest('.VPNav, .VPNavBar, .VPNavScreen')) return 'nav';
   if (el.closest('.VPFooter')) return 'footer';
   return 'body';
 }
 
 function ctaIdFromLink(host: string, pathname: string): string | null {
+  if (/\/docs\/getting-started\/?$/.test(pathname)) return 'get_started';
   if (/\/readme\/?$/.test(pathname)) return 'quick_start';
   if (pathname.includes('/docs/')) return 'documentation';
   if (host === 'github.com' && pathname.includes('/alisaitteke/photoshop-mcp')) return 'github';
@@ -102,6 +104,26 @@ function copiedCodeText(button: Element): string {
   const wrap = button.closest('div[class*="language-"]');
   const code = wrap?.querySelector('pre code, pre')?.textContent ?? '';
   return code.replace(/^ *(\$|>) /gm, '').trim();
+}
+
+/**
+ * Install / recipe / nav controls carry data-cta="<group>:<id>" (see components).
+ * Emitted as a single event so install funnels can be split by client.
+ */
+function handleTaggedCta(target: EventTarget | null): boolean {
+  const el = target instanceof Element ? target : null;
+  const node = el?.closest('[data-cta]');
+  const value = node?.getAttribute('data-cta');
+  if (!value) return false;
+  const [group = value, id = '', variant = ''] = value.split(':');
+  capture('site_cta_clicked', {
+    cta_id: id ? `${group}_${id}` : group,
+    cta_group: group,
+    cta_target: id,
+    ...(variant ? { cta_variant: variant } : {}),
+    cta_location: ctaLocation(node),
+  });
+  return true;
 }
 
 function handleCopyClick(target: EventTarget | null): boolean {
@@ -155,6 +177,7 @@ export function bindSiteProductEvents(): void {
   document.addEventListener(
     'click',
     (event) => {
+      if (handleTaggedCta(event.target)) return;
       if (handleCopyClick(event.target)) return;
       const el = event.target instanceof Element ? event.target : null;
       const anchor = el?.closest('a');
