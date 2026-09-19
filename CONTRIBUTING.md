@@ -2,6 +2,10 @@
 
 Thank you for your interest in contributing! This is a community-maintained project and is not affiliated with or endorsed by Adobe Inc.
 
+## Code of Conduct
+
+This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold it. Report unacceptable behavior to [alisaitteke@gmail.com](mailto:alisaitteke@gmail.com).
+
 ## Language policy
 
 This project uses **English** as its canonical language for all project artifacts:
@@ -317,7 +321,7 @@ A [pull request template](.github/pull_request_template.md) is provided automati
 
 ## Reporting bugs
 
-Open a [GitHub Issue](https://github.com/alisaitteke/photoshop-mcp/issues) and include:
+Open a [GitHub Issue](https://github.com/alisaitteke/photoshop-mcp/issues/new/choose) using the **Bug report** form. It asks for:
 
 - Operating system (Windows / macOS) and version
 - Photoshop version
@@ -325,6 +329,12 @@ Open a [GitHub Issue](https://github.com/alisaitteke/photoshop-mcp/issues) and i
 - Steps to reproduce
 - Expected vs. actual behavior
 - Relevant log output (`LOG_LEVEL=0` for debug)
+
+Feature ideas and documentation problems have their own forms on the same page.
+
+## Reporting security issues
+
+Do **not** open a public issue for security vulnerabilities. Follow [SECURITY.md](SECURITY.md) and use [private vulnerability reporting](https://github.com/alisaitteke/photoshop-mcp/security/advisories/new) instead.
 
 ## License
 
