@@ -3729,7 +3729,7 @@ export const ExtendScriptSnippets = {
       return {
         ok: true,
         summary: 'Generative fill invoked via ' + result.action_id,
-        details: { action_id: result.action_id, prompt: ${escaped}, wait },
+        details: { action_id: result.action_id, prompt: ${escaped}, wait: wait },
         next_suggested_tool: 'photoshop_get_preview'
       };
     `;
@@ -3776,7 +3776,7 @@ export const ExtendScriptSnippets = {
     return {
       ok: true,
       summary: 'Generative remove invoked via ' + actionId,
-      details: { action_id: actionId, feather_px: ${featherPx}, wait },
+      details: { action_id: actionId, feather_px: ${featherPx}, wait: wait },
       next_suggested_tool: 'photoshop_get_preview'
     };
   `,
@@ -3812,7 +3812,7 @@ export const ExtendScriptSnippets = {
       return {
         ok: true,
         summary: 'Generative expand invoked via ' + result.action_id,
-        details: { action_id: result.action_id, direction: ${dir}, prompt: ${escaped}, wait },
+        details: { action_id: result.action_id, direction: ${dir}, prompt: ${escaped}, wait: wait },
         next_suggested_tool: 'photoshop_get_preview'
       };
     `;
@@ -3845,7 +3845,7 @@ export const ExtendScriptSnippets = {
     return {
       ok: true,
       summary: 'Generative upscale invoked via ' + result.action_id,
-      details: { action_id: result.action_id, target_scale: ${targetScale}, wait },
+      details: { action_id: result.action_id, target_scale: ${targetScale}, wait: wait },
       next_suggested_tool: 'photoshop_get_preview'
     };
   `,
@@ -3883,7 +3883,7 @@ export const ExtendScriptSnippets = {
       return {
         ok: true,
         summary: 'Sky replacement invoked via ' + result.action_id,
-        details: { action_id: result.action_id, sky_image_path: ${escaped}, wait },
+        details: { action_id: result.action_id, sky_image_path: ${escaped}, wait: wait },
         next_suggested_tool: 'photoshop_get_preview'
       };
     `;
@@ -3933,7 +3933,7 @@ export const ExtendScriptSnippets = {
       return {
         ok: true,
         summary: 'Generate image invoked via ' + actionId,
-        details: { action_id: actionId, prompt: ${escaped}, width: ${width}, height: ${height}, wait },
+        details: { action_id: actionId, prompt: ${escaped}, width: ${width}, height: ${height}, wait: wait },
         next_suggested_tool: 'photoshop_get_preview'
       };
     `;
