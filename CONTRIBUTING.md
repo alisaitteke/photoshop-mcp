@@ -31,9 +31,12 @@ Issues and review comments may be written in any language, but English is prefer
 ```bash
 git clone https://github.com/alisaitteke/photoshop-mcp.git
 cd photoshop-mcp
-npm install
+npm ci
 npm run build
 ```
+
+npm is the canonical package manager. `package-lock.json` (root and `web/`) is
+committed — if you change dependencies, commit the updated lockfile too.
 
 ### UI development
 
@@ -80,7 +83,13 @@ and refreshes release notes once npm is live.
    git push origin vX.Y.Z
    ```
 
-5. Wait for the [Release workflow](.github/workflows/release.yml) to finish, then
+   Only repository admins can create, move or delete `v*` tags (enforced by the
+   "Release tags (v*)" ruleset).
+
+5. The **publish** job runs in the `release` environment and waits for approval.
+   Approve it from the workflow run page (**Review deployments → Approve and deploy**).
+
+6. Wait for the [Release workflow](.github/workflows/release.yml) to finish, then
    verify the new release on the repo **Releases** page. The workflow publishes to
    npm, waits for the version to become installable (npm publish-time malware scan
    can take ~5–15 minutes), refreshes release notes with **✅ Published on npm.**,
@@ -273,9 +282,14 @@ See [`docs/architecture.md`](docs/architecture.md) for a detailed breakdown.
 
 ## Making changes
 
-1. Branch from `master`.
+1. Branch from `master` (direct pushes to `master` are blocked; every change goes through a PR).
 2. Keep diffs focused — avoid unrelated refactors in the same PR.
-3. Follow existing patterns:
+3. Use a [Conventional Commits](https://www.conventionalcommits.org/) PR title, e.g.
+   `feat(ui): add Requesty provider` or `fix(macos): …`. Allowed types: `feat`, `fix`,
+   `docs`, `refactor`, `chore`, `perf`, `test`, `ci`, `build`, `revert`. PRs are
+   squash-merged, so the PR title becomes the commit on `master` and drives the
+   release-note categories.
+4. Follow existing patterns:
    - Provider adapters in `src/ui/providers/`
    - MCP tools in `src/tools/`
    - Recipe tools in `src/tools/recipes/`
@@ -302,7 +316,8 @@ npm run verify:photoshop-prompts
 npm run verify:pack
 ```
 
-Run these before every PR.
+Run these before every PR. The [CI workflow](.github/workflows/ci.yml) runs the same
+checks (plus `npm run test:unit`) on every pull request, and they must pass before merging.
 
 ### Recommended (Photoshop must be running)
 
@@ -317,6 +332,7 @@ Integration tests communicate with a live Photoshop instance over stdio — the 
 ## Pull request checklist
 
 - [ ] PR title, description, and commit messages are in **English**
+- [ ] PR title follows Conventional Commits (`feat: …`, `fix: …`, `docs: …`)
 - [ ] Code comments and user-facing strings are in **English**
 - [ ] `npm run lint` passes
 - [ ] `npm run build:server` passes
