@@ -1,6 +1,6 @@
 import type { LanguageModel } from 'ai';
 
-export type ProviderId = 'anthropic' | 'openai' | 'openrouter' | 'google' | 'custom';
+export type ProviderId = 'anthropic' | 'openai' | 'openrouter' | 'requesty' | 'google' | 'custom';
 
 export type AuthMethod = 'api_key' | 'cli_account';
 
