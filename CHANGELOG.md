@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.21] - 2026-09-25
+
+[v1.7.20...v1.7.21](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.20...v1.7.21)
+
+### Fixed
+
+- Generative tools no longer fail to parse in ExtendScript. Object shorthand `{ wait }` in the six Firefly JSX templates is written as `wait: wait`, which Photoshop's ES3 engine accepts. Thanks **onurleventogluu-ui** for the report in [#41](https://github.com/alisaitteke/photoshop-mcp/issues/41) and the fix in [#42](https://github.com/alisaitteke/photoshop-mcp/pull/42).
+
 ## [1.7.20] - 2026-09-22
 
 [v1.7.19...v1.7.20](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.19...v1.7.20)

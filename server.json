@@ -6,13 +6,13 @@
     "url": "https://github.com/alisaitteke/photoshop-mcp",
     "source": "github"
   },
-  "version": "1.7.20",
+  "version": "1.7.21",
   "mcpName": "io.github.alisaitteke/photoshop-mcp",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@alisaitteke/photoshop-mcp",
-      "version": "1.7.20",
+      "version": "1.7.21",
       "transport": {
         "type": "stdio"
       }
