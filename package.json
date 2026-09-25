@@ -92,7 +92,7 @@
     "@hono/node-server": "^1.13.7",
     "@modelcontextprotocol/sdk": "^1.0.4",
     "@openrouter/ai-sdk-provider": "^2.9.0",
-    "ai": "^6.0.175",
+    "ai": "^7.0.106",
     "better-sqlite3": "^12.9.0",
     "get-port": "^7.1.0",
     "hono": "^4.6.14",
