@@ -1,0 +1,138 @@
+name: Bug report
+description: Something is broken in the MCP server, a tool or recipe, the standalone UI, or the UXP bridge.
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! English is preferred so maintainers and future contributors can search the issue.
+
+        **Security vulnerabilities must not be reported here** — see [SECURITY.md](https://github.com/alisaitteke/photoshop-mcp/blob/master/SECURITY.md).
+        Common setup problems are covered in [docs/troubleshooting.md](https://github.com/alisaitteke/photoshop-mcp/blob/master/docs/troubleshooting.md).
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Before you start
+      options:
+        - label: I searched [existing issues](https://github.com/alisaitteke/photoshop-mcp/issues?q=is%3Aissue) and this has not been reported yet.
+          required: true
+        - label: I can reproduce this on the latest release (`npx -y @alisaitteke/photoshop-mcp` resolves to it).
+          required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Where does the problem happen?
+      options:
+        - MCP server (Cursor, Claude, VS Code, or another MCP host)
+        - Standalone UI (photoshop-mcp-ui)
+        - UXP bridge / Neural Filters
+        - Cursor plugin
+        - Installation / npm package
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: mcp-host
+    attributes:
+      label: MCP host or AI provider
+      description: For the MCP server, the host and its version. For the standalone UI, the provider, model, and auth mode (API key or CLI account).
+      placeholder: 'Cursor / Claude Desktop / Claude Code / Standalone UI: Anthropic, API key'
+
+  - type: input
+    id: tool
+    attributes:
+      label: Tool, recipe, or prompt
+      description: The tool or prompt template involved, if known.
+      placeholder: 'photoshop_recipe_remove_background, ps.remove_background'
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug, including the error message or structured error (`code`, `suggested_next_tool`) if there is one.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: The prompt you gave the AI or the exact tool call arguments, and the state of the Photoshop document (size, color mode, layers, active selection).
+      placeholder: |
+        1. Open a 4000×3000 RGB document with a single locked Background layer
+        2. Ask: "Remove the background from this portrait"
+        3. The AI calls photoshop_recipe_remove_background with { ... }
+        4. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: photoshop-mcp version
+      description: Run `npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui --version`, or check `package.json` if you built from source.
+      placeholder: '1.7.15'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS
+        - Windows
+    validations:
+      required: true
+
+  - type: input
+    id: os-version
+    attributes:
+      label: OS version
+      placeholder: 'macOS 15.5 (Apple Silicon) / Windows 11 24H2'
+    validations:
+      required: true
+
+  - type: input
+    id: photoshop-version
+    attributes:
+      label: Photoshop version
+      description: 'Help → About Photoshop (on macOS: Photoshop → About Photoshop).'
+      placeholder: 'Photoshop 2026 (27.0)'
+    validations:
+      required: true
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js version
+      description: Output of `node -v`.
+      placeholder: 'v22.11.0'
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: |
+        Set `LOG_LEVEL=0` in your MCP server `env` (or before starting `photoshop-mcp-ui`) for debug logs.
+        **Remove API keys, session tokens, and personal file paths before posting.**
+      render: shell
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Screenshots or additional context
+      description: Screenshots of Photoshop or the UI, sample files, or anything else that helps.

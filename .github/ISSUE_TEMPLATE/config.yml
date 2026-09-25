@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/alisaitteke/photoshop-mcp/security/advisories/new
+    about: Please report security issues privately, not as a public issue. See SECURITY.md.
+  - name: Troubleshooting guide
+    url: https://github.com/alisaitteke/photoshop-mcp/blob/master/docs/troubleshooting.md
+    about: Fixes for "Photoshop not found", timeouts, 401 errors in the UI, and other common problems.
+  - name: Documentation and website
+    url: https://photoshop-mcp.com/
+    about: Setup guides, the full tool catalog, and recipes.
