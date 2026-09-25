@@ -10,6 +10,10 @@ updates:
     commit-message:
       prefix: chore
       include: scope
+    ignore:
+      # Major upgrades are done deliberately by a maintainer, not by Dependabot.
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
     groups:
       npm-minor-and-patch:
         update-types: [minor, patch]
@@ -24,6 +28,10 @@ updates:
     commit-message:
       prefix: chore
       include: scope
+    ignore:
+      # Major upgrades are done deliberately by a maintainer, not by Dependabot.
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
     groups:
       web-minor-and-patch:
         update-types: [minor, patch]
@@ -35,6 +43,10 @@ updates:
     commit-message:
       prefix: ci
       include: scope
+    ignore:
+      # Major upgrades are done deliberately by a maintainer, not by Dependabot.
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
     groups:
       github-actions:
         patterns: ['*']
