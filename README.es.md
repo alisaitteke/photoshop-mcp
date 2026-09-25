@@ -53,6 +53,7 @@ Elija cualquiera de los siguientes en el primer inicio — use una clave de API 
 | **OpenAI** | GPT-5, GPT-4.1, o-series | [platform.openai.com](https://platform.openai.com/api-keys) | — |
 | **Google** | Gemini 2.5 Pro / Flash / Flash-Lite | [aistudio.google.com](https://aistudio.google.com/apikey) | `npm i -g @google/gemini-cli` → `gemini auth login` |
 | **OpenRouter** | 100+ modelos de cualquier proveedor | [openrouter.ai](https://openrouter.ai/keys) | — |
+| **Requesty** | 700+ modelos con una sola API | [app.requesty.ai](https://app.requesty.ai/api-keys) | - |
 
 ### Modos de autenticación
 

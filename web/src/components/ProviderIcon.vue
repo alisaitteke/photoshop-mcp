@@ -18,6 +18,7 @@ const LABELS: Record<ProviderId, string> = {
   anthropic: 'Anthropic',
   openai: 'OpenAI',
   openrouter: 'OpenRouter',
+  requesty: 'Requesty',
   google: 'Google',
   custom: 'Custom',
 };
