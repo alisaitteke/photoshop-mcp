@@ -24,7 +24,7 @@ describe('generative prompt string literals', () => {
 
   it('wraps generateImage prompt', () => {
     const jsx = ExtendScriptSnippets.generateImage(MULTI_WORD, 1024, 1024);
-    expect(jsx).toContain(`desc.putString(sTID('prompt'), ${QUOTED_PROMPT})`);
+    expect(jsx).toContain(`__mcp_syntheticFill(doc, ${QUOTED_PROMPT}, 'text_to_image')`);
   });
 
   it('wraps skyReplacement path for File()', () => {
