@@ -94,7 +94,8 @@ pathname `/feedback` instead.
 | `mcp_photoshop_first_connected` | First successful Photoshop connection (once per install) | `event_source: mcp` |
 | `mcp_first_tool_success` | First successful tool call (once per install) | `tool_name`, `event_source: mcp` |
 | `mcp_tool_batch` | 3s after last tool, 60s max hold, client disconnect, or session end | `tools_called_count`, `tools_error_count`, `unique_tools_count`, `tool_usage_summary`, `tools_used[]`, `had_errors`, `error_codes[]?`, `error_codes_summary?`, `batch_flush_reason`, `mcp_client_name?` |
-| `mcp_prompt_requested` | Prompt template fetch | `prompt_name` |
+| `mcp_prompt_requested` | Prompt template fetch (still one event per `prompts/get`) | `prompt_name`, `mcp_client_name?`, `mcp_client_version?` |
+| `mcp_prompt_batch` | 3s after the last prompt get, 60s max hold, client disconnect, or session end. Separate timers from `mcp_tool_batch`. | `prompts_requested_count`, `unique_prompts_count`, `prompt_usage_summary`, `prompts_used[]`, `full_catalog` (unique count equals the registry size passed at record time), `catalog_size`, `repeat` (requested / unique), `batch_flush_reason`, `mcp_client_name?` |
 | `mcp_product_feedback` | User answered the optional MCP product-feedback nudge | pathname `/feedback`; Rybbit `page_title` is the suggestion (or the choice if none); `feedback_choice` (`yes` / `not_now` / `dont_ask`), `has_suggestion`, `suggestion?` (truncated), `event_source: mcp` |
 | `pageleave` | Previous logical session closed after 30 minutes idle (next process start) | `duration_ms`, `shutdown_reason` (`idle_timeout`) |
 | `mcp_session_ended` | Previous logical session closed after 30 minutes idle | `duration_ms`, `shutdown_reason` (`idle_timeout`) |
@@ -102,7 +103,7 @@ pathname `/feedback` instead.
 Cursor and similar hosts often kill and respawn the stdio process per chat. Lifecycle events
 are therefore keyed to a **logical session** persisted at `~/.photoshop-mcp/mcp-logical-session.json`
 (30-minute idle timeout), not to each Node process. Stdio close still flushes `mcp_tool_batch`
-but does not emit `mcp_client_disconnected` / `mcp_session_ended`. Photoshop install detection
+and `mcp_prompt_batch` but does not emit `mcp_client_disconnected` / `mcp_session_ended`. Photoshop install detection
 is cached for 24 hours at `~/.photoshop-mcp/photoshop-detect-cache.json` so Spotlight/registry
 does not run on every spawn (`PHOTOSHOP_PATH` bypasses the cache).
 
@@ -110,6 +111,11 @@ Tool usage is **not** sent per call. Calls are aggregated in memory and flushed 
 `mcp_tool_batch` when the MCP client pauses for 3 seconds after the last tool in a
 burst (typical IDE agent turn), after 60 seconds of continuous tool activity, or
 when the session ends or the MCP client disconnects.
+
+Prompt fetches are sent **both** per get (`mcp_prompt_requested`) and as
+`mcp_prompt_batch` on the same 3s / 60s / disconnect / shutdown schedule, with
+its own timers so a prompt get does not reset the tool-batch timer. Stdio close
+flushes both batches.
 
 One-time funnel milestones (`mcp_first_tool_success`, `mcp_photoshop_first_connected`)
 use a persisted local flag only.

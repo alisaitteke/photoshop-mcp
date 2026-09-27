@@ -12,7 +12,7 @@ build/
 
 # IDE
 .vscode/
-.cursor/mcp.json
+.cursor/
 .idea/
 *.swp
 *.swo

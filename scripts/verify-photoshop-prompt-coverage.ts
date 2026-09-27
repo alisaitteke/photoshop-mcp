@@ -105,6 +105,21 @@ for (const guideName of PHOTOSHOP_GUIDE_PROMPT_NAMES) {
   assert.ok(promptNames.has(guideName), `Guide prompt ${guideName} must be registered.`);
 }
 
+for (const template of PHOTOSHOP_PROMPT_TEMPLATES) {
+  const result = template.handler({});
+  const text = result.messages
+    .map((message) => {
+      const content = message.content;
+      return content.type === 'text' ? content.text : '';
+    })
+    .join('\n');
+  assert.equal(
+    text.includes('prompts/get'),
+    false,
+    `Prompt ${template.name} handler must not chain prompts/get.`
+  );
+}
+
 for (const required of [
   'photoshop_get_state',
   'photoshop_get_preview',

@@ -8,9 +8,9 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { Logger } from '../utils/logger.js';
 import {
-  capture,
   onMcpClientConnected,
   onMcpClientDisconnected,
+  recordMcpPromptRequest,
   recordMcpToolCall,
 } from '../analytics/index.js';
 import { ToolRegistry, ToolDefinition } from './tool-registry.js';
@@ -207,10 +207,7 @@ export class PhotoshopMCPServer {
       const name = request.params.name;
       const args = (request.params.arguments as Record<string, string>) || {};
       this.logger.debug(`Prompt requested: ${name}`);
-      capture('mcp_prompt_requested', {
-        prompt_name: name,
-        event_source: 'mcp',
-      });
+      recordMcpPromptRequest(name, this.promptRegistry.count());
       return await this.promptRegistry.get(name, args);
     });
 

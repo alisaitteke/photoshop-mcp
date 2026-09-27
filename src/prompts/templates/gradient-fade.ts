@@ -58,7 +58,7 @@ export const gradientFadeTemplate: PhotoshopPromptTemplate = {
       `3. Call \`photoshop_recipe_gradient_fade\` with { direction: "${direction}", start_pct: ${startPct}, end_pct: ${endPct}${angleLine} }.`,
       `   - The recipe creates a reveal-all mask if needed, then paints a linear black→white gradient (${direction.replace(/_/g, ' ')}) on the mask channel.`,
       `4. Call \`photoshop_get_preview\` once to confirm the fade.`,
-      `5. For step-by-step mask education, \`prompts/get\` on \`ps.gradient_blend\` is an alternative; prefer this recipe for a single undo.`,
+      `5. For step-by-step mask education, call \`photoshop_apply_gradient_mask\`; prefer this recipe for a single undo.`,
       ``,
       `End state: the active layer fades into layers below through its mask; one undo reverts mask creation and gradient paint.`,
     ].join('\n');
