@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.22] - 2026-09-27
+
+[v1.7.21...v1.7.22](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.21...v1.7.22)
+
+### Added
+
+- Prompt fetches are aggregated as `mcp_prompt_batch` on their own 3s / 60s timers, separate from tool batches, so a full catalog prefetch shows up as one event. Each `prompts/get` still emits `mcp_prompt_requested`.
+
+### Changed
+
+- Recipe and guide prompts no longer tell the agent to call `prompts/get` on another prompt. Those steps name the tools directly, so opening one prompt does not chain into the rest of the catalog.
+
 ## [1.7.21] - 2026-09-25
 
 [v1.7.20...v1.7.21](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.20...v1.7.21)
