@@ -8,7 +8,10 @@ import {
   hasActiveMcpClient,
   setActiveMcpClient,
 } from './mcp-client-state.js';
-import { flushMcpToolBatchOnClientDisconnect } from './mcp-session.js';
+import {
+  flushMcpPromptBatchOnClientDisconnect,
+  flushMcpToolBatchOnClientDisconnect,
+} from './mcp-session.js';
 import { flushAnalyticsClient, getAnalytics } from './provider.js';
 
 function captureMcpClientEvent(
@@ -72,6 +75,7 @@ export function onMcpClientDisconnected(): void {
   if (!hasActiveMcpClient()) return;
 
   flushMcpToolBatchOnClientDisconnect();
+  flushMcpPromptBatchOnClientDisconnect();
   noteLogicalSessionActivity();
   clearActiveMcpClient();
   void flushAnalyticsClient().catch(() => {});

@@ -29,7 +29,7 @@ export const dodgeBurnTemplate: PhotoshopPromptTemplate = {
       `   - The recipe adds a "Dodge & Burn" layer filled with 50% gray (${blendMode.replace(/_/g, ' ')} mode) above the active layer.`,
       `3. Tell the user to paint on this layer with white (dodge / lighten) and black (burn / darken) at low brush opacity (5–15%).`,
       `4. Call \`photoshop_get_preview\` once after setup if helpful.`,
-      `5. For step-by-step atomic setup (create layer, fill, blend mode separately), use \`prompts/get\` on \`ps.dodge_burn_guide\`.`,
+      `5. For step-by-step atomic setup, call \`photoshop_create_layer\`, \`photoshop_fill_layer\`, and \`photoshop_set_layer_blend_mode\` separately.`,
       ``,
       `End state: a gray "Dodge & Burn" layer in ${blendMode.replace(/_/g, ' ')} mode; painting is manual; one undo removes the setup.`,
     ].join('\n');

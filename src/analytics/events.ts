@@ -70,6 +70,13 @@ const ALLOWED_PROPERTY_KEYS = new Set([
   'shutdown_reason',
   'tools_registered_count',
   'prompt_name',
+  'prompts_requested_count',
+  'unique_prompts_count',
+  'prompt_usage_summary',
+  'prompts_used',
+  'full_catalog',
+  'catalog_size',
+  'repeat',
   'tools_called_count',
   'tools_error_count',
   'unique_tools_count',
@@ -99,7 +106,7 @@ const ANALYTICS_RESERVED_PROPERTY_KEYS = new Set([
   '$screen_name',
 ]);
 
-const ARRAY_PROPERTY_KEYS = new Set(['tools_used', 'error_codes']);
+const ARRAY_PROPERTY_KEYS = new Set(['tools_used', 'error_codes', 'prompts_used']);
 
 /** Install-cohort fields written via identify traits only when not already set. */
 const PERSON_ONCE_PROPERTY_KEYS = new Set([

@@ -38,7 +38,7 @@ export const dodgeBurnGuideTemplate: PhotoshopPromptTemplate = {
       `3. Call \`photoshop_fill_layer\` with { red: 128, green: 128, blue: 128 } (50% gray).`,
       `4. Call \`photoshop_set_layer_blend_mode\` with { blendMode: "${blendMode}" }.`,
       `5. Tell the user to paint on this layer with white (dodge / lighten) and black (burn / darken) at low brush opacity (5–15%).`,
-      `6. Prefer \`photoshop_recipe_dodge_burn\` or \`prompts/get\` on \`ps.dodge_burn\` for a one-undo setup.`,
+      `6. Prefer \`photoshop_recipe_dodge_burn\` for a one-undo setup.`,
       ``,
       `End state: a gray "Dodge & Burn" layer sits above the subject in ${blendArg.replace(/_/g, ' ')} mode; painting is manual; undo removes the setup layer.`,
     ].join('\n');
