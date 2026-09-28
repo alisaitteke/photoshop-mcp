@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.23] - 2026-09-28
+
+[v1.7.22...v1.7.23](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.22...v1.7.23)
+
+### Added
+
+- Standalone UI can route each prompt through Jev (TypeSafe System One) before any language model runs. When the request is exactly one of 16 safe commands with every value given (undo, opacity, blend mode, remove background, and others), it runs in Photoshop with no LLM call. Multi-step requests and hard-to-undo actions such as merge or flatten stay on the Action Plan. Opt-in via Settings → Routing or `TYPESAFE_API_KEY`. With no key, nothing is sent to TypeSafe and the UI works as before.
+
+### Changed
+
+- Chat tool activity is a step timeline with a short title and parameters. Preview images are stored beside the chat and loaded on demand, instead of being embedded in the chat record.
+
 ## [1.7.22] - 2026-09-27
 
 [v1.7.21...v1.7.22](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.21...v1.7.22)
