@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.24] - 2026-09-28
+
+[v1.7.23...v1.7.24](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.23...v1.7.24)
+
+### Added
+
+- Standalone chat can be started with `npx -p @alisaitteke/photoshop-mcp ui`. The existing `photoshop-mcp-ui` command still works.
+
 ## [1.7.23] - 2026-09-28
 
 [v1.7.22...v1.7.23](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.22...v1.7.23)
