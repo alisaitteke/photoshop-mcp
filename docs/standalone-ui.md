@@ -8,7 +8,7 @@ API key **or**, for Anthropic and Google, reuse the OAuth session from
 ← Back to [README](../README.md)
 
 ```bash
-npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
+npx -p @alisaitteke/photoshop-mcp ui
 ```
 
 That's it. A local server starts on `127.0.0.1` (random free port) and your

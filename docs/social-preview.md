@@ -56,7 +56,7 @@ External automation can't invoke UXP plugins — only ExtendScript via AppleScri
 **Links**
 
 - GitHub: https://github.com/alisaitteke/photoshop-mcp
-- `npx @alisaitteke/photoshop-mcp` (MCP) · `npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui` (UI)
+- `npx @alisaitteke/photoshop-mcp` (MCP) · `npx -p @alisaitteke/photoshop-mcp ui` (UI)
 - Architecture write-up: https://github.com/alisaitteke/photoshop-mcp/blob/main/docs/architecture.md
 
 Feedback and contributors welcome. If your team builds agent tooling or creative automation, happy to connect.

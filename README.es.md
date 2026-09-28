@@ -38,7 +38,7 @@ Análisis técnico detallado: [`docs/architecture.md`](docs/architecture.md).
 ![Captura de pantalla de la UI independiente](./images/frame_generic_light.png)
 
 ```bash
-npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
+npx -p @alisaitteke/photoshop-mcp ui
 ```
 
 Eso es todo. Se inicia un servidor local en `127.0.0.1` (puerto libre aleatorio) y el navegador predeterminado abre la UI de chat automáticamente.

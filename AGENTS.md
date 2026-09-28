@@ -10,7 +10,7 @@
 | Cursor | Install the `photoshop-mcp` plugin (Customize → Plugins / Marketplace) so the Photoshop logo appears in the MCP list. Fallback: `mcpServers` → `npx -y @alisaitteke/photoshop-mcp` (stdio, generic icon) |
 | Claude Desktop / VS Code | Configure `mcpServers` → `npx -y @alisaitteke/photoshop-mcp` (stdio) |
 | Claude Code | `claude mcp add photoshop -- npx -y @alisaitteke/photoshop-mcp` |
-| Standalone chat UI (no IDE) | `npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui` |
+| Standalone chat UI (no IDE) | `npx -p @alisaitteke/photoshop-mcp ui` |
 | Local development | `npm install && npm run build && node dist/index.js` — see [docs/development.md](docs/development.md) |
 
 **Prerequisites:** Photoshop running on Windows or macOS, Node.js 18+. This is unofficial and not affiliated with Adobe.

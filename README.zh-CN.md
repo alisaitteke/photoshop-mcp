@@ -38,7 +38,7 @@ Photoshop MCP 添加了**状态感知**（`get_state`、`get_preview`、`get_cap
 ![独立 UI 截图](./images/frame_generic_light.png)
 
 ```bash
-npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
+npx -p @alisaitteke/photoshop-mcp ui
 ```
 
 就这样。本地服务器在 `127.0.0.1`（随机空闲端口）上启动，您的默认浏览器会自动打开聊天 UI。

@@ -45,7 +45,7 @@ tokens. Multi-step requests and hard-to-undo ones like merge or flatten never
 take the instant path; they go to the Action Plan.
 
 ```bash
-TYPESAFE_API_KEY=... npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
+TYPESAFE_API_KEY=... npx -p @alisaitteke/photoshop-mcp ui
 ```
 
 Experimental and opt-in. Without the key the UI works exactly as before and
@@ -102,7 +102,7 @@ You need **Photoshop running** (Windows or macOS, any version 2012+) and **Node.
 ### Option 1 — Easiest: the built-in chat window
 
 ```bash
-npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
+npx -p @alisaitteke/photoshop-mcp ui
 ```
 
 A chat window opens in your browser. Sign in with an AI provider API key — or

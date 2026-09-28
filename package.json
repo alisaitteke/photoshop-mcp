@@ -6,7 +6,8 @@
   "type": "module",
   "bin": {
     "photoshop-mcp": "dist/index.js",
-    "photoshop-mcp-ui": "dist/ui/cli.js"
+    "photoshop-mcp-ui": "dist/ui/cli.js",
+    "ui": "dist/ui/cli.js"
   },
   "files": [
     "dist",

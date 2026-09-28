@@ -39,7 +39,7 @@ CLI** – kein separater API-Schlüssel erforderlich.
 ![Screenshot der eigenständigen UI](./images/frame_generic_light.png)
 
 ```bash
-npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
+npx -p @alisaitteke/photoshop-mcp ui
 ```
 
 Das war's. Ein lokaler Server startet auf `127.0.0.1` (zufälliger freier Port) und der Standard-Browser öffnet die Chat-UI automatisch.

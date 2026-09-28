@@ -56,7 +56,7 @@ CONTRIBUTORS="$(new_contributors "$PREV" "$TAG")"
   echo "npx ${PKG}@${VERSION}"
   echo
   echo "# Standalone web UI"
-  echo "npx -p ${PKG}@${VERSION} photoshop-mcp-ui"
+  echo "npx -p ${PKG}@${VERSION} ui"
   echo
   echo "# Pin in package.json"
   echo "npm install ${PKG}@${VERSION}"

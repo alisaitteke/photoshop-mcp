@@ -38,7 +38,7 @@ Bunu Claude Desktop veya Cursor'a bağlamak istemiyorsanız? Aynı paket, bir ya
 ![Bağımsız UI Ekran Görüntüsü](./images/frame_generic_light.png)
 
 ```bash
-npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
+npx -p @alisaitteke/photoshop-mcp ui
 ```
 
 Hepsi bu. `127.0.0.1` üzerinde yerel bir sunucu başlar (rastgele boş port) ve varsayılan tarayıcınız sohbet UI'ını otomatik olarak açar.

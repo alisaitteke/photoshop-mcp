@@ -38,7 +38,7 @@ Claude DesktopやCursorに組み込みたくない場合でも大丈夫です。
 ![スタンドアロンUIスクリーンショット](./images/frame_generic_light.png)
 
 ```bash
-npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
+npx -p @alisaitteke/photoshop-mcp ui
 ```
 
 これだけです。`127.0.0.1`（ランダムな空きポート）でローカルサーバーが起動し、デフォルトブラウザにチャットUIが自動で開きます。

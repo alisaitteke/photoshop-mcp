@@ -13,7 +13,7 @@
 npx -y @alisaitteke/photoshop-mcp
 
 # Standalone web UI (local chat + Photoshop, no IDE required)
-npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
+npx -p @alisaitteke/photoshop-mcp ui
 ```
 
 **Prerequisites:** Adobe Photoshop (Windows or macOS), Node.js 18+. Photoshop must be running. Optional UXP bridge plugin in `uxp-plugin/` for Neural Filters.
