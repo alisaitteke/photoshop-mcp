@@ -16,6 +16,16 @@ import {
 } from '../analytics/index.js';
 import { setAnalyticsOptOut } from '../analytics/identity.js';
 import { Logger } from '../utils/logger.js';
+import { deletePreviewImages, readPreviewImage } from './store/previews.js';
+import {
+  checkTypeSafeKey,
+  getIntentRouterStatus,
+  isIntentRouterEnabled,
+  resetIntentRouter,
+  routeIntent,
+  toRouteView,
+  type RouteView,
+} from './intent/service.js';
 import {
   buildHistory,
   runChat,
@@ -32,6 +42,7 @@ import {
   maskApiKey,
   saveConfig,
   saveCustomProvider,
+  setIntentRouterConfig,
   setProviderConfig,
   type AuthMethod,
   type CustomProviderConfig,
@@ -193,7 +204,61 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
       apiKeyMasked: maskApiKey(active?.apiKey),
       accountLabel: active?.cliAccountLabel ?? null,
       actionPlanBeta: Boolean(config.actionPlanBeta),
+      intentRouter: { enabled: isIntentRouterEnabled() },
     });
+  });
+
+  // ---- Jev intent routing settings (Settings → Routing) --------------------
+
+  app.get('/api/intent-router', (c) => c.json(getIntentRouterStatus()));
+
+  app.post('/api/intent-router/validate', async (c) => {
+    const body = (await c.req.json().catch(() => ({}))) as { apiKey?: string };
+    return c.json(await checkTypeSafeKey(typeof body.apiKey === 'string' ? body.apiKey : undefined));
+  });
+
+  app.post('/api/intent-router/key', async (c) => {
+    const body = (await c.req.json().catch(() => ({}))) as { apiKey?: string };
+    const apiKey = typeof body.apiKey === 'string' ? body.apiKey.trim() : '';
+    if (!apiKey) return c.json({ error: 'missing_api_key' }, 400);
+    // Saving a key means "use it": switch Auto route back on.
+    setIntentRouterConfig({ apiKey, enabled: true });
+    resetIntentRouter();
+    return c.json(getIntentRouterStatus());
+  });
+
+  app.delete('/api/intent-router/key', (c) => {
+    setIntentRouterConfig({ apiKey: null });
+    resetIntentRouter();
+    return c.json(getIntentRouterStatus());
+  });
+
+  app.post('/api/intent-router/settings', async (c) => {
+    const body = (await c.req.json().catch(() => ({}))) as { enabled?: unknown; instant?: unknown };
+    setIntentRouterConfig({
+      ...(typeof body.enabled === 'boolean' ? { enabled: body.enabled } : {}),
+      ...(typeof body.instant === 'boolean' ? { instant: body.instant } : {}),
+    });
+    resetIntentRouter();
+    return c.json(getIntentRouterStatus());
+  });
+
+  // Jev intent preview while the user types. Off unless a TypeSafe key is set.
+  app.post('/api/intent', async (c) => {
+    if (!isIntentRouterEnabled()) return c.json({ enabled: false });
+    const body = (await c.req.json().catch(() => ({}))) as { prompt?: string };
+    const prompt = typeof body.prompt === 'string' ? body.prompt.trim() : '';
+    if (prompt.length < 3) return c.json({ enabled: true, decision: null });
+    try {
+      const routed = await routeIntent(prompt, c.req.raw.signal);
+      return c.json({
+        enabled: true,
+        decision: routed ? toRouteView(routed.decision) : null,
+        cached: routed?.cached ?? false,
+      });
+    } catch (err) {
+      return c.json({ enabled: true, decision: null, error: (err as Error).message });
+    }
   });
 
   app.post('/api/config/action-plan', async (c) => {
@@ -459,8 +524,23 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
   });
 
   app.delete('/api/chats/:id', (c) => {
-    deleteChat(c.req.param('id'));
+    const id = c.req.param('id');
+    deleteChat(id);
+    deletePreviewImages(id);
     return c.json({ ok: true });
+  });
+
+  // Tool images (photoshop_get_preview) are stored per chat on disk; the browser
+  // fetches them with the session token and shows them as object URLs.
+  app.get('/api/chats/:id/previews/:file', (c) => {
+    const image = readPreviewImage(c.req.param('id'), c.req.param('file'));
+    if (!image) return c.json({ error: 'not_found' }, 404);
+    return new Response(new Uint8Array(image.bytes), {
+      headers: {
+        'content-type': image.mimeType,
+        'cache-control': 'private, max-age=31536000, immutable',
+      },
+    });
   });
 
   // ---- Chat streaming -----------------------------------------------------
@@ -522,6 +602,7 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
       let buffer: AssistantBuffer = { text: '', toolCalls: [] };
       let lastFinish: RunChatFinishInfo | null = null;
       let assistantPersisted = false;
+      let route: RouteView | undefined;
 
       const persistAssistant = () => {
         if (assistantPersisted) return;
@@ -543,6 +624,7 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
             model: chat.model,
             ...(buffer.reasoning ? { reasoning: buffer.reasoning } : {}),
             ...(buffer.plan ? { plan: buffer.plan } : {}),
+            ...(route ? { route } : {}),
             ...(lastFinish?.usage ? { usage: lastFinish.usage } : {}),
             ...(lastFinish?.cost ? { cost: lastFinish.cost } : {}),
           },
@@ -585,6 +667,7 @@ export async function startUIServer(opts: UIServerOptions): Promise<UIServer> {
 
         for await (const ev of iterator) {
           if (controller.signal.aborted) break;
+          if (ev.type === 'route') route = ev.payload as RouteView;
           await stream.writeSSE({ event: ev.type, data: JSON.stringify(ev.payload) });
         }
 

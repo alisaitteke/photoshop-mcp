@@ -5,15 +5,19 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import JsonHighlight from '@/components/JsonHighlight.vue';
 import { displayToolName } from '@/lib/tool-display';
-import type { ToolOrbStatus } from './ToolCallOrb.vue';
+import PreviewImage from './PreviewImage.vue';
+import type { ToolResult } from '@/lib/api';
+import type { ToolStepStatus } from '@/lib/tool-result-status';
+import { formatDuration } from '@/lib/tool-summary';
 
 const props = defineProps<{
   open: boolean;
   name: string;
-  status: ToolOrbStatus;
+  status: ToolStepStatus;
   input?: unknown;
-  result?: { ok: boolean; content: string };
+  result?: ToolResult;
   rationale?: string;
+  durationMs?: number;
 }>();
 
 const emit = defineEmits<{
@@ -65,6 +69,9 @@ function statusLabel(): string {
               <Badge :variant="badgeVariant()" class="text-[10px] capitalize">
                 {{ statusLabel() }}
               </Badge>
+              <span v-if="formatDuration(durationMs)" class="font-mono text-[11px] text-muted-foreground">
+                {{ formatDuration(durationMs) }}
+              </span>
             </div>
           </div>
           <Button variant="ghost" size="icon" @click="emit('close')">
@@ -89,6 +96,14 @@ function statusLabel(): string {
           <div v-if="result">
             <div class="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
               Result
+            </div>
+            <div v-if="result.images?.length" class="mb-2 space-y-2">
+              <PreviewImage
+                v-for="image in result.images"
+                :key="image.file"
+                :image="image"
+                :alt="`${displayToolName(name)} result`"
+              />
             </div>
             <pre class="max-h-64 overflow-auto rounded-md bg-muted/40 p-2 text-[11px] leading-snug">{{
               result.content

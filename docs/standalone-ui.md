@@ -61,6 +61,45 @@ agentic flow is used when Action Plan is disabled.
 Good for multi-step prompts such as *"remove the background and export for web"*
 where you want fewer model calls and faster end-to-end execution.
 
+## Previews and step timeline
+
+Tool calls render as a readable timeline: each step shows what it did
+(`Fill layer · rgb 50,50,50`, `Blend mode · Screen`), how long it took, and a
+thumbnail when the step returned an image. The latest `photoshop_get_preview`
+image of a turn is shown under the timeline; click any image to enlarge it.
+
+Preview images are stored next to the chat database, in
+`~/.photoshop-mcp/previews/<chat-id>/`, and are deleted with the chat. They are
+served through the same token-protected `/api/*` routes as everything else.
+
+## Jev intent routing (experimental, opt-in)
+
+With a [TypeSafe](https://typesafe.ai) API key, the UI asks Jev (a fast
+classification model, not an LLM) to route each message before any language
+model runs:
+
+| Route | When | What runs |
+|---|---|---|
+| **Instant** | One known, safe command with every value resolved (undo, remove background, blend mode, opacity…) | The tool directly, then a preview. No LLM call, no token cost. |
+| **Plan** | Several known operations, or a hard-to-undo one (merge, flatten) | Action Plan |
+| **Look & iterate** | The image has to be inspected to decide | Agent loop with previews |
+| **Ask first** | Too vague | Agent loop, told to ask one question first |
+
+While you type, the composer shows the route Jev picked. Thresholds live in
+`src/ui/intent/router.ts`; the command list in `src/ui/intent/catalog.ts`.
+
+Turn it on in **Settings → Routing**: paste a key from
+[console.typesafe.ai](https://console.typesafe.ai/) and press **Save** (the key is
+checked with one tiny request first). The same tab has **Auto route** and
+**Instant commands** switches and a **Check connection** button. The key is
+stored with your other keys in `~/.photoshop-mcp/data.db`.
+`TYPESAFE_API_KEY` still works as a fallback for headless setups; a key saved
+in Settings takes its place.
+
+When it is on, **prompts are also sent to `api.typesafe.ai`**. Without a key,
+with Auto route off, or with `PSMCP_INTENT_ROUTER=off`, nothing changes and
+nothing is sent. If Jev is slow or fails, the UI falls back to the normal flow.
+
 ## What happens on first launch
 
 1. Pick a provider and choose **API key** or **Uses your account**.
@@ -119,6 +158,8 @@ the server. Requests without a valid token get `401 unauthorized`.
 - `PHOTOSHOP_SCRIPT_TIMEOUT`: Default ExtendScript timeout in milliseconds (default `30000`, max `600000`)
 - `LOG_LEVEL`: Logging level (0=DEBUG, 1=INFO, 2=WARN, 3=ERROR)
 - `PSMCP_UI_TOKEN`: Pin the standalone UI session token (see above)
+- `TYPESAFE_API_KEY`: Fallback key for Jev intent routing when none is saved in Settings → Routing. Prompts are sent to api.typesafe.ai
+- `PSMCP_INTENT_ROUTER`: Set `off` to disable Jev routing even when `TYPESAFE_API_KEY` is set
 - `PSMCP_FEEDBACK`: Set `0` / `false` / `no` to disable the product-feedback ping question (on by default)
 - `ANALYTICS_DISABLED`: Set to `1` or `true` to disable anonymous usage analytics entirely
 - `POSTHOG_DISABLED`: Legacy alias for `ANALYTICS_DISABLED`

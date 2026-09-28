@@ -21,6 +21,15 @@ export interface CustomProviderConfig {
   defaultModel: string;
 }
 
+/** Jev (TypeSafe) intent routing, set from Settings → Routing. */
+export interface IntentRouterConfig {
+  apiKey?: string;
+  /** Route messages with Jev when a key is present. Defaults to on. */
+  enabled?: boolean;
+  /** Let Jev run single safe commands without the chat model. Defaults to on. */
+  instant?: boolean;
+}
+
 export interface UIConfig {
   providers: Partial<Record<ProviderId, ProviderConfig>>;
   activeProvider: ProviderId;
@@ -31,6 +40,7 @@ export interface UIConfig {
    */
   actionPlanBeta?: boolean;
   customProvider: CustomProviderConfig | null;
+  intentRouter?: IntentRouterConfig;
 }
 
 const KV_KEY = 'config';
@@ -105,4 +115,21 @@ export function getCustomProvider(): CustomProviderConfig | null {
 
 export function deleteCustomProvider(): UIConfig {
   return saveConfig({ customProvider: null });
+}
+
+export function getIntentRouterConfig(): IntentRouterConfig {
+  return { ...loadConfig().intentRouter };
+}
+
+/** Merge into the stored router settings; `apiKey: null` removes the key. */
+export function setIntentRouterConfig(
+  patch: Omit<IntentRouterConfig, 'apiKey'> & { apiKey?: string | null }
+): IntentRouterConfig {
+  const next: IntentRouterConfig = { ...getIntentRouterConfig() };
+  if (patch.apiKey === null) delete next.apiKey;
+  else if (typeof patch.apiKey === 'string') next.apiKey = patch.apiKey;
+  if (typeof patch.enabled === 'boolean') next.enabled = patch.enabled;
+  if (typeof patch.instant === 'boolean') next.instant = patch.instant;
+  saveConfig({ intentRouter: next });
+  return next;
 }

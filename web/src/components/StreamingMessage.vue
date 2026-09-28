@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { ChevronDown, ChevronRight } from 'lucide-vue-next';
+import IntentChip from './IntentChip.vue';
 import PlanCard from './PlanCard.vue';
-import ToolCallStrip, { type ToolStripItem } from './ToolCallStrip.vue';
-import { effectiveToolOrbStatus } from '@/lib/tool-result-status';
+import PreviewImage from './PreviewImage.vue';
+import StepTimeline, { type TimelineItem } from './StepTimeline.vue';
+import { effectiveToolStatus } from '@/lib/tool-result-status';
 import type { ChatMessage, ToolCall } from '@/stores/chat';
 
 const props = defineProps<{
@@ -43,20 +45,34 @@ const showContent = computed(
     Boolean(props.message.text) ||
     Boolean(props.message.reasoning) ||
     Boolean(props.message.plan) ||
+    Boolean(props.message.route) ||
     props.message.toolCalls.length > 0 ||
     Boolean(activityLabel.value)
 );
 
-const standaloneStripItems = computed((): ToolStripItem[] =>
+const standaloneItems = computed((): TimelineItem[] =>
   props.standaloneToolCalls.map((tc) => ({
     id: tc.id,
     name: tc.name,
-    status: effectiveToolOrbStatus(tc),
+    status: effectiveToolStatus(tc),
     input: tc.input,
     result: tc.result,
+    durationMs: tc.durationMs,
     clickable: true,
   }))
 );
+
+/** The newest image any tool returned in this turn: what the document looks like now. */
+const latestPreview = computed(() => {
+  const calls = props.message.toolCalls;
+  for (let i = calls.length - 1; i >= 0; i--) {
+    const images = calls[i]!.result?.images;
+    if (images?.length) {
+      return { image: images[images.length - 1]!, step: i + 1 };
+    }
+  }
+  return null;
+});
 </script>
 
 <template>
@@ -90,6 +106,10 @@ const standaloneStripItems = computed((): ToolStripItem[] =>
       </div>
     </div>
 
+    <div v-if="message.route" class="flex">
+      <IntentChip :route="message.route" />
+    </div>
+
     <PlanCard
       v-if="message.plan"
       :plan="message.plan"
@@ -98,11 +118,21 @@ const standaloneStripItems = computed((): ToolStripItem[] =>
     />
 
     <div
-      v-if="standaloneStripItems.length > 0"
-      class="rounded-lg border border-border bg-card/50"
+      v-if="standaloneItems.length > 0"
+      class="overflow-hidden rounded-lg border border-border bg-card/50"
     >
-      <ToolCallStrip :items="standaloneStripItems" />
+      <StepTimeline :items="standaloneItems" />
     </div>
+
+    <figure v-if="latestPreview" class="m-0 flex flex-col gap-1.5">
+      <PreviewImage
+        :image="latestPreview.image"
+        :alt="`Document preview after step ${latestPreview.step}`"
+      />
+      <figcaption class="text-[11px] text-muted-foreground">
+        Photoshop document after step {{ latestPreview.step }} · click to enlarge
+      </figcaption>
+    </figure>
 
     <div
       v-if="message.text || (message.isStreaming && !showActivity)"

@@ -6,6 +6,8 @@ import { runChatViaActionPlan } from './agent/action-plan.js';
 import { runChatViaApiKey } from './agent/api-key.js';
 import { runChatViaClaudeAccount } from './agent/claude-account.js';
 import { runChatViaGeminiAccount } from './agent/gemini-account.js';
+import { prepareInstant, runChatViaInstant } from './agent/instant.js';
+import { routeIntent, toRouteView } from './intent/service.js';
 import { loadConfig } from './config.js';
 import {
   computeCost,
@@ -64,9 +66,36 @@ Planning rules:
 - Use "$steps.<stepId>.<dot.path>" placeholders for values produced by earlier steps.
 `.trim();
 
+const CLARIFY_HINT = `
+The request looks ambiguous. Before calling any Photoshop tool, ask the user exactly one short clarifying question, then stop.
+`.trim();
+
 export async function* runChat(opts: RunChatOptions): AsyncGenerator<RunChatStreamEvent> {
   const authMethod = opts.authMethod ?? 'api_key';
-  const actionPlanBeta = loadConfig().actionPlanBeta;
+  let actionPlanBeta = loadConfig().actionPlanBeta;
+  let agentSystemPrompt = PHOTOSHOP_SYSTEM_PROMPT;
+
+  // Optional Jev routing (TYPESAFE_API_KEY). Any failure falls back to today's behaviour.
+  const routed = await routeIntent(opts.prompt, opts.abortSignal).catch(() => null);
+  if (routed) {
+    const { decision } = routed;
+    yield { type: 'route', payload: toRouteView(decision) };
+    if (decision.route === 'instant' && decision.call) {
+      const prepared = await prepareInstant(decision.call, opts.chatId);
+      if (prepared) {
+        yield* runChatViaInstant({
+          prepared,
+          chatId: opts.chatId,
+          abortSignal: opts.abortSignal,
+          onAssistantBuffer: opts.onAssistantBuffer,
+          onFinish: opts.onFinish,
+        });
+        return;
+      }
+    }
+    actionPlanBeta = decision.route === 'plan' || decision.route === 'instant';
+    if (decision.route === 'clarify') agentSystemPrompt = `${PHOTOSHOP_SYSTEM_PROMPT}\n\n${CLARIFY_HINT}`;
+  }
 
   if (actionPlanBeta) {
     yield* runChatViaActionPlan({
@@ -94,7 +123,7 @@ export async function* runChat(opts: RunChatOptions): AsyncGenerator<RunChatStre
         provider: opts.provider,
         modelId: opts.modelId,
         chatId: opts.chatId,
-        systemPrompt: PHOTOSHOP_SYSTEM_PROMPT,
+        systemPrompt: agentSystemPrompt,
         abortSignal: opts.abortSignal,
         onAssistantBuffer: opts.onAssistantBuffer,
         onFinish: opts.onFinish,
@@ -108,7 +137,7 @@ export async function* runChat(opts: RunChatOptions): AsyncGenerator<RunChatStre
         modelId: opts.modelId,
         chatId: opts.chatId,
         cliPath: opts.cliPath,
-        systemPrompt: PHOTOSHOP_SYSTEM_PROMPT,
+        systemPrompt: agentSystemPrompt,
         abortSignal: opts.abortSignal,
         onAssistantBuffer: opts.onAssistantBuffer,
         onFinish: opts.onFinish,
@@ -131,7 +160,7 @@ export async function* runChat(opts: RunChatOptions): AsyncGenerator<RunChatStre
     modelId: opts.modelId,
     chatId: opts.chatId,
     authMethod,
-    systemPrompt: PHOTOSHOP_SYSTEM_PROMPT,
+    systemPrompt: agentSystemPrompt,
     abortSignal: opts.abortSignal,
     onAssistantBuffer: opts.onAssistantBuffer,
     onFinish: opts.onFinish,

@@ -60,6 +60,7 @@ export interface Status {
   apiKeyMasked: string | null;
   accountLabel: string | null;
   actionPlanBeta: boolean;
+  intentRouter?: { enabled: boolean };
 }
 
 export interface ProviderModel {
@@ -108,12 +109,26 @@ export interface ChatSummary {
   updatedAt: number;
 }
 
+/** An image a tool returned (e.g. photoshop_get_preview), stored on disk by the UI server. */
+export interface ToolImageRef {
+  file: string;
+  mimeType: string;
+}
+
+export interface ToolResult {
+  ok: boolean;
+  content: string;
+  images?: ToolImageRef[];
+}
+
 export interface PersistedToolCall {
   id: string;
   name: string;
   input: unknown;
-  result?: { ok: boolean; content: string };
+  result?: ToolResult;
   status: 'pending' | 'success' | 'error';
+  startedAt?: number;
+  durationMs?: number;
 }
 
 export interface UsageDetails {
@@ -153,6 +168,73 @@ export interface PlanView {
   steps: PlanStepView[];
 }
 
+export type IntentRoute = 'instant' | 'plan' | 'agent' | 'clarify';
+
+/** Jev's routing decision for a prompt (see src/ui/intent). */
+export interface RouteView {
+  route: IntentRoute;
+  label: string;
+  intent: string;
+  confidence: number;
+  latencyMs: number;
+  model: string;
+  reason: string;
+}
+
+export interface IntentPreviewResponse {
+  enabled: boolean;
+  decision?: RouteView | null;
+  cached?: boolean;
+  error?: string;
+}
+
+export interface IntentRouterStatus {
+  active: boolean;
+  enabled: boolean;
+  instant: boolean;
+  hasApiKey: boolean;
+  apiKeyMasked: string | null;
+  source: 'settings' | 'env' | null;
+  disabledByEnv: boolean;
+}
+
+export interface IntentKeyCheck {
+  ok: boolean;
+  latencyMs?: number;
+  model?: string;
+  error?: string;
+}
+
+export const apiGetIntentRouter = () => api<IntentRouterStatus>('/api/intent-router');
+
+export const apiCheckIntentKey = (apiKey?: string) =>
+  api<IntentKeyCheck>('/api/intent-router/validate', {
+    method: 'POST',
+    body: JSON.stringify(apiKey ? { apiKey } : {}),
+  });
+
+export const apiSaveIntentKey = (apiKey: string) =>
+  api<IntentRouterStatus>('/api/intent-router/key', {
+    method: 'POST',
+    body: JSON.stringify({ apiKey }),
+  });
+
+export const apiDeleteIntentKey = () =>
+  api<IntentRouterStatus>('/api/intent-router/key', { method: 'DELETE' });
+
+export const apiSetIntentRouter = (patch: { enabled?: boolean; instant?: boolean }) =>
+  api<IntentRouterStatus>('/api/intent-router/settings', {
+    method: 'POST',
+    body: JSON.stringify(patch),
+  });
+
+export const apiIntent = (prompt: string, signal?: AbortSignal) =>
+  api<IntentPreviewResponse>('/api/intent', {
+    method: 'POST',
+    body: JSON.stringify({ prompt }),
+    signal,
+  });
+
 export interface PersistedMessage {
   id: string;
   chatId: string;
@@ -166,6 +248,7 @@ export interface PersistedMessage {
     provider?: ProviderId;
     model?: string;
     plan?: PlanView;
+    route?: RouteView;
   };
   createdAt: number;
 }
@@ -304,6 +387,31 @@ export const apiUpdateChatModel = (
 
 export const apiDeleteChat = (id: string) =>
   api<{ ok: true }>(`/api/chats/${id}`, { method: 'DELETE' });
+
+// ---- Tool preview images ----------------------------------------------
+
+const previewUrlCache = new Map<string, Promise<string>>();
+
+/**
+ * Preview images live behind the session-token check, which an <img src> cannot
+ * satisfy, so fetch them with the header and hand back a cached object URL.
+ */
+export function previewObjectUrl(chatId: string, file: string): Promise<string> {
+  const key = `${chatId}/${file}`;
+  let pending = previewUrlCache.get(key);
+  if (!pending) {
+    pending = fetch(
+      `/api/chats/${encodeURIComponent(chatId)}/previews/${encodeURIComponent(file)}`,
+      { headers: withAuthHeaders(undefined) }
+    ).then(async (res) => {
+      if (!res.ok) throw new ApiError(res.status, res.statusText);
+      return URL.createObjectURL(await res.blob());
+    });
+    pending.catch(() => previewUrlCache.delete(key));
+    previewUrlCache.set(key, pending);
+  }
+  return pending;
+}
 
 // ---- Chat streaming ---------------------------------------------------
 

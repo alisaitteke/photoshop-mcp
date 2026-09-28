@@ -7,8 +7,7 @@ import type { ModelMessage } from 'ai';
 import { buildSpawnArgs, buildUiMcpChildEnv } from './mcp-transport.js';
 import {
   computeCost,
-  isToolOutputOk,
-  stringifyToolOutput,
+  finishToolCall,
   type AssistantBuffer,
   type RunChatFinishInfo,
   type RunChatStreamEvent,
@@ -83,6 +82,7 @@ export async function* runChatViaApiKey(
             name: part.toolName,
             input: part.input,
             status: 'pending' as const,
+            startedAt: Date.now(),
           };
           buffer.toolCalls.push(tc);
           yield {
@@ -97,31 +97,22 @@ export async function* runChatViaApiKey(
           break;
         }
         case 'tool-result': {
-          const tc = buffer.toolCalls.find((c) => c.id === part.toolCallId);
-          const text = stringifyToolOutput(part.output);
-          const ok = isToolOutputOk(part.output);
-          if (tc) {
-            tc.result = { ok, content: text };
-            tc.status = ok ? 'success' : 'error';
-          }
           yield {
             type: 'tool-result',
-            payload: { id: part.toolCallId, ok, content: text },
+            payload: finishToolCall(buffer, part.toolCallId, {
+              output: part.output,
+              chatId: opts.chatId,
+            }),
           };
           yield { type: 'activity', payload: { phase: 'thinking' } };
           opts.onAssistantBuffer?.(buffer);
           break;
         }
         case 'tool-error': {
-          const tc = buffer.toolCalls.find((c) => c.id === part.toolCallId);
           const text = (part.error as Error)?.message ?? String(part.error);
-          if (tc) {
-            tc.result = { ok: false, content: text };
-            tc.status = 'error';
-          }
           yield {
             type: 'tool-result',
-            payload: { id: part.toolCallId, ok: false, content: text },
+            payload: finishToolCall(buffer, part.toolCallId, { error: text }),
           };
           yield { type: 'activity', payload: { phase: 'thinking' } };
           opts.onAssistantBuffer?.(buffer);

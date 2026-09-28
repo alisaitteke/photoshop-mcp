@@ -4,8 +4,7 @@ import type { ProviderAdapter } from '../providers/registry.js';
 import { buildMcpServerConfig } from './mcp-transport.js';
 import {
   buildPromptWithHistory,
-  isToolOutputOk,
-  stringifyToolOutput,
+  finishToolCall,
   type AssistantBuffer,
   type RunChatFinishInfo,
   type RunChatStreamEvent,
@@ -102,6 +101,7 @@ export async function* runChatViaClaudeAccount(
               name: block.name,
               input: block.input,
               status: 'pending' as const,
+              startedAt: Date.now(),
             };
             buffer.toolCalls.push(tc);
             yield {
@@ -128,16 +128,12 @@ export async function* runChatViaClaudeAccount(
         if (!toolUseId || seenToolResults.has(toolUseId)) continue;
         seenToolResults.add(toolUseId);
 
-        const text = stringifyToolOutput(message.tool_use_result);
-        const tc = buffer.toolCalls.find((c) => c.id === toolUseId);
-        const ok = isToolOutputOk(message.tool_use_result);
-        if (tc) {
-          tc.result = { ok, content: text };
-          tc.status = ok ? 'success' : 'error';
-        }
         yield {
           type: 'tool-result',
-          payload: { id: toolUseId, ok, content: text },
+          payload: finishToolCall(buffer, toolUseId, {
+            output: message.tool_use_result,
+            chatId: opts.chatId,
+          }),
         };
         yield { type: 'activity', payload: { phase: 'thinking' } };
         opts.onAssistantBuffer?.(buffer);

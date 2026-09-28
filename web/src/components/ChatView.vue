@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { MessageSquarePlus, FlaskConical } from 'lucide-vue-next';
+import { computed, provide, ref, watch } from 'vue';
+import { MessageSquarePlus, FlaskConical, Zap } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import StatusBar from './StatusBar.vue';
 import MessageList from './MessageList.vue';
 import Composer from './Composer.vue';
 import ModelSelector from './ModelSelector.vue';
 import { syncAnalyticsContext } from '@/lib/analytics';
+import { PREVIEW_CHAT_ID } from '@/lib/preview-context';
 import {
   apiSetActionPlanBeta,
   apiUpdateChatModel,
@@ -20,6 +21,7 @@ const props = defineProps<{
   store: ReturnType<typeof useChatStore>;
   settingsOpen: boolean;
   actionPlanBeta: boolean;
+  intentRouter?: boolean;
 }>();
 
 const emit = defineEmits<{ 
@@ -45,6 +47,11 @@ async function toggleActionPlanBeta(): Promise<void> {
     planBeta.value = !next;
   }
 }
+
+provide(
+  PREVIEW_CHAT_ID,
+  computed(() => props.store.activeChatId.value)
+);
 
 const activeChat = computed(() => {
   const id = props.store.activeChatId.value;
@@ -112,6 +119,7 @@ async function onModelChange(modelId: string): Promise<void> {
           <Composer
             class="pointer-events-auto"
             :busy="props.store.sending.value"
+            :intent-router="props.intentRouter"
             @send="(p) => props.store.send(p)"
             @abort="props.store.abort"
           >
@@ -126,7 +134,17 @@ async function onModelChange(modelId: string): Promise<void> {
                   @update:model="onModelChange"
                   @open-settings="emit('open-settings')"
                 />
+                <span
+                  v-if="props.intentRouter"
+                  class="flex h-7 items-center gap-1.5 rounded-md px-2 text-xs text-foreground"
+                  title="Jev picks the route for each message: run instantly, plan, look and iterate, or ask first. Action Plan is used when Jev chooses Plan."
+                >
+                  <Zap class="size-3.5 text-amber-500" />
+                  Auto route
+                  <span class="rounded bg-amber-500/15 px-1 text-[9px] font-semibold uppercase text-amber-600">Jev</span>
+                </span>
                 <Button
+                  v-else
                   variant="ghost"
                   size="sm"
                   :disabled="props.store.sending.value"

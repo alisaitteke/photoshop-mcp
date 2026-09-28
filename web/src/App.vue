@@ -159,6 +159,7 @@ onMounted(refresh);
       :store="chat"
       :settings-open="settingsOpen"
       :action-plan-beta="status?.actionPlanBeta ?? true"
+      :intent-router="status?.intentRouter?.enabled ?? false"
       @new-chat="handleNewChat"
       @open-settings="settingsOpen = true"
     />

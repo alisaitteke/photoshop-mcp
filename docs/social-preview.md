@@ -8,6 +8,7 @@ Assets and copy for sharing this project on LinkedIn, GitHub, and other channels
 | ----- | ---- | ---- |
 | Social preview | [`images/og-social.png`](../images/og-social.png) | 1200×630 (LinkedIn / GitHub recommended) |
 | README hero | [`images/readme-hero-v2.png`](../images/readme-hero-v2.png) | 1600×800 (GitHub README banner) |
+| Jev hero | [`images/readme-hero-jev.png`](../images/readme-hero-jev.png) | 1600×800 (README “New: instant edits with Jev”; source `images/readme-hero-jev.svg`, render with `npx tsx scripts/generate-jev-hero-image.ts`) |
 
 Branding matches [alisait.com](https://alisait.com): cyan logo gradient (`#06b6d4` → `#67e8f9`), Photoshop icon (`#001E36` / `#31A8FF`), and **Ali** + *said* footer text.
 

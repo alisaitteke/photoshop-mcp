@@ -16,9 +16,8 @@ import {
 import { createPlanner, type PlanResult, type Planner, type PlannerEvent } from './planner.js';
 import {
   computeCost,
-  isToolOutputOk,
+  finishToolCall,
   parseToolEnvelope,
-  stringifyToolOutput,
   toolFailureMessage,
   type AssistantBuffer,
   type PlanStepStatus,
@@ -195,7 +194,13 @@ export async function* runChatViaActionPlan(
         type: 'tool-call',
         payload: { id: toolCallId, name: step.tool, input: args },
       };
-      buffer.toolCalls.push({ id: toolCallId, name: step.tool, input: args, status: 'pending' });
+      buffer.toolCalls.push({
+        id: toolCallId,
+        name: step.tool,
+        input: args,
+        status: 'pending',
+        startedAt: Date.now(),
+      });
       opts.onAssistantBuffer?.(buffer);
 
       try {
@@ -205,14 +210,9 @@ export async function* runChatViaActionPlan(
           abortSignal: opts.abortSignal,
         });
         results[step.id] = output;
-        const text = stringifyToolOutput(output);
-        const ok = isToolOutputOk(output);
-        const tc = buffer.toolCalls.find((c) => c.id === toolCallId);
-        if (tc) {
-          tc.result = { ok, content: text };
-          tc.status = ok ? 'success' : 'error';
-        }
-        yield { type: 'tool-result', payload: { id: toolCallId, ok, content: text } };
+        const payload = finishToolCall(buffer, toolCallId, { output, chatId: opts.chatId });
+        const { ok, content: text } = payload;
+        yield { type: 'tool-result', payload };
         opts.onAssistantBuffer?.(buffer);
         if (ok) {
           setStepStatus(planView, step.id, 'done');
@@ -225,12 +225,7 @@ export async function* runChatViaActionPlan(
         }
       } catch (err) {
         const text = (err as Error)?.message ?? String(err);
-        const tc = buffer.toolCalls.find((c) => c.id === toolCallId);
-        if (tc) {
-          tc.result = { ok: false, content: text };
-          tc.status = 'error';
-        }
-        yield { type: 'tool-result', payload: { id: toolCallId, ok: false, content: text } };
+        yield { type: 'tool-result', payload: finishToolCall(buffer, toolCallId, { error: text }) };
         opts.onAssistantBuffer?.(buffer);
         const repaired = yield* tryRepair(text, step);
         if (!repaired) break;
@@ -277,6 +272,7 @@ export async function* runChatViaActionPlan(
           name: suggestion.tool,
           input: suggestion.args,
           status: 'pending',
+          startedAt: Date.now(),
         });
         opts.onAssistantBuffer?.(buffer);
 
@@ -288,14 +284,9 @@ export async function* runChatViaActionPlan(
           });
           lastOutput = output;
           results[followStepId] = output;
-          const text = stringifyToolOutput(output);
-          const ok = isToolOutputOk(output);
-          const tc = buffer.toolCalls.find((c) => c.id === toolCallId);
-          if (tc) {
-            tc.result = { ok, content: text };
-            tc.status = ok ? 'success' : 'error';
-          }
-          yield { type: 'tool-result', payload: { id: toolCallId, ok, content: text } };
+          const payload = finishToolCall(buffer, toolCallId, { output, chatId: opts.chatId });
+          const { ok } = payload;
+          yield { type: 'tool-result', payload };
           if (ok) {
             setStepStatus(planView, followStepId, 'done');
             yield {
@@ -314,12 +305,7 @@ export async function* runChatViaActionPlan(
           }
         } catch (err) {
           const text = (err as Error)?.message ?? String(err);
-          const tc = buffer.toolCalls.find((c) => c.id === toolCallId);
-          if (tc) {
-            tc.result = { ok: false, content: text };
-            tc.status = 'error';
-          }
-          yield { type: 'tool-result', payload: { id: toolCallId, ok: false, content: text } };
+          yield { type: 'tool-result', payload: finishToolCall(buffer, toolCallId, { error: text }) };
           setStepStatus(planView, followStepId, 'error');
           yield {
             type: 'plan-step',

@@ -10,8 +10,10 @@ import {
   type ChatSummary,
   type PersistedToolCall,
   type PlanStepStatus,
+  type ToolImageRef,
   type PlanView,
   type ProviderId,
+  type RouteView,
   type UsageCost,
   type UsageDetails,
 } from '@/lib/api';
@@ -33,6 +35,7 @@ export interface ChatMessage {
   toolCalls: ToolCall[];
   plan?: PlanView;
   planPartial?: boolean;
+  route?: RouteView;
   activity?: StreamActivity;
   isStreaming?: boolean;
   usage?: UsageDetails;
@@ -51,6 +54,8 @@ export interface ChatStreamEventPayload {
   input?: unknown;
   ok?: boolean;
   content?: string;
+  images?: ToolImageRef[];
+  durationMs?: number;
   finishReason?: string;
   usage?: UsageDetails;
   cost?: UsageCost;
@@ -147,6 +152,7 @@ export function useChatStore() {
         reasoning: m.content.reasoning,
         toolCalls: m.content.toolCalls ?? [],
         plan: m.content.plan,
+        route: m.content.route,
         usage: m.content.usage,
         cost: m.content.cost,
         provider: m.content.provider,
@@ -284,14 +290,25 @@ export function useChatStore() {
         name: data.name,
         input: data.input,
         status: 'pending',
+        startedAt: Date.now(),
       });
     } else if (event === 'tool-result' && data.id) {
       flushDeltaBatch();
       const tc = findToolCall(data.id);
       if (tc) {
-        tc.result = { ok: Boolean(data.ok), content: data.content ?? '' };
+        tc.result = {
+          ok: Boolean(data.ok),
+          content: data.content ?? '',
+          ...(data.images?.length ? { images: data.images } : {}),
+        };
         tc.status = data.ok ? 'success' : 'error';
+        tc.durationMs =
+          data.durationMs ?? (tc.startedAt ? Math.max(0, Date.now() - tc.startedAt) : undefined);
       }
+    } else if (event === 'route') {
+      const m = ensureAssistantMessage();
+      streamingMessage = m;
+      m.route = data as unknown as RouteView;
     } else if (event === 'plan-partial') {
       const m = ensureAssistantMessage();
       streamingMessage = m;

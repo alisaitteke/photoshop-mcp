@@ -11,6 +11,7 @@
 [![npm version](https://img.shields.io/npm/v/@alisaitteke/photoshop-mcp.svg)](https://www.npmjs.com/package/@alisaitteke/photoshop-mcp)
 [![GitHub release](https://img.shields.io/github/v/release/alisaitteke/photoshop-mcp?include_prereleases)](https://github.com/alisaitteke/photoshop-mcp/releases)
 [![Action Plan](https://img.shields.io/badge/Action%20Plan-beta-amber.svg)](docs/standalone-ui.md#action-plan-beta)
+[![Jev routing](https://img.shields.io/badge/Jev%20routing-opt--in-31A8FF.svg)](#new-instant-edits-with-jev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-lightgrey.svg)]()
@@ -26,6 +27,31 @@ does the clicking for you. Works with Cursor, Claude, or the built-in chat
 window. No code, no scripts, no IDE required.
 
 > **Note:** This is an unofficial, community-maintained project and is not affiliated with or endorsed by Adobe Inc.
+
+## New: instant edits with Jev
+
+<p align="center">
+  <a href="docs/standalone-ui.md#jev-intent-routing-experimental-opt-in">
+    <img src="./images/readme-hero-jev.png" alt="Jev routes each prompt before any LLM runs: one safe command goes straight to Photoshop with no LLM call; plans, visual checks and vague requests go to the LLM" width="100%" />
+  </a>
+</p>
+
+Not every prompt needs a language model. The built-in chat window can now ask
+**Jev**, [TypeSafe AI](https://typesafe.ai)'s System One model, where each
+message should go before any LLM runs. When Jev is confident you asked for one
+of 16 safe commands with every value spelled out (undo, opacity, blend mode,
+remove background, …), it runs in Photoshop straight away: no LLM call, no LLM
+tokens. Multi-step requests and hard-to-undo ones like merge or flatten never
+take the instant path; they go to the Action Plan.
+
+```bash
+TYPESAFE_API_KEY=... npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
+```
+
+Experimental and opt-in. Without the key the UI works exactly as before and
+nothing is sent to TypeSafe; with it, prompts also go to `api.typesafe.ai`.
+Routes, thresholds and the off switch:
+[`docs/standalone-ui.md`](docs/standalone-ui.md#jev-intent-routing-experimental-opt-in).
 
 ## What can it do?
 
