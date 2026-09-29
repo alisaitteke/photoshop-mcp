@@ -5,6 +5,17 @@ import { ensureUxpBridgeServer, invokeUxpBridge } from './uxp-bridge-server.js';
 
 const HEALTH_TIMEOUT_MS = 800;
 
+/**
+ * True only when the Photoshop plugin is actually polling the bridge.
+ *
+ * Fetching /health on our own server merely proves that this Node process
+ * is listening — it says nothing about Photoshop. The health payload now
+ * carries `plugin_polling`, derived from the plugin's /poll traffic (the
+ * panel polls every 400ms), which is the signal that the UXP bridge panel
+ * is loaded and running in Photoshop. Bridge commands would queue forever
+ * without that poller, so anything that wants to *use* the bridge (e.g.
+ * neural filters) must check this, not just server liveness.
+ */
 export async function isUxpBridgeReachable(): Promise<boolean> {
   try {
     const port = await ensureUxpBridgeServer();
@@ -15,8 +26,8 @@ export async function isUxpBridgeReachable(): Promise<boolean> {
     });
     clearTimeout(timer);
     if (!res.ok) return false;
-    const body = (await res.json()) as { ok?: boolean };
-    return body.ok === true;
+    const body = (await res.json()) as { ok?: boolean; plugin_polling?: boolean };
+    return body.ok === true && body.plugin_polling === true;
   } catch {
     return false;
   }

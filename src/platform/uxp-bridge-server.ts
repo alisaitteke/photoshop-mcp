@@ -22,10 +22,24 @@ export interface UxpBridgeResult {
 
 const DEFAULT_PORT = Number.parseInt(process.env.PHOTOSHOP_UXP_BRIDGE_PORT ?? '38452', 10);
 
+/**
+ * The plugin polls every 400ms; after this long without any traffic it is
+ * gone. Commands currently being executed also count as liveness: the
+ * plugin's poll loop awaits each command inline, so a long batchPlay (up to
+ * the 90s neural-filter budget) pauses polling without the plugin being
+ * dead.
+ */
+const PLUGIN_STALE_MS = 3000;
+const COMMAND_LIVENESS_MS = 120_000;
+
 let server: Server | null = null;
 let listenPort = DEFAULT_PORT;
 const pendingCommands: UxpBridgeCommand[] = [];
 const results = new Map<string, UxpBridgeResult>();
+let lastPollAt: number | null = null;
+let lastResultAt: number | null = null;
+/** Commands picked up by a poller but not yet resolved, keyed by id → picked-at. */
+const inFlightCommands = new Map<string, number>();
 
 function json(res: import('node:http').ServerResponse, status: number, body: unknown): void {
   const payload = JSON.stringify(body);
@@ -40,6 +54,33 @@ export function getUxpBridgePort(): number {
   return listenPort;
 }
 
+/**
+ * True when the Photoshop plugin is connected — the only real signal that
+ * the bridge panel is loaded and running. A plain HTTP check of /health
+ * only proves this Node server exists, not that anything in Photoshop is
+ * talking to it. Liveness is any of:
+ * - a `/poll` within PLUGIN_STALE_MS,
+ * - a `/result` within PLUGIN_STALE_MS,
+ * - a command the plugin picked up but has not resolved yet (its poll loop
+ *   awaits commands inline, so polls pause while one runs).
+ */
+export function isUxpPluginPolling(): boolean {
+  const now = Date.now();
+  if (lastPollAt !== null && now - lastPollAt < PLUGIN_STALE_MS) return true;
+  if (lastResultAt !== null && now - lastResultAt < PLUGIN_STALE_MS) return true;
+  for (const [id, pickedAt] of inFlightCommands) {
+    if (now - pickedAt < COMMAND_LIVENESS_MS) return true;
+    inFlightCommands.delete(id); // stale beyond any command budget
+  }
+  return false;
+}
+
+/** Milliseconds since the last plugin contact, or null if it never polled. */
+export function getLastPollAgeMs(): number | null {
+  const candidates = [lastPollAt, lastResultAt].filter((t): t is number => t !== null);
+  return candidates.length === 0 ? null : Date.now() - Math.max(...candidates);
+}
+
 export async function ensureUxpBridgeServer(): Promise<number> {
   if (server) return listenPort;
 
@@ -48,17 +89,24 @@ export async function ensureUxpBridgeServer(): Promise<number> {
       const url = new URL(req.url ?? '/', `http://127.0.0.1:${listenPort}`);
 
       if (req.method === 'GET' && url.pathname === '/health') {
-        json(res, 200, { ok: true, pending: pendingCommands.length });
+        json(res, 200, {
+          ok: true,
+          pending: pendingCommands.length,
+          plugin_polling: isUxpPluginPolling(),
+          last_poll_age_ms: getLastPollAgeMs(),
+        });
         return;
       }
 
       if (req.method === 'GET' && url.pathname === '/poll') {
+        lastPollAt = Date.now();
         const cmd = pendingCommands.shift();
         if (!cmd) {
           res.writeHead(204);
           res.end();
           return;
         }
+        inFlightCommands.set(cmd.id, lastPollAt);
         json(res, 200, cmd);
         return;
       }
@@ -73,6 +121,8 @@ export async function ensureUxpBridgeServer(): Promise<number> {
             const parsed = JSON.parse(body) as UxpBridgeResult;
             if (parsed?.id) {
               results.set(parsed.id, parsed);
+              inFlightCommands.delete(parsed.id);
+              lastResultAt = Date.now();
             }
             json(res, 200, { ok: true });
           } catch {
@@ -125,6 +175,7 @@ export async function invokeUxpBridge(
     await new Promise((r) => setTimeout(r, 250));
   }
 
+  inFlightCommands.delete(id);
   return { id, ok: false, error: 'uxp_bridge_timeout' };
 }
 
@@ -132,4 +183,7 @@ export async function shutdownUxpBridgeServer(): Promise<void> {
   if (!server) return;
   await new Promise<void>((resolve) => server!.close(() => resolve()));
   server = null;
+  lastPollAt = null;
+  lastResultAt = null;
+  inFlightCommands.clear();
 }

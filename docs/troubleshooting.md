@@ -31,6 +31,7 @@ Common issues when connecting to or scripting Photoshop through the MCP server.
 - Batch recipes (watermark, CSV cards, mockup replace, social variants, datasets, image stack, carousel split, artboard export) already use 600s
 - Generative tools use 120s
 - MCP abort does **not** stop JSX already running in Photoshop. After a timeout, ping until it succeeds before firing more tools — immediately retrying `get_state` just waits another 30s on a busy app.
+- If **every** tool call times out — including cheap reads like `photoshop_get_state` with zero or one document open, always after the full 30s — the scripting path itself is not responding (see the next section), not the script being slow.
 
 ```javascript
 photoshop_execute_script({
@@ -38,6 +39,33 @@ photoshop_execute_script({
   timeout_ms: 180000
 })
 ```
+
+### Every tool call returns `extendscript_timeout` (UXP bridge panel is loaded)
+
+**Symptom:** `photoshop_ping` succeeds, but every script-executing tool (`photoshop_get_state`, `photoshop_list_documents`, …) fails after ~30s with `extendscript_timeout`, and debug logs show `Using ExtendScript for version … (UXP not available for external scripting)` even though the **MCP Bridge** panel in Photoshop visibly says it is polling.
+
+**Cause:** Two different channels are involved, and only one of them runs tool scripts:
+
+- **Tool scripts** (the 100+ document/layer/filter tools) always run through the platform scripting path — AppleScript on macOS, `cscript` + COM `DoJavaScript` on Windows. The UXP panel is not consulted for them: UXP plugins cannot execute arbitrary ExtendScript, so even a perfectly loaded bridge panel cannot carry these calls. On newer Photoshop builds this legacy scripting entry point can stop responding, and the call then blocks until the 30s budget expires.
+- **The UXP bridge panel** only carries bridge commands the plugin implements (Neural Filters via `photoshop_neural_filter`). Its polling status does not change which path tool scripts take.
+
+**Diagnosis:**
+
+1. Call `photoshop_get_capabilities` and check `uxp_bridge_reachable`. It is `true` only when the plugin has actually polled the bridge in the last few seconds (the panel polls every 400ms) — this verifies the panel ↔ server channel independently of the scripting path.
+2. Set `LOG_LEVEL=0`. The factory now logs one of:
+   - `UXP bridge plugin detected and polling — neural filters available, but tool scripts still require ExtendScript` (bridge fine; timeouts mean the scripting path is the problem)
+   - `UXP plugin not polling the bridge` (panel not loaded/connected — neural filters will not work either)
+3. To probe the bridge channel end-to-end, force the UXP path with `PHOTOSHOP_MCP_API=uxp`: any script tool then fails immediately with a message stating whether the plugin is connected, instead of hanging for 30s. (`PHOTOSHOP_MCP_API=extendscript` forces the other path; unset/auto is the default.)
+
+```json
+{
+  "env": {
+    "PHOTOSHOP_MCP_API": "uxp"
+  }
+}
+```
+
+**Fix:** if `uxp_bridge_reachable` is `true` but tool scripts still time out, the platform scripting path is blocked on that Photoshop build — check "Failed to connect to Photoshop" above (COM/security settings on Windows), and that no modal dialog is holding Photoshop. The bridge panel cannot substitute for the scripting path.
 
 ### `photoshop_execute_script` returns `Result: undefined`
 

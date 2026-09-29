@@ -55,6 +55,10 @@ Neural Filters (`photoshop_neural_filter`) require the companion plugin in `uxp-
 
 Override port with `PHOTOSHOP_UXP_BRIDGE_PORT` (default `38452`).
 
+The bridge `/health` endpoint reports `plugin_polling`, which is `true` only while the panel is actually connected: a poll within the last ~3s (the panel polls every 400ms), a result posted within the last ~3s, or a bridge command the plugin picked up and is still executing (its poll loop pauses while a command runs). This is the signal behind the `uxp_bridge_reachable` capability — a plain HTTP 200 from `/health` only proves the Node server is listening, not that Photoshop is connected.
+
+Tool scripts do **not** travel over this bridge (UXP plugins cannot execute ExtendScript); it carries bridge commands the plugin implements, currently Neural Filters. To force or probe a specific execution path, set `PHOTOSHOP_MCP_API` to `uxp` or `extendscript` (default `auto`: ExtendScript for scripts, bridge status reported in logs — see [troubleshooting](troubleshooting.md)).
+
 ### Generative AI tools
 
 Firefly tools (`photoshop_generative_*`, `photoshop_generate_image`, `photoshop_sky_replacement`) require:
