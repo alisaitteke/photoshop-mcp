@@ -80,8 +80,15 @@ export function getPhotoshopCapabilities(version: string): PhotoshopCapabilities
   };
 }
 
-/** Merge runtime UXP bridge reachability into version-derived capabilities. */
-export async function resolvePhotoshopCapabilities(version: string): Promise<PhotoshopCapabilities> {
+/**
+ * Merge runtime UXP bridge reachability into version-derived capabilities.
+ * `uxp_bridge_reachable` is true only when the companion plugin is actively
+ * polling the bridge (not merely that the bridge HTTP server is listening),
+ * so `neural_filters` reflects a plugin that can actually pick up commands.
+ */
+export async function resolvePhotoshopCapabilities(
+  version: string
+): Promise<PhotoshopCapabilities> {
   const base = getPhotoshopCapabilities(version);
   const bridgeUp = await isUxpBridgeReachable();
   return {

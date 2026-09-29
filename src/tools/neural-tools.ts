@@ -5,10 +5,7 @@
 import type { ToolDefinition, ToolResult } from '../core/tool-registry.js';
 import { resolvePhotoshopCapabilities } from '../platform/capabilities.js';
 import type { PhotoshopConnection } from '../platform/connection.js';
-import {
-  invokeNeuralFilter,
-  type NeuralFilterKind,
-} from '../platform/uxp-bridge-client.js';
+import { invokeNeuralFilter, type NeuralFilterKind } from '../platform/uxp-bridge-client.js';
 import { atomicFailure, atomicSuccess } from './atomic-shared.js';
 
 const FILTER_KINDS: NeuralFilterKind[] = [
@@ -83,7 +80,7 @@ async function runNeuralFilter(
       ok: false,
       code: 'uxp_bridge_unavailable',
       message:
-        'Neural Filters require the photoshop-mcp UXP bridge plugin. Load uxp-plugin/ via UXP Developer Tools.',
+        'Neural Filters require the photoshop-mcp UXP bridge plugin, and it is not connected right now. Load uxp-plugin/ via UXP Developer Tools and keep the MCP Bridge panel open (if a filter is already running, wait for it to finish and retry).',
       suggested_next_tool: 'photoshop_get_capabilities',
     });
   }

@@ -41,31 +41,104 @@ const ERROR_PATTERNS: Array<{
   code: PhotoshopErrorCode;
   suggested_next_tool?: string;
 }> = [
-  { pattern: /document_not_found/i, code: 'document_not_found', suggested_next_tool: 'photoshop_list_documents' },
-  { pattern: /no active document/i, code: 'no_active_document', suggested_next_tool: 'photoshop_get_state' },
-  { pattern: /no documents/i, code: 'no_active_document', suggested_next_tool: 'photoshop_get_state' },
-  { pattern: /no active layer/i, code: 'no_active_layer', suggested_next_tool: 'photoshop_get_layers' },
-  { pattern: /layer not found/i, code: 'layer_not_found', suggested_next_tool: 'photoshop_get_layers' },
-  { pattern: /no base layer below|nothing to clip into/i, code: 'no_base_layer_below', suggested_next_tool: 'photoshop_get_layers' },
-  { pattern: /not clipping|not a clipping mask/i, code: 'not_clipping', suggested_next_tool: 'photoshop_get_layers' },
-  { pattern: /selection/i, code: 'selection_required', suggested_next_tool: 'photoshop_get_state' },
-  { pattern: /version_unsupported|not supported.*version/i, code: 'version_unsupported', suggested_next_tool: 'photoshop_get_capabilities' },
-  { pattern: /generative.*credit|quota|sign in/i, code: 'generative_credits_exhausted', suggested_next_tool: 'photoshop_get_capabilities' },
   {
-    pattern: /script execution timeout|script timed out|waiting in the execution queue|appleevent timed out|ETIMEDOUT/i,
+    pattern: /document_not_found/i,
+    code: 'document_not_found',
+    suggested_next_tool: 'photoshop_list_documents',
+  },
+  {
+    pattern: /no active document/i,
+    code: 'no_active_document',
+    suggested_next_tool: 'photoshop_get_state',
+  },
+  {
+    pattern: /no documents/i,
+    code: 'no_active_document',
+    suggested_next_tool: 'photoshop_get_state',
+  },
+  {
+    pattern: /no active layer/i,
+    code: 'no_active_layer',
+    suggested_next_tool: 'photoshop_get_layers',
+  },
+  {
+    pattern: /layer not found/i,
+    code: 'layer_not_found',
+    suggested_next_tool: 'photoshop_get_layers',
+  },
+  {
+    pattern: /no base layer below|nothing to clip into/i,
+    code: 'no_base_layer_below',
+    suggested_next_tool: 'photoshop_get_layers',
+  },
+  {
+    pattern: /not clipping|not a clipping mask/i,
+    code: 'not_clipping',
+    suggested_next_tool: 'photoshop_get_layers',
+  },
+  { pattern: /selection/i, code: 'selection_required', suggested_next_tool: 'photoshop_get_state' },
+  {
+    pattern: /version_unsupported|not supported.*version/i,
+    code: 'version_unsupported',
+    suggested_next_tool: 'photoshop_get_capabilities',
+  },
+  {
+    pattern: /generative.*credit|quota|sign in/i,
+    code: 'generative_credits_exhausted',
+    suggested_next_tool: 'photoshop_get_capabilities',
+  },
+  {
+    pattern:
+      /script execution timeout|script timed out|waiting in the execution queue|appleevent timed out|ETIMEDOUT/i,
     code: 'extendscript_timeout',
     suggested_next_tool: 'photoshop_ping',
   },
-  { pattern: /artboard_not_found|artboard not found|no artboard/i, code: 'artboard_not_found', suggested_next_tool: 'photoshop_list_artboards' },
-  { pattern: /generative.*timeout|generative.*timed out/i, code: 'generative_timeout', suggested_next_tool: 'photoshop_get_preview' },
-  { pattern: /generative_no_selection|selection required for generative/i, code: 'generative_no_selection', suggested_next_tool: 'photoshop_select_rectangle' },
-  { pattern: /uxp.?bridge|neural filter.*bridge/i, code: 'uxp_bridge_unavailable', suggested_next_tool: 'photoshop_get_capabilities' },
-  { pattern: /generative/i, code: 'generative_unavailable', suggested_next_tool: 'photoshop_get_capabilities' },
-  { pattern: /syntax error|error 8:/i, code: 'extendscript_runtime_error', suggested_next_tool: 'photoshop_get_state' },
-  { pattern: /font_not_found/i, code: 'font_not_found', suggested_next_tool: 'photoshop_list_fonts' },
-  { pattern: /not a text layer/i, code: 'not_text_layer', suggested_next_tool: 'photoshop_create_text_layer' },
+  {
+    pattern: /artboard_not_found|artboard not found|no artboard/i,
+    code: 'artboard_not_found',
+    suggested_next_tool: 'photoshop_list_artboards',
+  },
+  {
+    pattern: /generative.*timeout|generative.*timed out/i,
+    code: 'generative_timeout',
+    suggested_next_tool: 'photoshop_get_preview',
+  },
+  {
+    pattern: /generative_no_selection|selection required for generative/i,
+    code: 'generative_no_selection',
+    suggested_next_tool: 'photoshop_select_rectangle',
+  },
+  {
+    pattern: /uxp.?bridge|neural filter.*bridge/i,
+    code: 'uxp_bridge_unavailable',
+    suggested_next_tool: 'photoshop_get_capabilities',
+  },
+  {
+    pattern: /generative/i,
+    code: 'generative_unavailable',
+    suggested_next_tool: 'photoshop_get_capabilities',
+  },
+  {
+    pattern: /syntax error|error 8:/i,
+    code: 'extendscript_runtime_error',
+    suggested_next_tool: 'photoshop_get_state',
+  },
+  {
+    pattern: /font_not_found/i,
+    code: 'font_not_found',
+    suggested_next_tool: 'photoshop_list_fonts',
+  },
+  {
+    pattern: /not a text layer/i,
+    code: 'not_text_layer',
+    suggested_next_tool: 'photoshop_create_text_layer',
+  },
   { pattern: /file not found|does not exist/i, code: 'file_not_found' },
-  { pattern: /color mode/i, code: 'unsupported_color_mode', suggested_next_tool: 'photoshop_get_document_info' },
+  {
+    pattern: /color mode/i,
+    code: 'unsupported_color_mode',
+    suggested_next_tool: 'photoshop_get_document_info',
+  },
 ];
 
 export function classifyError(message: string): PhotoshopErrorEnvelope {
@@ -89,7 +162,8 @@ export function classifyError(message: string): PhotoshopErrorEnvelope {
 }
 
 const TIMEOUT_BUSY_HINT =
-  'The MCP wait ended; Photoshop may still be running that script. Call photoshop_ping until it succeeds before more edits.';
+  'The MCP wait ended; Photoshop may still be running that script. Call photoshop_ping until it succeeds before more edits. ' +
+  'If every tool call times out (not just long ones), the scripting path itself is not responding — run photoshop_get_capabilities and check uxp_bridge_reachable to see whether the UXP bridge plugin is connected.';
 
 /**
  * Timeouts are classified without knowing which tool failed. Once the wrapper
