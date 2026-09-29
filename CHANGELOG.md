@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.25] - 2026-09-30
+
+[v1.7.24...v1.7.25](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.24...v1.7.25)
+
+### Added
+
+- Jev can run 26 safe commands and recipes instantly, and short chains of up to four such as “black and white, then opacity 50”, with no LLM call. Hover the route chip to see why a route was picked. Merge and flatten still go through the Action Plan.
+
 ## [1.7.24] - 2026-09-28
 
 [v1.7.23...v1.7.24](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.23...v1.7.24)
