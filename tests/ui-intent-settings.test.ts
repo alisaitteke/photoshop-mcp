@@ -43,7 +43,7 @@ describe('intent router settings', () => {
     expect(applyInstantSetting(instant, true)).toBe(instant);
     const planned = applyInstantSetting(instant, false);
     expect(planned.route).toBe('plan');
-    expect(planned.call).toBeUndefined();
+    expect(planned.calls).toBeUndefined();
     expect(planned.reason).toMatch(/Instant commands are off/);
   });
 });

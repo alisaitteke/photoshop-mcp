@@ -135,9 +135,9 @@ const setInstant = (instant: boolean) => run(() => apiSetIntentRouter({ instant 
       </div>
 
       <p class="mb-3 text-xs leading-relaxed text-muted-foreground">
-        Jev reads each message before your chat model does and picks a route: run one
-        command instantly, plan several steps, look at the image and iterate, or ask you
-        first. It does not replace the chat model.
+        Jev reads each message before your chat model does and picks a route: run known
+        commands instantly, plan the rest, look at the image and iterate, or ask you first.
+        It does not replace the chat model.
       </p>
 
       <div class="flex items-center gap-2">
@@ -219,8 +219,9 @@ const setInstant = (instant: boolean) => run(() => apiSetIntentRouter({ instant 
     <div class="space-y-2">
       <Label>Instant commands</Label>
       <p class="text-xs text-muted-foreground">
-        Run single, safe commands (undo, remove background, blend mode, opacity…) without
-        calling the chat model. Merge and flatten always go through a plan.
+        Run safe commands and recipes (undo, opacity, remove background, color grade,
+        carousel…) without calling the chat model, including short chains like “black &amp;
+        white, then opacity 50”. Merge and flatten always go through a plan.
       </p>
       <div class="flex gap-2">
         <Button

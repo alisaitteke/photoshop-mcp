@@ -38,6 +38,8 @@ export interface MessageContent {
     latencyMs: number;
     model: string;
     reason: string;
+    signals?: { multiStep: number; needsVisual: number; actionable: number };
+    steps?: number;
   };
   /** Present only for Action Plan (beta) runs. */
   plan?: {

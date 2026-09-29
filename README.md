@@ -39,10 +39,11 @@ window. No code, no scripts, no IDE required.
 Not every prompt needs a language model. The built-in chat window can now ask
 **Jev**, [TypeSafe AI](https://typesafe.ai)'s System One model, where each
 message should go before any LLM runs. When Jev is confident you asked for one
-of 16 safe commands with every value spelled out (undo, opacity, blend mode,
-remove background, …), it runs in Photoshop straight away: no LLM call, no LLM
-tokens. Multi-step requests and hard-to-undo ones like merge or flatten never
-take the instant path; they go to the Action Plan.
+of 26 safe commands and recipes (undo, opacity, blend mode, remove background,
+color grade, split carousel, …), or a short chain of them like "black and white,
+then opacity 50", it runs in Photoshop straight away: no LLM call, no LLM
+tokens. Anything else, and hard-to-undo steps like merge or flatten, goes to the
+Action Plan.
 
 ```bash
 TYPESAFE_API_KEY=... npx -p @alisaitteke/photoshop-mcp ui

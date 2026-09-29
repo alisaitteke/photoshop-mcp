@@ -179,6 +179,10 @@ export interface RouteView {
   latencyMs: number;
   model: string;
   reason: string;
+  /** Jev's routing signals (0..1). Missing on messages saved before they were recorded. */
+  signals?: { multiStep: number; needsVisual: number; actionable: number };
+  /** Number of commands in an instant chain. */
+  steps?: number;
 }
 
 export interface IntentPreviewResponse {

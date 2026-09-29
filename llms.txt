@@ -53,6 +53,7 @@ claude mcp add photoshop -- npx -y @alisaitteke/photoshop-mcp
 - **Generative AI** — fill, remove, expand, upscale, sky replacement, generate image (Adobe account)
 - **State** — `photoshop_get_state`, `photoshop_get_preview`, `photoshop_get_capabilities`
 - **Standalone UI** — Action Plan (beta): plan all steps in one LLM call, then execute
+- **Jev intent routing (opt-in)** — with `TYPESAFE_API_KEY`, the Web UI asks Jev (TypeSafe AI's System One model) to route each prompt; 26 safe commands and recipes (undo, opacity, blend mode, remove background, color grade, split carousel, …), or a short chain of them, run with no LLM call
 
 ## Distribution
 
@@ -68,6 +69,7 @@ claude mcp add photoshop -- npx -y @alisaitteke/photoshop-mcp
 - [Available tools](https://photoshop-mcp.com/docs/available-tools/)
 - [Prompt layer](https://photoshop-mcp.com/docs/prompt-layer/)
 - [Web UI](https://photoshop-mcp.com/docs/web-ui/)
+- [Jev intent routing](https://photoshop-mcp.com/jev)
 - [Generative AI](https://photoshop-mcp.com/docs/generative-ai/)
 - [Development](https://photoshop-mcp.com/docs/development/)
 - [Troubleshooting](https://photoshop-mcp.com/docs/troubleshooting/)

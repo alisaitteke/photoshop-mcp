@@ -27,8 +27,23 @@ const meta = computed(() => {
   const r = props.route;
   if (!r) return '';
   const parts = [`${Math.round(r.confidence * 100)}%`, `${r.latencyMs} ms`];
+  if (r.route === 'instant' && r.steps && r.steps > 1) parts.push(`${r.steps} steps`);
   if (r.route === 'instant') parts.push('no LLM call');
   return parts.join(' · ');
+});
+
+const pct = (n: number) => `${Math.round(n * 100)}%`;
+
+const tooltip = computed(() => {
+  const r = props.route;
+  if (!r) return '';
+  const lines = [`${r.reason} (${r.model})`];
+  if (r.signals) {
+    lines.push(
+      `multi-step ${pct(r.signals.multiStep)} · specific ${pct(r.signals.actionable)} · needs a look ${pct(r.signals.needsVisual)}`
+    );
+  }
+  return lines.join('\n');
 });
 </script>
 
@@ -44,7 +59,7 @@ const meta = computed(() => {
     v-else-if="route && style"
     class="flex h-7 min-w-0 items-center gap-1.5 rounded-md border bg-card px-2 text-[11px] shadow-sm"
     :class="style.tone"
-    :title="`${route.reason} (${route.model})`"
+    :title="tooltip"
   >
     <component :is="style.icon" class="size-3 shrink-0" />
     <span class="font-semibold">{{ style.name }}</span>

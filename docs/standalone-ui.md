@@ -80,13 +80,44 @@ model runs:
 
 | Route | When | What runs |
 |---|---|---|
-| **Instant** | One known, safe command with every value resolved (undo, remove background, blend mode, opacity…) | The tool directly, then a preview. No LLM call, no token cost. |
-| **Plan** | Several known operations, or a hard-to-undo one (merge, flatten) | Action Plan |
+| **Instant** | One known, safe command or recipe with every required value resolved, or a chain of up to 4 of them | The tools in order, then one preview. No LLM call, no token cost. |
+| **Plan** | Several operations that are not all known, or a hard-to-undo one (merge, flatten) | Action Plan |
 | **Look & iterate** | The image has to be inspected to decide | Agent loop with previews |
 | **Ask first** | Too vague | Agent loop, told to ask one question first |
 
-While you type, the composer shows the route Jev picked. Thresholds live in
+While you type, the composer shows the route Jev picked; hover the chip to see
+Jev's signals (multi-step, specific, needs a look). Thresholds live in
 `src/ui/intent/router.ts`; the command list in `src/ui/intent/catalog.ts`.
+
+**Recipes.** A recipe is already a fixed multi-tool workflow, so matching one
+runs many Photoshop steps without an LLM. Recipes qualify when their inputs are
+choices, numbers or yes/no flags, because Jev picks from options and never
+writes text: remove background, color grade (preset), enhance portrait
+(strength), gradient fade (direction), dodge & burn, frequency separation
+(radius), organize layers, passport photo (size, print sheet), export for web
+(size, format), social exports (one yes/no per platform) and split carousel
+(slide count). A value that is not stated uses the recipe's default; a required
+one (the slide count) must be stated. Recipes that need a path or free text
+(sky blend, batch mockups/watermarks, CSV cards) and remove distraction (needs a
+selection) go through the planner.
+
+**Chains.** A prompt is cut at connecting words (`ve`, `sonra`, `ardından`,
+`-ıp/-ip`, `and then`, commas, sentence ends). Names such as "black and white"
+or "dodge and burn" are kept whole and filler such as "lütfen" is dropped. Jev
+labels each part in its own parallel call, and the chain runs only when Jev
+says the request is multi-step, every part is a confident known command, none is
+risky and every required value is resolved. Otherwise it goes to the planner.
+If the parts disagree with a single-command reading, nothing runs instantly, so a
+part of the request is never silently dropped. A chain stops at the first failed
+step and reports what was applied before it.
+
+**Calls.** One Jev round routes the whole prompt (plus one call per part, in
+parallel). A second round runs only when a picked command has values to fill,
+again one call per command with just its own text. If that round fails, commands
+with values go to the planner instead of running with defaults.
+
+A multi-step prompt only goes to **Ask first** when it is very vague; otherwise
+it is planned, since several clear steps are not a reason to ask a question.
 
 Turn it on in **Settings → Routing**: paste a key from
 [console.typesafe.ai](https://console.typesafe.ai/) and press **Save** (the key is

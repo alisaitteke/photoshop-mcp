@@ -80,8 +80,8 @@ export async function* runChat(opts: RunChatOptions): AsyncGenerator<RunChatStre
   if (routed) {
     const { decision } = routed;
     yield { type: 'route', payload: toRouteView(decision) };
-    if (decision.route === 'instant' && decision.call) {
-      const prepared = await prepareInstant(decision.call, opts.chatId);
+    if (decision.route === 'instant' && decision.calls?.length) {
+      const prepared = await prepareInstant(decision.calls, opts.chatId);
       if (prepared) {
         yield* runChatViaInstant({
           prepared,

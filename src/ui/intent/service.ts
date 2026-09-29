@@ -1,5 +1,11 @@
 import { getIntentRouterConfig, maskApiKey, type IntentRouterConfig } from '../config.js';
-import { classifyIntent, type IntentDecision, type IntentRoute, type SystemOneClient } from './router.js';
+import {
+  classifyIntent,
+  type IntentDecision,
+  type IntentRoute,
+  type IntentSignals,
+  type SystemOneClient,
+} from './router.js';
 
 /**
  * Jev routing is opt-in. The key is set in Settings → Routing (stored with the
@@ -68,7 +74,7 @@ export function isIntentRouterEnabled(): boolean {
 export function applyInstantSetting(decision: IntentDecision, instantAllowed: boolean): IntentDecision {
   if (instantAllowed || decision.route !== 'instant') return decision;
   const rest: IntentDecision = { ...decision };
-  delete rest.call;
+  delete rest.calls;
   return {
     ...rest,
     route: 'plan',
@@ -175,9 +181,14 @@ export interface RouteView {
   latencyMs: number;
   model: string;
   reason: string;
+  /** Jev's routing signals, so the chip can show why a route was picked. */
+  signals: IntentSignals;
+  /** Number of commands in an instant chain (absent for a single command). */
+  steps?: number;
 }
 
 export function toRouteView(decision: IntentDecision): RouteView {
+  const chain = decision.route === 'instant' && (decision.calls?.length ?? 0) > 1;
   return {
     route: decision.route,
     label: decision.label,
@@ -186,5 +197,7 @@ export function toRouteView(decision: IntentDecision): RouteView {
     latencyMs: decision.latencyMs,
     model: decision.model,
     reason: decision.reason,
+    signals: decision.signals,
+    ...(chain ? { steps: decision.calls!.length } : {}),
   };
 }

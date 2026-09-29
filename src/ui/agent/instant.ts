@@ -13,9 +13,10 @@ import {
 } from './shared.js';
 
 /**
- * The "instant" route: Jev already picked the tool and its arguments, so run it
- * directly and show a preview. No language model is involved, so there is no
- * token usage or cost for the turn.
+ * The "instant" route: Jev already picked the tool(s) and their arguments, so
+ * run them in order and show one preview at the end. No language model is
+ * involved, so there is no token usage or cost for the turn. A chain stops at
+ * the first failed step and reports what was applied before it.
  */
 
 type ExecutableTool = {
@@ -28,7 +29,7 @@ type ExecutableTool = {
 export interface PreparedInstant {
   mcp: MCPClient;
   tools: Record<string, ExecutableTool>;
-  call: InstantCall;
+  calls: InstantCall[];
 }
 
 const ZERO_COST = { totalUsd: 0, inputUsd: 0, outputUsd: 0, cachedReadUsd: 0, cachedWriteUsd: 0 };
@@ -42,10 +43,11 @@ const ZERO_USAGE: LanguageModelUsage = {
 };
 
 /**
- * Start the MCP child and check the tool exists. Returns null (caller falls back
- * to the normal LLM route) instead of failing the turn.
+ * Start the MCP child and check every tool exists. Returns null (caller falls
+ * back to the normal LLM route) instead of failing the turn.
  */
-export async function prepareInstant(call: InstantCall, chatId?: string): Promise<PreparedInstant | null> {
+export async function prepareInstant(calls: InstantCall[], chatId?: string): Promise<PreparedInstant | null> {
+  if (calls.length === 0) return null;
   let mcp: MCPClient | undefined;
   try {
     mcp = await createMCPClient({
@@ -56,11 +58,11 @@ export async function prepareInstant(call: InstantCall, chatId?: string): Promis
       }),
     });
     const tools = (await mcp.tools()) as unknown as Record<string, ExecutableTool>;
-    if (typeof tools[call.tool]?.execute !== 'function') {
+    if (calls.some((call) => typeof tools[call.tool]?.execute !== 'function')) {
       await mcp.close();
       return null;
     }
-    return { mcp, tools, call };
+    return { mcp, tools, calls };
   } catch {
     await mcp?.close().catch(() => undefined);
     return null;
@@ -74,7 +76,7 @@ export async function* runChatViaInstant(opts: {
   onAssistantBuffer?: (buf: AssistantBuffer) => void;
   onFinish?: (info: RunChatFinishInfo) => void;
 }): AsyncGenerator<RunChatStreamEvent> {
-  const { mcp, tools, call } = opts.prepared;
+  const { mcp, tools, calls } = opts.prepared;
   const buffer: AssistantBuffer = { text: '', toolCalls: [] };
 
   const runTool = async function* (
@@ -101,11 +103,24 @@ export async function* runChatViaInstant(opts: {
   };
 
   try {
-    const main = yield* runTool(call.tool, call.args);
-    if (main.ok && call.preview && !opts.abortSignal.aborted && tools.photoshop_get_preview?.execute) {
+    const done: InstantCall[] = [];
+    let failure: { call: InstantCall; message: string } | null = null;
+    for (const call of calls) {
+      if (opts.abortSignal.aborted) break;
+      const result = yield* runTool(call.tool, call.args);
+      if (!result.ok) {
+        failure = { call, message: result.message };
+        break;
+      }
+      done.push(call);
+    }
+
+    const last = done[done.length - 1];
+    const wantsPreview = done.some((call) => call.preview) && last?.tool !== 'photoshop_get_preview';
+    if (wantsPreview && !opts.abortSignal.aborted && tools.photoshop_get_preview?.execute) {
       yield* runTool('photoshop_get_preview', { max_dimension_px: 1024 });
     }
-    buffer.text = main.ok ? `Done: ${call.label}.` : `${call.label} did not work: ${main.message}`;
+    buffer.text = instantSummary(calls, done, failure);
     yield { type: 'text-delta', payload: { text: buffer.text } };
     opts.onAssistantBuffer?.(buffer);
 
@@ -114,4 +129,19 @@ export async function* runChatViaInstant(opts: {
   } finally {
     await mcp.close().catch(() => undefined);
   }
+}
+
+export function instantSummary(
+  calls: InstantCall[],
+  done: InstantCall[],
+  failure: { call: InstantCall; message: string } | null
+): string {
+  const labels = (list: InstantCall[]) => list.map((call) => call.label).join(' → ');
+  if (!failure) {
+    return done.length === calls.length ? `Done: ${labels(done)}.` : `Stopped after: ${labels(done) || 'nothing'}.`;
+  }
+  if (calls.length === 1) return `${failure.call.label} did not work: ${failure.message}`;
+  const step = calls.indexOf(failure.call) + 1;
+  const applied = done.length > 0 ? ` Applied before it: ${labels(done)}.` : '';
+  return `Step ${step} of ${calls.length} (${failure.call.label}) did not work: ${failure.message.replace(/\.\s*$/, '')}.${applied}`;
 }
