@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.27] - 2026-09-30
+
+[v1.7.26...v1.7.27](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.26...v1.7.27)
+
 ### Fixed
 
 - A full scratch disk is `scratch_disk_full` instead of a generic script timeout. Photoshop's error `-25010` and the scratch-disk dialogs take this path. A startup timeout takes it too when the OS drive, the default scratch disk, is below Photoshop's 10 GB minimum free space.
