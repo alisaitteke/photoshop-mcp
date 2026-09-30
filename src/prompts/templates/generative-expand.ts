@@ -26,7 +26,7 @@ export const generativeExpandTemplate: PhotoshopPromptTemplate = {
       ``,
       `Plan:`,
       `1. Verify \`generative_expand\` via \`photoshop_get_capabilities\`.`,
-      `2. Call \`photoshop_generative_expand\` with { prompt: "${prompt.replace(/"/g, '\\"')}", direction: "${direction}" }.`,
+      `2. Call \`photoshop_generative_expand\` with { prompt: ${JSON.stringify(prompt)}, direction: "${direction}" }.`,
       `3. Call \`photoshop_get_preview\` to confirm expanded canvas.`,
       ``,
       `End state: document enlarged with generated border content.`,

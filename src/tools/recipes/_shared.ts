@@ -7,6 +7,7 @@ import {
 } from '../../api/extendscript.js';
 import { PhotoshopAPIFactory } from '../../api/photoshop-api.js';
 import { parseExtendScriptPayload } from '../../utils/extendscript-result.js';
+import { jsString } from '../../utils/js-string.js';
 
 export interface RecipeSuccess {
   ok: true;
@@ -179,7 +180,7 @@ function __mcp_json_stringify(value) {
 `;
 
 export function wrapInSuspendHistory(historyName: string, body: string): string {
-  const escapedName = historyName.replace(/"/g, '\\"');
+  const escapedName = jsString(historyName);
   return `
     ${RECIPE_ACTION_HELPERS}
     ${EXTENDSCRIPT_JSON_HELPER}
@@ -334,7 +335,7 @@ export function clampInt(value: unknown, min: number, max: number, fallback: num
   return Math.max(min, Math.min(max, Math.round(value)));
 }
 
-export { jsString } from '../../utils/js-string.js';
+export { jsString };
 export { BATCH_SCRIPT_TIMEOUT_MS } from '../../platform/script-timeout.js';
 
 export function gradientMaskAxisPercents(
