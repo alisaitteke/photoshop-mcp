@@ -99,6 +99,12 @@ Error recovery contract
     \`photoshop_execute_script\`, retry **once** with \`timeout_ms\` (e.g. 180000,
     max 600000) or use a batch recipe (those already use 600s). Set env
     \`PHOTOSHOP_SCRIPT_TIMEOUT\` to raise the default.
+  - \`scratch_disk_full\` — Photoshop is out of scratch space. It may show
+    "Could not initialize Photoshop because the scratch disks are full",
+    "Could not complete your request because the scratch disks are full", or
+    "Scratch Disk Low", and then freeze so a script times out. Free at least
+    100 GB on the primary scratch disk (the OS drive by default), then restart
+    Photoshop. Ping and \`get_state\` wait until that restart.
   - \`artboard_not_found\` — call \`photoshop_list_artboards\` or
     \`photoshop_create_artboard\`.
   - \`font_not_found\` — call \`photoshop_list_fonts\` and retry with a listed name.

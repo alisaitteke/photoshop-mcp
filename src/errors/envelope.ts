@@ -1,6 +1,7 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { recordMcpToolCall } from '../analytics/mcp-session.js';
 import type { ToolHandler } from '../core/tool-registry.js';
+import { readOsDriveFreeBytes } from '../platform/os-free-space.js';
 import { EXECUTE_SCRIPT_RETRY_TIMEOUT_MS } from '../platform/script-timeout.js';
 
 export type PhotoshopErrorCode =
@@ -15,6 +16,7 @@ export type PhotoshopErrorCode =
   | 'generative_unavailable'
   | 'generative_timeout'
   | 'extendscript_timeout'
+  | 'scratch_disk_full'
   | 'artboard_not_found'
   | 'generative_credits_exhausted'
   | 'generative_no_selection'
@@ -68,7 +70,51 @@ const ERROR_PATTERNS: Array<{
   { pattern: /color mode/i, code: 'unsupported_color_mode', suggested_next_tool: 'photoshop_get_document_info' },
 ];
 
+/**
+ * Photoshop's minimum available hard-disk space.
+ * https://helpx.adobe.com/photoshop/system-requirements.html
+ */
+export const PHOTOSHOP_MIN_FREE_BYTES = 10 * 1024 * 1024 * 1024;
+
+/**
+ * Adobe's scratch-disk dialogs, plus error -25010 from the scripts shipped
+ * with Photoshop (Presets/Scripts, kErrTempDiskFull).
+ * https://helpx.adobe.com/photoshop/desktop/troubleshoot/performance-stability-issues/troubleshoot-scratch-disk-full-errors-in-photoshop.html
+ */
+const SCRATCH_DISK_FULL_PATTERN =
+  /scratch disks are full|scratch disk is full|scratch disk full|scratch disk low|not enough space on the scratch disk|\(number:\s*-25010\)/i;
+
+/**
+ * Recovery from Adobe's scratch-disk troubleshooting (updated Feb 23, 2026):
+ * free 100 GB on the primary scratch disk, delete "Photoshop Temp*" on C:,
+ * clean up Macintosh HD, then restart. Extra drives: Settings / Preferences >
+ * Scratch Disks, or Cmd+Option / Ctrl+Alt during launch.
+ */
+const SCRATCH_DISK_RECOVERY =
+  'Free at least 100 GB on the primary scratch disk (the OS drive, unless another disk was chosen). On Windows, delete files whose names begin with "Photoshop Temp" on C:. On macOS, free space on Macintosh HD. Restart Photoshop before calling any tool again. Another drive can be set in Photoshop > Settings > Scratch Disks (macOS) or Edit > Preferences > Scratch Disks (Windows), or by holding Cmd+Option (macOS) or Ctrl+Alt (Windows) while launching.';
+
+export function scratchDiskFullEnvelope(detail: string): PhotoshopErrorEnvelope {
+  return {
+    ok: false,
+    code: 'scratch_disk_full',
+    message: `${detail} ${SCRATCH_DISK_RECOVERY}`,
+  };
+}
+
+/** Startup timeout while the OS drive is below Photoshop's 10 GB minimum. */
+export function diagnoseScratchDiskTimeout(freeBytes: number | null): PhotoshopErrorEnvelope | null {
+  if (freeBytes === null || freeBytes >= PHOTOSHOP_MIN_FREE_BYTES) return null;
+  const freeGb = (freeBytes / (1024 * 1024 * 1024)).toFixed(1);
+  return scratchDiskFullEnvelope(
+    `Scripting timed out. The OS drive, Photoshop's default scratch disk, has ${freeGb} GB free, below the 10 GB minimum.`
+  );
+}
+
 export function classifyError(message: string): PhotoshopErrorEnvelope {
+  if (SCRATCH_DISK_FULL_PATTERN.test(message)) {
+    return scratchDiskFullEnvelope(message);
+  }
+
   for (const { pattern, code, suggested_next_tool } of ERROR_PATTERNS) {
     if (pattern.test(message)) {
       return {
@@ -193,13 +239,44 @@ function extractErrorCodeFromResult(result: CallToolResult): string {
   return 'unknown';
 }
 
+async function finishToolError(toolName: string, result: CallToolResult): Promise<CallToolResult> {
+  const diagnosed = await applyScratchDiskDiagnosis(result);
+  return refineTimeoutToolResult(toolName, diagnosed);
+}
+
+/**
+ * Photoshop freezes on "Could not initialize Photoshop because the scratch
+ * disks are full" before any script can return -25010. The Apple event then
+ * times out. When the OS drive is below the 10 GB minimum, say so.
+ */
+export async function applyScratchDiskDiagnosis(result: CallToolResult): Promise<CallToolResult> {
+  const text = result.content
+    .filter((c): c is { type: 'text'; text: string } => c.type === 'text')
+    .map((c) => c.text)
+    .join('\n');
+  if (!text) return result;
+  try {
+    const parsed = JSON.parse(text) as PhotoshopErrorEnvelope;
+    if (parsed.ok !== false || parsed.code !== 'extendscript_timeout') return result;
+  } catch {
+    return result;
+  }
+
+  try {
+    const diagnosed = diagnoseScratchDiskTimeout(await readOsDriveFreeBytes());
+    return diagnosed ? envelopeToToolResult(diagnosed) : result;
+  } catch {
+    return result;
+  }
+}
+
 export function wrapToolHandler(toolName: string, handler: ToolHandler): ToolHandler {
   return async (args) => {
     const started = Date.now();
     try {
       let result = await handler(args);
       if (result.isError) {
-        result = refineTimeoutToolResult(toolName, enrichErrorResult(result));
+        result = await finishToolError(toolName, enrichErrorResult(result));
       }
 
       const ok = !result.isError;
@@ -212,7 +289,7 @@ export function wrapToolHandler(toolName: string, handler: ToolHandler): ToolHan
 
       return result;
     } catch (error) {
-      const result = refineTimeoutToolResult(toolName, buildEnvelopeFromError(error));
+      const result = await finishToolError(toolName, buildEnvelopeFromError(error));
       recordMcpToolCall({
         toolName,
         ok: false,

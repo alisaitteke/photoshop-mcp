@@ -122,7 +122,7 @@ The UI restricts the agent to **Photoshop MCP tools only** — no shell, filesys
 
 ## Error recovery contract
 
-[`src/errors/envelope.ts`](../src/errors/envelope.ts) classifies ExtendScript/runtime failures into typed codes (`no_active_document`, `extendscript_timeout`, `artboard_not_found`, `version_unsupported`, `generative_unavailable`, …) and suggests the next tool (`photoshop_get_state`, `photoshop_execute_script`, `photoshop_list_artboards`, `photoshop_get_capabilities`, etc.).
+[`src/errors/envelope.ts`](../src/errors/envelope.ts) classifies ExtendScript/runtime failures into typed codes (`no_active_document`, `extendscript_timeout`, `scratch_disk_full`, `artboard_not_found`, `version_unsupported`, `generative_unavailable`, …) and suggests the next tool (`photoshop_get_state`, `photoshop_execute_script`, `photoshop_list_artboards`, `photoshop_get_capabilities`, etc.).
 
 This is intentional **agent UX design**: hosts can self-correct without guessing, which matters when non-technical users drive Photoshop through natural language.
 

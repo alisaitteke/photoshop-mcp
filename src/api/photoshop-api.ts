@@ -160,7 +160,17 @@ class ExtendScriptPhotoshopAPI implements PhotoshopAPI {
     }
     return String(result);
   } catch (error) {
-    return 'ERROR: ' + (error.message || String(error));
+    var errorMessage = '';
+    var errorNumber = '';
+    try { errorMessage = error.message; } catch (e) {}
+    try { errorNumber = String(error.number); } catch (e2) {}
+    if (!errorMessage) {
+      try { errorMessage = String(error); } catch (e3) { errorMessage = 'unknown'; }
+    }
+    if (errorNumber && errorNumber !== 'undefined' && errorNumber !== 'NaN') {
+      return 'ERROR: ' + errorMessage + ' (number: ' + errorNumber + ')';
+    }
+    return 'ERROR: ' + errorMessage;
   } finally {
     try { if (__originalRulerUnits !== null) app.preferences.rulerUnits = __originalRulerUnits; } catch (e) {}
     try { if (__originalTypeUnits !== null) app.preferences.typeUnits = __originalTypeUnits; } catch (e) {}
