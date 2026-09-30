@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.26] - 2026-09-30
+
+[v1.7.25...v1.7.26](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.25...v1.7.26)
+
 ### Fixed
 
 - `photoshop_ping` runs a short script in Photoshop. A successful ping means the scripting engine finished that script. While a previous script is still running, ping returns `extendscript_timeout` instead of succeeding and leaving `photoshop_get_state` / `photoshop_get_layers` stuck on the open document.
