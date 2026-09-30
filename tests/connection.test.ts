@@ -66,6 +66,18 @@ describe('PhotoshopConnection on macOS', () => {
     expect(seenAppNames).toEqual(['Adobe Photoshop 2026', 'Adobe Photoshop 2026']);
   });
 
+  it('does not launch Photoshop when launch is false and the app is not running', async () => {
+    vi.spyOn(MacOSExecutor.prototype, 'isPhotoshopRunning').mockResolvedValue(false);
+    const launch = vi
+      .spyOn(MacOSExecutor.prototype, 'launchPhotoshop')
+      .mockResolvedValue(undefined);
+    const connection = new PhotoshopConnection();
+    await expect(
+      connection.executeScript('return 1;', undefined, { launch: false })
+    ).rejects.toThrow(/not running/i);
+    expect(launch).not.toHaveBeenCalled();
+  });
+
   it('applies the detected app name in ensurePhotoshopRunning', async () => {
     const connection = new PhotoshopConnection();
     await connection.ensurePhotoshopRunning();

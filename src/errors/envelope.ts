@@ -109,6 +109,13 @@ export function refineTimeoutEnvelope(
       suggested_args: { timeout_ms: EXECUTE_SCRIPT_RETRY_TIMEOUT_MS },
     };
   }
+  if (toolName === 'photoshop_ping') {
+    return {
+      ...envelope,
+      message: `${envelope.message} Photoshop is still running a previous script. Retry photoshop_ping until it succeeds before photoshop_get_state or photoshop_get_layers.`,
+      suggested_next_tool: 'photoshop_ping',
+    };
+  }
   return {
     ...envelope,
     message: `${envelope.message} ${TIMEOUT_BUSY_HINT}`,

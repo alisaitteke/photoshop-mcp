@@ -127,7 +127,11 @@ export class PhotoshopConnection {
     }
   }
 
-  async executeScript(script: string, timeout?: number): Promise<unknown> {
+  async executeScript(
+    script: string,
+    timeout?: number,
+    options?: { launch?: boolean }
+  ): Promise<unknown> {
     try {
       await this.resolvePhotoshopInfo();
       if (!this.photoshopInfo) {
@@ -137,14 +141,15 @@ export class PhotoshopConnection {
       const executor = this.getExecutor();
       this.applyMacOSAppName();
 
-      // Check if Photoshop is running, launch if needed
       const isRunning = await executor.isPhotoshopRunning();
       if (!isRunning) {
+        if (options?.launch === false) {
+          throw new Error('Photoshop is not running');
+        }
         this.logger.info('Photoshop not running, launching...');
         await executor.launchPhotoshop(this.photoshopInfo.path);
       }
 
-      // Execute the script
       const result = await executor.execute(script, timeout);
       return result;
     } catch (error) {

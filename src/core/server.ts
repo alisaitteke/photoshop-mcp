@@ -46,7 +46,8 @@ import { createStackTools } from '../tools/stack-tools.js';
 import { createExportTools } from '../tools/export-tools.js';
 import { createArtboardTools } from '../tools/artboard-tools.js';
 import { ensureUxpBridgeServer } from '../platform/uxp-bridge-server.js';
-import { buildPingToolResult, submitFeedbackFromArgs } from '../feedback/nudge.js';
+import { submitFeedbackFromArgs } from '../feedback/nudge.js';
+import { probePhotoshopEngine } from './ping-engine.js';
 
 export interface PhotoshopMCPServerOptions {
   serverVersion: string;
@@ -101,11 +102,11 @@ export class PhotoshopMCPServer {
       tool: {
         name: 'photoshop_ping',
         description:
-          'Verify Photoshop is installed and reachable on this machine.\n\n' +
-          'Use when: once at session start if connection status is unknown.\n' +
-          'Do NOT use when: on every tool call — call once, then use photoshop_get_state.\n\n' +
-          'Returns: connection success or failure message. May append a FEEDBACK_NUDGE block 15 minutes after the first successful ping, then at most once per 7 days (disabled with PSMCP_FEEDBACK=0).\n' +
-          'Preconditions: none. Side effects: may trigger Photoshop detection.',
+          'Verify that the Photoshop scripting engine can run a script.\n\n' +
+          'Use when: once at session start, and after extendscript_timeout until this call succeeds.\n' +
+          'Do NOT use when: on every tool call — after a successful ping, use photoshop_get_state. Do not call get_state or get_layers while this ping is still failing.\n\n' +
+          'Returns: "Successfully connected to Photoshop" only after a short script runs inside Photoshop. While a previous script is still running, returns extendscript_timeout — retry photoshop_ping. If Photoshop is not installed or not running, returns a failure string and does not launch the app. May append a FEEDBACK_NUDGE block 15 minutes after the first successful ping, then at most once per 7 days (disabled with PSMCP_FEEDBACK=0).\n' +
+          'Preconditions: none. Side effects: may trigger Photoshop detection. Does not launch Photoshop.',
         inputSchema: { type: 'object', properties: {} },
       },
       handler: async () => this.pingPhotoshop(),
@@ -236,9 +237,7 @@ export class PhotoshopMCPServer {
   }
 
   private async pingPhotoshop() {
-    const connection = this.session.getConnection();
-    const isConnected = await connection.ping();
-    return buildPingToolResult(isConnected);
+    return probePhotoshopEngine(this.session.getConnection());
   }
 
   private async getVersion() {

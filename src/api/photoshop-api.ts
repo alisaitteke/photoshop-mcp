@@ -8,7 +8,11 @@ export interface PhotoshopAPI {
   /**
    * Execute a script using the appropriate API
    */
-  executeScript(script: string, timeoutMs?: number): Promise<unknown>;
+  executeScript(
+    script: string,
+    timeoutMs?: number,
+    options?: { launch?: boolean }
+  ): Promise<unknown>;
 
   /**
    * Get the API type being used
@@ -66,10 +70,14 @@ class UXPPhotoshopAPI implements PhotoshopAPI {
     this.connection = connection;
   }
 
-  async executeScript(script: string, timeoutMs?: number): Promise<unknown> {
+  async executeScript(
+    script: string,
+    timeoutMs?: number,
+    options?: { launch?: boolean }
+  ): Promise<unknown> {
     // UXP cannot be executed externally via AppleScript/COM
     // Fall back to ExtendScript
-    return await this.connection.executeScript(script, timeoutMs);
+    return await this.connection.executeScript(script, timeoutMs, options);
   }
 
   getAPIType(): APIType {
@@ -87,10 +95,14 @@ class ExtendScriptPhotoshopAPI implements PhotoshopAPI {
     this.connection = connection;
   }
 
-  async executeScript(script: string, timeoutMs?: number): Promise<unknown> {
+  async executeScript(
+    script: string,
+    timeoutMs?: number,
+    options?: { launch?: boolean }
+  ): Promise<unknown> {
     // Wrap script in error handling
     const wrappedScript = this.wrapInErrorHandling(script);
-    return await this.connection.executeScript(wrappedScript, timeoutMs);
+    return await this.connection.executeScript(wrappedScript, timeoutMs, options);
   }
 
   private wrapInErrorHandling(script: string): string {

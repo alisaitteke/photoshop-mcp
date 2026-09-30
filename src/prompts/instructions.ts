@@ -91,9 +91,11 @@ Error recovery contract
   - \`selection_required\` — make a selection before reusing the failed tool.
   - \`extendscript_timeout\` — the JSX ran past its budget (default 30s).
     MCP abort does **not** stop Photoshop; the previous script may still be
-    running. Call \`photoshop_ping\` until it succeeds, then continue. Do not
-    immediately retry \`photoshop_get_state\` on the same 30s budget — that
-    just waits another 30s on a busy app. If the timed-out tool was
+    running. \`photoshop_ping\` runs a short script on that same queue and
+    succeeds only when Photoshop finishes it. Retry ping until it succeeds,
+    then call \`photoshop_get_state\`. Do not call \`photoshop_get_state\` or
+    \`photoshop_get_layers\` while ping is still returning
+    \`extendscript_timeout\`. If the timed-out tool was
     \`photoshop_execute_script\`, retry **once** with \`timeout_ms\` (e.g. 180000,
     max 600000) or use a batch recipe (those already use 600s). Set env
     \`PHOTOSHOP_SCRIPT_TIMEOUT\` to raise the default.

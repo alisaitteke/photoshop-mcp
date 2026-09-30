@@ -46,6 +46,16 @@ describe('classifyError timeouts and artboards', () => {
     expect(refined.message).toMatch(/still be running/i);
   });
 
+  it('after ping times out, tells the agent to retry ping before reading the document', () => {
+    const refined = refineTimeoutEnvelope(
+      'photoshop_ping',
+      classifyError('Script execution timeout')
+    );
+    expect(refined.suggested_next_tool).toBe('photoshop_ping');
+    expect(refined.message).toMatch(/Retry photoshop_ping/i);
+    expect(refined.message).toMatch(/get_state/i);
+  });
+
   it('after execute_script timeout, suggests retrying once with a longer timeout_ms', () => {
     const refined = refineTimeoutEnvelope(
       'photoshop_execute_script',

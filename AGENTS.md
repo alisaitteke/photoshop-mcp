@@ -92,7 +92,7 @@ Examples: [examples/cursor-config.json](examples/cursor-config.json), [examples/
 | Symptom | Fix |
 | ------- | --- |
 | Photoshop not found | Start Photoshop; set `PHOTOSHOP_PATH` if non-standard install |
-| Tool times out | Ping until Photoshop answers, then retry. Pass `timeout_ms` on `photoshop_execute_script` (max 600s), or set `PHOTOSHOP_SCRIPT_TIMEOUT`; batch recipes already use 600s. Do not immediately retry `get_state` after a timeout — Photoshop may still be running the previous script. |
+| Tool times out | Retry `photoshop_ping` until it succeeds. Ping runs a short script and returns `extendscript_timeout` while Photoshop is still busy; only then call `get_state`. Pass `timeout_ms` on `photoshop_execute_script` (max 600s), or set `PHOTOSHOP_SCRIPT_TIMEOUT`; batch recipes already use 600s. |
 | `generative_unavailable` / `version_unsupported` | Call `get_capabilities`; feature may need newer Photoshop or Adobe login |
 | Neural filter fails | **Add Plugin** → `uxp-plugin/manifest.json` → **Load** in UXP Developer Tools — see [docs/development.md](docs/development.md#uxp-bridge-plugin-neural-filters) |
 | No active document | Ask user to open/create a document, then `get_state` |

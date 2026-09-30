@@ -9,7 +9,7 @@ Reference for all atomic `photoshop_*` MCP tools exposed by this server (paramet
 ### Connection & Info
 
 #### `photoshop_ping`
-Test connection to Photoshop.
+Run a short script in Photoshop. Success means the scripting engine is idle. While a previous script is still running, the call returns `extendscript_timeout` instead of succeeding; retry ping before `photoshop_get_state` or `photoshop_get_layers`. Does not launch Photoshop when it is not running.
 
 ```javascript
 // Example: Check if Photoshop is accessible
