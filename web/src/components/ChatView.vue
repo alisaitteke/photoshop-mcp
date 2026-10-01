@@ -24,9 +24,10 @@ const props = defineProps<{
   intentRouter?: boolean;
 }>();
 
-const emit = defineEmits<{ 
+const emit = defineEmits<{
   'new-chat': [];
   'open-settings': [];
+  'active-changed': [value: { provider: ProviderId; model: string }];
 }>();
 
 const planBeta = ref(props.actionPlanBeta);
@@ -69,18 +70,12 @@ const subscriptionMode = computed(
   () => activeProviderInfo.value?.authMethod === 'cli_account'
 );
 
-async function onProviderChange(providerId: ProviderId): Promise<void> {
+async function onSelect(selection: { provider: ProviderId; model: string }): Promise<void> {
   const chat = activeChat.value;
   if (!chat) return;
-  await apiUpdateChatModel(chat.id, { provider: providerId });
+  await apiUpdateChatModel(chat.id, selection);
   await props.store.loadChats();
-}
-
-async function onModelChange(modelId: string): Promise<void> {
-  const chat = activeChat.value;
-  if (!chat) return;
-  await apiUpdateChatModel(chat.id, { model: modelId });
-  await props.store.loadChats();
+  emit('active-changed', selection);
 }
 </script>
 
@@ -130,8 +125,7 @@ async function onModelChange(modelId: string): Promise<void> {
                   :current-provider="activeChat.provider"
                   :current-model="activeChat.model"
                   :disabled="props.store.sending.value"
-                  @update:provider="onProviderChange"
-                  @update:model="onModelChange"
+                  @select="onSelect"
                   @open-settings="emit('open-settings')"
                 />
                 <span

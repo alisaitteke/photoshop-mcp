@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Anonymous Rybbit sessions now include the system language, the machine CPU model, OS uptime in hours, and the Photoshop version once it is known. The session language column uses the system locale. The machine clock stays on `system_timezone`; Rybbit still fills the session timezone from IP geolocation.
 - `photoshop_get_preview` renders an MCP App (`ui://photoshop/preview`) in hosts that support it: document size, top-level layer names, a before/after slider, and long-edge web-export buttons. Hosts that cannot draw the app still receive the JPEG.
 - Cursor and Claude Code plugin skills `photoshop-remove-background` and `photoshop-recipes` carry the phrase-to-tool glossary. Server `instructions` keep the session contract and the short remove-background hard rule.
 

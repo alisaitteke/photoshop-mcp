@@ -36,7 +36,8 @@ export function createLayerTransformTools(connection: PhotoshopConnection): Tool
           'Scale the active layer by a percentage (100 leaves the size unchanged). `centerAnchor` true (default) scales from the center; false scales from the top-left.\n\n' +
           'Use when: a numeric percent scale on one layer.\n' +
           'Do NOT use when: the layer should fit the canvas automatically — use photoshop_fit_layer_to_document.\n' +
-          'Do NOT use when: the document dimensions should change — use photoshop_resize_image.\n\n' +
+          'Do NOT use when: the document dimensions should change — use photoshop_resize_image.\n' +
+          'Do NOT use when: the layer has no pixels yet — fill it first. An empty layer fails with an empty bounding rectangle.\n\n' +
           'Returns: the scale percent applied.\n' +
           'Preconditions: active document and active layer. Side effects: transforms that layer, one history step. 100% does not change size; any other percent is not idempotent. Reversible with photoshop_undo.',
         inputSchema: {

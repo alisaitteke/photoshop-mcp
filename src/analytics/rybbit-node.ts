@@ -3,6 +3,7 @@ import { getAppVersion } from './app-version.js';
 import { resolveRybbitAnalyticsHost, resolveRybbitApiKey, resolveRybbitSiteId } from './config.js';
 import { buildPersonIdentifyProperties, sanitizePersonOnceProperties } from './events.js';
 import { getOrCreateDistinctId } from './identity.js';
+import { getSystemLocale } from './locale.js';
 import type { AnalyticsEvent, AnalyticsProvider, AnalyticsPropertyValue } from './types.js';
 
 const PROPERTIES_MAX_CHARS = 2048;
@@ -12,18 +13,15 @@ const FLUSH_AT = 10;
 const FLUSH_INTERVAL_MS = 5000;
 
 const DROP_WHEN_OVER_BUDGET = [
-  'os_release',
-  'system_timezone',
-  'system_locale',
-  'system_locale_language',
-  'system_locale_region',
-  'node_major',
   'is_electron',
   'photoshop_path_configured',
   'custom_data_dir_configured',
-  'cpu_count',
-  'arch',
+  'node_major',
   'os_type',
+  'arch',
+  'cpu_count',
+  'os_release',
+  'system_locale_region',
 ];
 
 const PROTECTED_PROPERTY_KEYS = new Set(['feedback_choice', 'suggestion']);
@@ -105,6 +103,8 @@ export class RybbitNodeProvider implements AnalyticsProvider {
     };
     const pageTitle = resolvePageTitle(props);
     if (pageTitle) body.page_title = pageTitle;
+    const language = sessionLanguage();
+    if (language) body.language = language;
     if (eventName) body.event_name = eventName;
     const encoded = encodeProperties(props);
     if (encoded) body.properties = encoded;
@@ -183,6 +183,13 @@ function resolvePathname(properties: Record<string, AnalyticsPropertyValue>): st
   if (source === 'mcp' || surface === 'mcp') return '/mcp';
   if (source === 'ui' || surface === 'ui' || surface === 'web') return '/ui';
   return '/ui-server';
+}
+
+/** Rybbit stores this on the session `language` column (max 35). */
+function sessionLanguage(): string | undefined {
+  const locale = getSystemLocale().trim();
+  if (!locale || locale === 'unknown') return undefined;
+  return locale.slice(0, 35);
 }
 
 function resolvePageTitle(

@@ -196,6 +196,23 @@ export function useChatStore() {
     if (idx !== -1) chats.value[idx] = { ...chats.value[idx], title };
   }
 
+  function pruneSupersededToolCalls(m: ChatMessage): void {
+    const live = new Map(
+      (m.plan?.steps ?? []).filter((step) => step.id && step.tool).map((step) => [step.id, step.tool])
+    );
+    if (live.size === 0 || !m.toolCalls.some((tc) => tc.stepId)) return;
+    const lastIndex = new Map<string, number>();
+    m.toolCalls.forEach((tc, index) => {
+      if (!tc.stepId || live.get(tc.stepId) !== tc.name) return;
+      lastIndex.set(tc.stepId, index);
+    });
+    const next = m.toolCalls.filter((tc, index) => {
+      if (!tc.stepId) return true;
+      return lastIndex.get(tc.stepId) === index;
+    });
+    if (next.length !== m.toolCalls.length) m.toolCalls.splice(0, m.toolCalls.length, ...next);
+  }
+
   function ensureAssistantMessage(): ChatMessage {
     const last = messages[messages.length - 1];
     if (last && last.role === 'assistant') return last;
@@ -289,6 +306,7 @@ export function useChatStore() {
         id: data.id,
         name: data.name,
         input: data.input,
+        ...(data.stepId ? { stepId: data.stepId } : {}),
         status: 'pending',
         startedAt: Date.now(),
       });
@@ -314,12 +332,14 @@ export function useChatStore() {
       streamingMessage = m;
       m.plan = { summary: data.summary ?? '', steps: data.steps ?? [] };
       m.planPartial = true;
+      pruneSupersededToolCalls(m);
     } else if (event === 'plan') {
       flushDeltaBatch();
       const m = ensureAssistantMessage();
       streamingMessage = m;
       m.plan = { summary: data.summary ?? '', steps: data.steps ?? [] };
       m.planPartial = false;
+      pruneSupersededToolCalls(m);
     } else if (event === 'plan-step' && data.id && data.status) {
       flushDeltaBatch();
       const m = ensureAssistantMessage();

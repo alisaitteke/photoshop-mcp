@@ -18,6 +18,8 @@ export interface ToolCallPersist {
   input: unknown;
   result?: ToolResultPersist;
   status: 'pending' | 'success' | 'error';
+  /** Plan step this call belongs to. Repairs replace steps; the timeline matches on this id. */
+  stepId?: string;
   /** Epoch ms when the call started; used to show per-step timing. */
   startedAt?: number;
   durationMs?: number;
@@ -96,6 +98,14 @@ export function stringifyToolOutput(output: unknown): string {
   } catch {
     return String(output);
   }
+}
+
+/**
+ * JSON object a later plan step can read with `$steps.<id>.<path>`.
+ * MCP tool calls wrap that JSON in `{ content: [{ type: 'text', text }] }`.
+ */
+export function toolResultData(output: unknown): unknown {
+  return parseToolEnvelope(output) ?? output;
 }
 
 /** Parse structured tool envelopes from raw MCP / SDK output. */

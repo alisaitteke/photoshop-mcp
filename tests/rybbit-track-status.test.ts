@@ -84,7 +84,10 @@ describe('RybbitNodeProvider /track status', () => {
       hostname: 'photoshop-mcp.com',
       pathname: '/feedback',
       page_title: 'better selections',
+      language: expect.any(String),
     });
+    expect(String(trackBodies[0]?.language).length).toBeGreaterThan(0);
+    expect(String(trackBodies[0]?.language).length).toBeLessThanOrEqual(35);
     const properties = JSON.parse(String(trackBodies[0]?.properties)) as Record<string, unknown>;
     expect(properties).toMatchObject({
       feedback_choice: 'yes',

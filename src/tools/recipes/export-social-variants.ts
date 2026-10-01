@@ -48,7 +48,7 @@ export function bindExportSocialVariants(connection: PhotoshopConnection): ToolD
           platforms: {
             type: 'array',
             description: `Slugs of platforms to export. Known: ${Object.keys(PLATFORM_SPECS).join(', ')}. Default: ${DEFAULT_PLATFORMS.join(', ')}.`,
-            items: { type: 'string' },
+            items: { type: 'string', enum: Object.keys(PLATFORM_SPECS) },
             default: DEFAULT_PLATFORMS,
           },
           quality: {

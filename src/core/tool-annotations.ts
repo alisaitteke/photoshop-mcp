@@ -46,6 +46,7 @@ export const TOOL_ANNOTATIONS: Record<string, PhotoshopToolAnnotations> = {
   photoshop_delete_layer: harm(false),
   photoshop_create_text_layer: edit(false),
   photoshop_fill_layer: harm(true),
+  photoshop_fill_gradient: harm(true),
   photoshop_get_layers: read,
   photoshop_select_layer_by_name: edit(true),
 

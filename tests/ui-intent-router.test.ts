@@ -32,27 +32,27 @@ const yes = (noul = 0.95) => ({ noul });
 
 describe('intent router: decide (single command)', () => {
   it('runs a confident single command instantly', () => {
-    const d = decide(answers({ intent: pick('undo', 0.97) }), meta);
+    const d = decide(answers({ intent: pick('photoshop_undo', 0.97) }), meta);
     expect(d.route).toBe('instant');
-    expect(d.calls).toEqual([{ tool: 'photoshop_undo', args: {}, preview: false, label: 'Undo 1 step' }]);
+    expect(d.calls).toEqual([{ tool: 'photoshop_undo', args: {}, preview: true, label: 'Undo' }]);
   });
 
   it('fills a number slot from the pre-parsed candidates', () => {
-    const d = decide(answers({ intent: pick('set_opacity', 0.93), 's0.opacity': pick('60', 0.9) }), meta);
+    const d = decide(answers({ intent: pick('photoshop_set_layer_opacity', 0.93), 's0.opacity': pick('60', 0.9) }), meta);
     expect(d.route).toBe('instant');
     expect(d.calls?.[0]?.args).toEqual({ opacity: 60 });
-    expect(d.label).toBe('Opacity 60%');
+    expect(d.label).toBe('Set layer opacity · opacity 60');
   });
 
   it('fills the blend mode slot', () => {
-    const d = decide(answers({ intent: pick('set_blend_mode', 0.91), 's0.blendMode': pick('MULTIPLY', 0.96) }), meta);
+    const d = decide(answers({ intent: pick('photoshop_set_layer_blend_mode', 0.91), 's0.blendMode': pick('MULTIPLY', 0.96) }), meta);
     expect(d.calls?.[0]?.args).toEqual({ blendMode: 'MULTIPLY' });
-    expect(d.label).toBe('Blend mode Multiply');
+    expect(d.label).toBe('Set layer blend mode · blendMode MULTIPLY');
   });
 
   it('does not run instantly when a required slot is missing or unsure', () => {
     const d = decide(
-      answers({ intent: pick('set_opacity'), 's0.opacity': pick('60', THRESHOLDS.slot - 0.1) }),
+      answers({ intent: pick('photoshop_set_layer_opacity'), 's0.opacity': pick('60', THRESHOLDS.slot - 0.1) }),
       meta
     );
     expect(d.route).toBe('plan');
@@ -60,28 +60,44 @@ describe('intent router: decide (single command)', () => {
   });
 
   it('rejects numbers outside the slot range', () => {
-    const d = decide(answers({ intent: pick('set_opacity'), 's0.opacity': pick('140') }), meta);
+    const d = decide(answers({ intent: pick('photoshop_set_layer_opacity'), 's0.opacity': pick('140') }), meta);
     expect(d.route).toBe('plan');
   });
 
   it('never runs risky commands instantly', () => {
-    const d = decide(answers({ intent: pick('flatten_image', 0.99) }), meta);
+    const d = decide(answers({ intent: pick('photoshop_flatten_image', 0.99) }), meta);
     expect(d.route).toBe('plan');
     expect(d.reason).toMatch(/hard to undo/);
   });
 
   it('falls back when confidence is below the instant threshold', () => {
-    const d = decide(answers({ intent: pick('undo', THRESHOLDS.instant - 0.01) }), meta);
+    const d = decide(answers({ intent: pick('photoshop_undo', THRESHOLDS.instant - 0.01) }), meta);
     expect(d.route).not.toBe('instant');
   });
 
   it('does not run a single command instantly when the request looks multi-step', () => {
-    const d = decide(answers({ intent: pick('undo'), multi_step: yes(0.8) }), meta);
+    const d = decide(answers({ intent: pick('photoshop_undo'), multi_step: yes(0.8) }), meta);
     expect(d.route).toBe('plan');
   });
 
   it('asks first when a single request is not actionable', () => {
     expect(decide(answers({ actionable: { noul: 0.2 } }), meta).route).toBe('clarify');
+  });
+
+  it('plans a known command instead of asking first when the request is unspecific', () => {
+    const d = decide(answers({ intent: pick('photoshop_undo', 0.97), actionable: { noul: 0.1 } }), meta);
+    expect(d.route).toBe('instant');
+  });
+
+  it('plans undo-all instead of one step or a clarifying question', () => {
+    const d = decide(
+      answers({ intent: pick('photoshop_undo', 0.97), actionable: { noul: 0.1 } }),
+      meta,
+      { prompt: 'tüm değişiklikleri geri al' }
+    );
+    expect(d.route).toBe('plan');
+    expect(d.calls).toBeUndefined();
+    expect(d.reason).toMatch(/every change/);
   });
 
   it('plans (does not ask first) when a multi-step request only looks a bit unspecific', () => {
@@ -106,32 +122,32 @@ describe('intent router: decide (single command)', () => {
 
 describe('intent router: recipes', () => {
   it('runs a color grade with the look Jev picked', () => {
-    const d = decide(answers({ intent: pick('color_grade'), 's0.preset': pick('vintage', 0.9) }), meta);
+    const d = decide(answers({ intent: pick('photoshop_recipe_apply_color_grade'), 's0.preset': pick('vintage', 0.9) }), meta);
     expect(d.route).toBe('instant');
     expect(d.calls?.[0]).toMatchObject({
       tool: 'photoshop_recipe_apply_color_grade',
       args: { preset: 'vintage' },
       preview: true,
-      label: 'Color grade: vintage',
+      label: 'Apply color grade · preset vintage',
     });
   });
 
   it("leaves optional values to the recipe's defaults when none is stated", () => {
-    const d = decide(answers({ intent: pick('color_grade'), 's0.preset': pick('none', 0.9) }), meta);
+    const d = decide(answers({ intent: pick('photoshop_recipe_apply_color_grade'), 's0.preset': pick('none', 0.9) }), meta);
     expect(d.route).toBe('instant');
     expect(d.calls?.[0]?.args).toEqual({});
   });
 
   it('needs the slide count before splitting a carousel', () => {
-    expect(decide(answers({ intent: pick('split_carousel') }), meta).route).toBe('plan');
-    const d = decide(answers({ intent: pick('split_carousel'), 's0.slides': pick('5') }), meta);
+    expect(decide(answers({ intent: pick('photoshop_recipe_split_carousel') }), meta).route).toBe('plan');
+    const d = decide(answers({ intent: pick('photoshop_recipe_split_carousel'), 's0.slides': pick('5') }), meta);
     expect(d.calls?.[0]).toMatchObject({ tool: 'photoshop_recipe_split_carousel', args: { slides: 5 } });
   });
 
   it('turns per-platform yes/no answers into a platform list', () => {
     const d = decide(
       answers({
-        intent: pick('export_social_variants'),
+        intent: pick('photoshop_recipe_export_social_variants'),
         's0.platforms.instagram_story': yes(0.92),
         's0.platforms.youtube_thumbnail': yes(0.88),
         's0.platforms.x_post': yes(0.3),
@@ -139,11 +155,11 @@ describe('intent router: recipes', () => {
       meta
     );
     expect(d.calls?.[0]?.args).toEqual({ platforms: ['instagram_story', 'youtube_thumbnail'] });
-    expect(d.label).toBe('Social exports (2)');
+    expect(d.label).toBe('Export social variants · platforms (2)');
   });
 
   it('only changes a default on a confident yes', () => {
-    const base = { intent: pick('passport_photo'), 's0.spec': pick('tr_50x60', 0.9) };
+    const base = { intent: pick('photoshop_recipe_passport_photo'), 's0.spec': pick('tr_50x60', 0.9) };
     expect(decide(answers({ ...base, 's0.make_sheet': yes(0.6) }), meta).calls?.[0]?.args).toEqual({ spec: 'tr_50x60' });
     expect(decide(answers({ ...base, 's0.make_sheet': yes(0.9) }), meta).calls?.[0]?.args).toEqual({
       spec: 'tr_50x60',
@@ -152,29 +168,33 @@ describe('intent router: recipes', () => {
   });
 
   it('maps slot keys to the recipe argument names', () => {
-    const d = decide(answers({ intent: pick('organize_layers'), 's0.naming': pick('content_summary'), 's0.auto_group': yes(0.9) }), meta);
-    expect(d.calls?.[0]?.args).toEqual({ naming_scheme: 'content_summary', auto_group: false });
+    const d = decide(answers({ intent: pick('photoshop_recipe_organize_layers'), 's0.naming_scheme': pick('content_summary'), 's0.auto_group': yes(0.9) }), meta);
+    expect(d.calls?.[0]?.args).toEqual({ naming_scheme: 'content_summary', auto_group: true });
   });
 
   it('never runs a command with values instantly when the value call failed', () => {
-    const slotted = decide(answers({ intent: pick('color_grade') }), meta, { slotsAnswered: false });
+    const slotted = decide(answers({ intent: pick('photoshop_recipe_apply_color_grade') }), meta, { slotsAnswered: false });
     expect(slotted.route).toBe('plan');
-    const plain = decide(answers({ intent: pick('remove_background') }), meta, { slotsAnswered: false });
+    const plain = decide(answers({ intent: pick('photoshop_deselect') }), meta, { slotsAnswered: false });
     expect(plain.route).toBe('instant');
   });
 
-  it('only lists recipes whose tools exist and whose inputs Jev can fill', () => {
-    const recipes = INSTANT_INTENTS.filter((i) => i.tool.startsWith('photoshop_recipe_')).map((i) => i.tool);
-    expect(recipes).toEqual(
+  it('lists every recipe tool, and leaves free-text recipes to the planner', () => {
+    const recipes = INSTANT_INTENTS.filter((i) => i.tool.startsWith('photoshop_recipe_'));
+    const names = recipes.map((i) => i.tool);
+    expect(names).toEqual(
       expect.arrayContaining([
         'photoshop_recipe_remove_background',
         'photoshop_recipe_apply_color_grade',
         'photoshop_recipe_enhance_portrait',
         'photoshop_recipe_split_carousel',
+        'photoshop_recipe_sky_blend',
+        'photoshop_recipe_csv_to_cards',
       ])
     );
-    expect(recipes).not.toContain('photoshop_recipe_sky_blend');
-    expect(recipes).not.toContain('photoshop_recipe_csv_to_cards');
+    expect(recipes.find((i) => i.tool === 'photoshop_recipe_sky_blend')?.unfillable).toBe(true);
+    expect(recipes.find((i) => i.tool === 'photoshop_recipe_csv_to_cards')?.unfillable).toBe(true);
+    expect(recipes.find((i) => i.tool === 'photoshop_recipe_remove_background')?.unfillable).toBeUndefined();
   });
 });
 
@@ -230,8 +250,8 @@ describe('intent router: chains', () => {
     const d = decide(
       answers({
         multi_step: yes(0.9),
-        step_1: pick('black_and_white', 0.93),
-        step_2: pick('set_opacity', 0.9),
+        step_1: pick('photoshop_desaturate', 0.93),
+        step_2: pick('photoshop_set_layer_opacity', 0.9),
         's2.opacity': pick('50', 0.92),
       }),
       meta,
@@ -240,15 +260,15 @@ describe('intent router: chains', () => {
     expect(d.route).toBe('instant');
     expect(d.calls?.map((c) => c.tool)).toEqual(['photoshop_desaturate', 'photoshop_set_layer_opacity']);
     expect(d.calls?.[1]?.args).toEqual({ opacity: 50 });
-    expect(d.label).toBe('Black & white → Opacity 50%');
-    expect(d.intent).toBe('black_and_white+set_opacity');
+    expect(d.label).toBe('Desaturate → Set layer opacity · opacity 50');
+    expect(d.intent).toBe('photoshop_desaturate+photoshop_set_layer_opacity');
     expect(d.confidence).toBe(0.9);
     expect(d.steps).toEqual(steps);
   });
 
   it('plans when any part is not a known command', () => {
     const d = decide(
-      answers({ multi_step: yes(0.9), step_1: pick('black_and_white'), step_2: pick('other', 0.9) }),
+      answers({ multi_step: yes(0.9), step_1: pick('photoshop_desaturate'), step_2: pick('other', 0.9) }),
       meta,
       { steps }
     );
@@ -257,7 +277,7 @@ describe('intent router: chains', () => {
 
   it('plans when a part is risky', () => {
     const d = decide(
-      answers({ multi_step: yes(0.9), step_1: pick('black_and_white'), step_2: pick('flatten_image') }),
+      answers({ multi_step: yes(0.9), step_1: pick('photoshop_desaturate'), step_2: pick('photoshop_flatten_image') }),
       meta,
       { steps }
     );
@@ -267,7 +287,7 @@ describe('intent router: chains', () => {
 
   it('needs Jev to agree that the request is multi-step', () => {
     const d = decide(
-      answers({ multi_step: yes(0.4), step_1: pick('black_and_white'), step_2: pick('duplicate_layer') }),
+      answers({ multi_step: yes(0.4), step_1: pick('photoshop_desaturate'), step_2: pick('photoshop_duplicate_layer') }),
       meta,
       { steps }
     );
@@ -276,7 +296,7 @@ describe('intent router: chains', () => {
 
   it('prefers the single command when every part agrees with it', () => {
     const d = decide(
-      answers({ intent: pick('black_and_white'), multi_step: yes(0.05), step_1: pick('black_and_white'), step_2: pick('black_and_white') }),
+      answers({ intent: pick('photoshop_desaturate'), multi_step: yes(0.05), step_1: pick('photoshop_desaturate'), step_2: pick('photoshop_desaturate') }),
       meta,
       { steps: ['make it gray', 'no color'] }
     );
@@ -286,7 +306,7 @@ describe('intent router: chains', () => {
 
   it('does not run one command when a part of the request is something else', () => {
     const d = decide(
-      answers({ intent: pick('black_and_white'), multi_step: yes(0.05), step_1: pick('black_and_white'), step_2: pick('other', 0.8) }),
+      answers({ intent: pick('photoshop_desaturate'), multi_step: yes(0.05), step_1: pick('photoshop_desaturate'), step_2: pick('other', 0.8) }),
       meta,
       { steps: ['siyah beyaz yap', 'biraz daha güzel yap'] }
     );
@@ -296,7 +316,7 @@ describe('intent router: chains', () => {
 
   it('plans when a chain step is missing a required value', () => {
     const d = decide(
-      answers({ multi_step: yes(0.9), step_1: pick('black_and_white'), step_2: pick('set_opacity') }),
+      answers({ multi_step: yes(0.9), step_1: pick('photoshop_desaturate'), step_2: pick('photoshop_set_layer_opacity') }),
       meta,
       { steps }
     );
@@ -325,7 +345,7 @@ describe('intent router: questions', () => {
 
   it('asks value questions only for the picked commands, with numbers from their own part', () => {
     const targets = instantTargets(
-      answers({ multi_step: yes(0.9), step_1: pick('set_opacity'), step_2: pick('undo') }),
+      answers({ multi_step: yes(0.9), step_1: pick('photoshop_set_layer_opacity'), step_2: pick('photoshop_undo') }),
       'opaklığı 50 yap ve 3 adım geri al',
       ['opaklığı 50 yap', '3 adım geri al']
     );
@@ -333,13 +353,13 @@ describe('intent router: questions', () => {
     const opacity = buildSlotQuestions(targets![0]!) as Record<string, { criteria: Record<string, unknown> }>;
     const count = buildSlotQuestions(targets![1]!) as Record<string, { criteria: Record<string, unknown> }>;
     expect(Object.keys(opacity.opacity!.criteria)).toEqual(['50', 'none']);
-    expect(Object.keys(count.count!.criteria)).toEqual(['3', 'none']);
+    expect(Object.keys(count.steps!.criteria)).toEqual(['3', 'none']);
   });
 
   it('skips number questions when the text has no numbers, and splits multi-selects', () => {
-    const undo = findIntent('undo')!;
+    const undo = findIntent('photoshop_undo')!;
     expect(buildSlotQuestions({ intent: undo, text: 'undo', prefix: 's0', confidence: 1 })).toEqual({});
-    const social = findIntent('export_social_variants')!;
+    const social = findIntent('photoshop_recipe_export_social_variants')!;
     const q = buildSlotQuestions({ intent: social, text: 'export for insta and youtube', prefix: 's0', confidence: 1 });
     expect(Object.keys(q)).toContain('platforms.instagram_story');
     expect(Object.values(q).every((question) => (question as { type: string }).type === 'noul')).toBe(true);
@@ -364,7 +384,7 @@ describe('intent router: classifyIntent', () => {
   }
 
   it('makes one call when the picked command has no values to fill', async () => {
-    const { client, seen } = fakeClient(() => answers({ intent: pick('deselect', 0.9) }));
+    const { client, seen } = fakeClient(() => answers({ intent: pick('photoshop_deselect', 0.9) }));
     let t = 1000;
     const d = await classifyIntent('deselect everything', client, { now: () => (t += 42) });
     expect(seen).toHaveLength(1);
@@ -376,7 +396,7 @@ describe('intent router: classifyIntent', () => {
 
   it('makes a second call for the values of the picked command', async () => {
     const { client, seen } = fakeClient((_, keys) =>
-      keys.includes('intent') ? answers({ intent: pick('set_opacity') }) : { opacity: pick('40') }
+      keys.includes('intent') ? answers({ intent: pick('photoshop_set_layer_opacity') }) : { opacity: pick('40') }
     );
     const d = await classifyIntent('opacity 40', client);
     expect(seen).toHaveLength(2);
@@ -388,7 +408,7 @@ describe('intent router: classifyIntent', () => {
     const { client, seen } = fakeClient((text, keys) => {
       if (keys.includes('multi_step')) return answers({ multi_step: yes(0.9) });
       if (keys.includes('intent')) {
-        return { intent: pick(text === 'arka planı kaldır' ? 'remove_background' : 'color_grade') };
+        return { intent: pick(text === 'arka planı kaldır' ? 'photoshop_recipe_remove_background' : 'photoshop_recipe_apply_color_grade') };
       }
       return { preset: pick('cinematic') };
     });
@@ -397,17 +417,18 @@ describe('intent router: classifyIntent', () => {
       'arka planı kaldır, sonra sinematik renk ver',
       'arka planı kaldır',
       'sinematik renk ver',
+      'arka planı kaldır',
       'sinematik renk ver',
     ]);
     expect(d.route).toBe('instant');
     expect(d.calls?.map((c) => c.args)).toEqual([{}, { preset: 'cinematic' }]);
-    expect(d.label).toBe('Remove background → Color grade: cinematic');
+    expect(d.label).toBe('Remove background → Apply color grade · preset cinematic');
   });
 
   it('plans when a part could not be labelled', async () => {
     const { client } = fakeClient((text, keys) => {
       if (keys.includes('multi_step')) return answers({ multi_step: yes(0.9) });
-      return text === 'katmanı çoğalt' ? { intent: pick('duplicate_layer') } : new Error('timeout');
+      return text === 'katmanı çoğalt' ? { intent: pick('photoshop_duplicate_layer') } : new Error('timeout');
     });
     const d = await classifyIntent('katmanı çoğalt ve yeni katman ekle', client);
     expect(d.route).toBe('plan');
@@ -415,7 +436,7 @@ describe('intent router: classifyIntent', () => {
 
   it('does not guess values when the value call fails', async () => {
     const { client } = fakeClient((_, keys) =>
-      keys.includes('intent') ? answers({ intent: pick('color_grade') }) : new Error('timeout')
+      keys.includes('intent') ? answers({ intent: pick('photoshop_recipe_apply_color_grade') }) : new Error('timeout')
     );
     const d = await classifyIntent('vintage look', client);
     expect(d.route).toBe('plan');

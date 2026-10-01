@@ -24,7 +24,7 @@ export const SUBMIT_ACTION_PLAN_INPUT_SCHEMA = {
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['id', 'tool', 'argsJson'],
+        required: ['id', 'tool', 'argsJson', 'rationale', 'dependsOn'],
         properties: {
           id: { type: 'string', description: 'Unique short id for this step, e.g. "s1".' },
           tool: { type: 'string', description: 'Exact tool name from the catalog.' },
@@ -34,11 +34,14 @@ export const SUBMIT_ACTION_PLAN_INPUT_SCHEMA = {
               'JSON-encoded object of arguments for the tool. Use "{}" if none. ' +
               'A value may reference a prior step result with "$steps.<stepId>.<dot.path>".',
           },
-          rationale: { type: 'string', description: 'One short sentence on why this step.' },
+          rationale: {
+            type: 'string',
+            description: 'One short sentence on why this step. Use "" if none.',
+          },
           dependsOn: {
             type: 'array',
             items: { type: 'string' },
-            description: 'Step ids this step depends on.',
+            description: 'Step ids this step depends on. Use [] if none.',
           },
         },
       },

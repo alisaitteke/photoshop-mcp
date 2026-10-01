@@ -134,7 +134,7 @@ export async function* runChatViaApiKey(
             type: 'error',
             payload: { message: (part.error as Error)?.message ?? String(part.error) },
           };
-          break;
+          return;
         }
         default:
           break;

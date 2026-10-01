@@ -127,6 +127,8 @@ export interface PersistedToolCall {
   input: unknown;
   result?: ToolResult;
   status: 'pending' | 'success' | 'error';
+  /** Action-plan step this call belongs to. */
+  stepId?: string;
   startedAt?: number;
   durationMs?: number;
 }

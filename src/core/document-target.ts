@@ -15,10 +15,10 @@ export const DOCUMENT_ID_SCHEMA_EXCLUDES = new Set([
 ]);
 
 export const DOCUMENT_ID_PROPERTY = {
-  type: 'number',
+  type: ['number', 'null'],
   description:
-    'Optional Photoshop document id from photoshop_get_state / photoshop_list_documents. ' +
-    'When set, the tool activates that document before running so a UI tab switch cannot retarget the edit.',
+    'Photoshop document id from photoshop_get_state / photoshop_list_documents. ' +
+    'Send null to use the active document. A number activates that document before the tool runs.',
 } as const;
 
 export function runWithDocumentId<T>(documentId: number | undefined, fn: () => T): T {
@@ -56,11 +56,15 @@ export function withOptionalDocumentId(tool: Tool): Tool {
   if (!schema || schema.type !== 'object') return tool;
   const properties = schema.properties ?? {};
   if (properties.document_id) return tool;
+  const required = Array.isArray(schema.required) ? [...schema.required] : [];
+  if (!required.includes('document_id')) required.push('document_id');
   return {
     ...tool,
     inputSchema: {
       ...schema,
       type: 'object',
+      additionalProperties: false,
+      required,
       properties: {
         ...properties,
         document_id: { ...DOCUMENT_ID_PROPERTY },

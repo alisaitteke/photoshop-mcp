@@ -15,9 +15,20 @@ const props = defineProps<{
 
 const done = computed(() => props.plan.steps.filter((s) => s.status === 'done').length);
 
+function callForStep(stepId: string, idx: number): ToolCall | undefined {
+  const calls = props.toolCalls ?? [];
+  if (stepId && calls.some((tc) => tc.stepId)) {
+    for (let i = calls.length - 1; i >= 0; i--) {
+      if (calls[i]?.stepId === stepId) return calls[i];
+    }
+    return undefined;
+  }
+  return calls[idx];
+}
+
 const items = computed((): TimelineItem[] =>
   props.plan.steps.map((step, idx) => {
-    const toolCall = props.toolCalls?.[idx];
+    const toolCall = callForStep(step.id, idx);
     const name = step.tool || toolCall?.name || '…';
 
     return {

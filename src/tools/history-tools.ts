@@ -10,6 +10,7 @@ export function createHistoryTools(connection: PhotoshopConnection): ToolDefinit
         name: 'photoshop_undo',
         description:
           'Step the active document back through history (Ctrl/Cmd+Z). Each call moves the active history state earlier by `steps` (default 1).\n\n' +
+          'Users often say: undo, geri al, ctrl z, cmd z, son değişikliği geri al.\n' +
           'Use when: reverting the last edit or a short run of edits.\n' +
           'Do NOT use when: you need to reapply an undone edit — use photoshop_redo.\n' +
           'Do NOT use when: you only need to inspect the stack — use photoshop_get_history.\n\n' +
@@ -32,7 +33,13 @@ export function createHistoryTools(connection: PhotoshopConnection): ToolDefinit
     {
       tool: {
         name: 'photoshop_redo',
-        description: 'Redo the previously undone operation(s) - equivalent to Ctrl/Cmd+Shift+Z',
+        description:
+          'Redo the previously undone operation(s), equivalent to Ctrl/Cmd+Shift+Z.\n\n' +
+          'Users often say: redo, yinele, geri alınanı uygula.\n' +
+          'Use when: reapplying the change that was just undone.\n' +
+          'Do NOT use when: stepping back through history — use photoshop_undo.\n\n' +
+          'Returns: text confirmation with the step count.\n' +
+          'Preconditions: active document with something on the redo stack. Side effects: moves the history state forward.',
         inputSchema: {
           type: 'object',
           properties: {

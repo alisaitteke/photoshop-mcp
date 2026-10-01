@@ -39,7 +39,8 @@ export function createActionTools(connection: PhotoshopConnection): ToolDefiniti
         description:
           'Execute custom ExtendScript (JSX) code inside Photoshop (advanced escape hatch).\n\n' +
           'Use when: no existing tool covers the operation and you can write safe JSX.\n' +
-          'Do NOT use when: a recipe or atomic tool exists — prefer photoshop_recipe_* or photoshop_* tools.\n\n' +
+          'Do NOT use when: a recipe or atomic tool exists — prefer photoshop_recipe_* or photoshop_* tools.\n' +
+          'Do NOT use when: painting a two-color gradient — use photoshop_fill_gradient. Document.gradients does not exist and throws "undefined is not an object".\n\n' +
           'Returns: script return value serialized as text/JSON.\n' +
           'IMPORTANT: Your code runs inside a wrapping IIFE. Use an explicit `return` to pass data back — ' +
           'a bare trailing expression returns undefined. Example: `return { ok: true };` ' +

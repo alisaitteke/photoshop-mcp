@@ -14,8 +14,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  'update:provider': [value: ProviderId];
-  'update:model': [value: string];
+  select: [value: { provider: ProviderId; model: string }];
   'open-settings': [];
 }>();
 
@@ -35,11 +34,8 @@ function onModelClick(prov: ProviderInfo, mdl: ProviderModel): void {
     emit('open-settings');
     return;
   }
-  if (prov.id !== props.currentProvider) {
-    emit('update:provider', prov.id);
-  }
-  if (mdl.id !== props.currentModel) {
-    emit('update:model', mdl.id);
+  if (prov.id !== props.currentProvider || mdl.id !== props.currentModel) {
+    emit('select', { provider: prov.id, model: mdl.id });
   }
   open.value = false;
 }

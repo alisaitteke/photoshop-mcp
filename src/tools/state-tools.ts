@@ -26,7 +26,7 @@ export function createStateTools(connection: PhotoshopConnection): ToolDefinitio
           'Return a cheap read-only snapshot of Photoshop session state (active document, layer, selection).\n\n' +
           'Use when: before any tool that needs an active document/layer, or after an error to recover context.\n' +
           'Do NOT use when: you only need a visual preview — use photoshop_get_preview instead.\n\n' +
-          'Returns: JSON with hasDocument, openDocumentCount, document.id/name/dimensions/colorMode/artboards, activeLayer, activeArtboard, hasSelection. Capture document.id and pass it as document_id on later mutating calls. Artboard ids come from document.artboards[].id. When openDocumentCount > 1, call photoshop_list_documents before acting across tabs.\n' +
+          'Returns: JSON with hasDocument, openDocumentCount, documents[] (id, name, width, height, saved, is_active for every open file), document (id, name, path, saved, width, height, resolution, colorMode, bitsPerChannel, layerCount, layers[] up to 40 top-level layers, artboards), activeLayer, activeArtboard, hasSelection. path is omitted until the file has been saved. Capture document.id and pass it as document_id on later mutating calls. Artboard ids come from document.artboards[].id.\n' +
           'Preconditions: none (safe on empty session). Side effects: none.',
         inputSchema: { type: 'object', properties: {} },
       },

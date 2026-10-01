@@ -142,10 +142,12 @@ export function createLayerTools(connection: PhotoshopConnection): ToolDefinitio
           'Fill the active layer with a solid RGB color. If a selection exists, only that region is filled and the selection stays; otherwise the whole layer is filled and the selection is cleared.\n\n' +
           'Use when: a flat color fill on the active layer or on the current selection.\n' +
           'Do NOT use when: a new empty layer is needed first — use photoshop_create_layer, then this.\n' +
+          'Do NOT use when: the fill should be a two-color gradient — use photoshop_fill_gradient.\n' +
           'Do NOT use when: the selection should be filled with surrounding content — use photoshop_content_aware_fill.\n' +
-          'Do NOT use when: the active layer is text — rasterize with photoshop_rasterize_layer first, or recolor type with photoshop_set_text_color.\n\n' +
+          'Do NOT use when: the active layer is text — rasterize with photoshop_rasterize_layer first, or recolor type with photoshop_set_text_color.\n' +
+          'A smart object is rasterized in place and then filled. No extra layer is created.\n\n' +
           'Returns: the RGB color applied.\n' +
-          'Preconditions: active document and an unlocked non-text layer. Side effects: overwrites those pixels, one history step. The same color on the same pixels is idempotent. Reversible with photoshop_undo.',
+          'Preconditions: active document and an unlocked non-text layer. Side effects: overwrites those pixels. The same color on the same pixels is idempotent. Reversible with photoshop_undo.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -172,6 +174,37 @@ export function createLayerTools(connection: PhotoshopConnection): ToolDefinitio
         },
       },
       handler: async (args) => fillLayer(connection, args),
+    },
+    {
+      tool: {
+        name: 'photoshop_fill_gradient',
+        description:
+          'Paint a two-color linear gradient on the active layer pixels.\n\n' +
+          'Use when: the user asks for a color gradient, blend, or "mavi yeşil" style ramp on a layer.\n' +
+          'Do NOT use when: a flat color is enough — use photoshop_fill_layer.\n' +
+          'Do NOT use when: the gradient should fade the layer into the background — use photoshop_recipe_gradient_fade.\n' +
+          'Do NOT use when: you would write ExtendScript. Document.gradients does not exist.\n\n' +
+          'Returns: the two colors and direction applied.\n' +
+          'Preconditions: active document and an unlocked non-text layer. Side effects: overwrites those pixels, one history step. The same colors on the same pixels are idempotent. Reversible with photoshop_undo.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            fromRed: { type: 'number', description: 'Start red (0-255)', minimum: 0, maximum: 255 },
+            fromGreen: { type: 'number', description: 'Start green (0-255)', minimum: 0, maximum: 255 },
+            fromBlue: { type: 'number', description: 'Start blue (0-255)', minimum: 0, maximum: 255 },
+            toRed: { type: 'number', description: 'End red (0-255)', minimum: 0, maximum: 255 },
+            toGreen: { type: 'number', description: 'End green (0-255)', minimum: 0, maximum: 255 },
+            toBlue: { type: 'number', description: 'End blue (0-255)', minimum: 0, maximum: 255 },
+            direction: {
+              type: 'string',
+              description: 'Gradient axis. Default left_to_right.',
+              enum: ['left_to_right', 'right_to_left', 'top_to_bottom', 'bottom_to_top'],
+            },
+          },
+          required: ['fromRed', 'fromGreen', 'fromBlue', 'toRed', 'toGreen', 'toBlue'],
+        },
+      },
+      handler: async (args) => fillGradient(connection, args),
     },
     {
       tool: {
@@ -345,6 +378,82 @@ async function fillLayer(
         {
           type: 'text' as const,
           text: `Error filling layer: ${error instanceof Error ? error.message : String(error)}`,
+        },
+      ],
+      isError: true,
+    };
+  }
+}
+
+function colorByte(value: unknown, label: string): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new Error(`${label} must be a number from 0 to 255`);
+  }
+  return Math.max(0, Math.min(255, Math.round(value)));
+}
+
+async function fillGradient(
+  connection: PhotoshopConnection,
+  args: Record<string, unknown>
+): Promise<ToolResult> {
+  let fromRed: number;
+  let fromGreen: number;
+  let fromBlue: number;
+  let toRed: number;
+  let toGreen: number;
+  let toBlue: number;
+  try {
+    fromRed = colorByte(args.fromRed, 'fromRed');
+    fromGreen = colorByte(args.fromGreen, 'fromGreen');
+    fromBlue = colorByte(args.fromBlue, 'fromBlue');
+    toRed = colorByte(args.toRed, 'toRed');
+    toGreen = colorByte(args.toGreen, 'toGreen');
+    toBlue = colorByte(args.toBlue, 'toBlue');
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: `Error filling gradient: ${error instanceof Error ? error.message : String(error)}`,
+        },
+      ],
+      isError: true,
+    };
+  }
+  const direction =
+    args.direction === 'right_to_left' ||
+    args.direction === 'top_to_bottom' ||
+    args.direction === 'bottom_to_top'
+      ? args.direction
+      : 'left_to_right';
+
+  try {
+    const apiFactory = new PhotoshopAPIFactory(connection);
+    const api = await apiFactory.createAPI();
+    const script = ExtendScriptSnippets.fillLinearGradient(
+      fromRed,
+      fromGreen,
+      fromBlue,
+      toRed,
+      toGreen,
+      toBlue,
+      direction
+    );
+    await api.executeScript(script);
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: `Layer filled with gradient RGB(${fromRed}, ${fromGreen}, ${fromBlue}) to RGB(${toRed}, ${toGreen}, ${toBlue}) ${direction}`,
+        },
+      ],
+    };
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: `Error filling gradient: ${error instanceof Error ? error.message : String(error)}`,
         },
       ],
       isError: true,

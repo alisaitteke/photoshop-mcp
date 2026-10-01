@@ -8,9 +8,13 @@ MCP server and standalone UI are used and to improve the product. Analytics are
 
 ## What we collect
 
-- App version, operating system (platform, type, release), CPU count, Node.js version,
+- App version, operating system (platform, type, release), CPU count, CPU model
+  (`machine`), OS uptime in whole hours (`uptime_hours`), Node.js version,
   launch method, system locale/timezone, and whether optional env overrides are
   configured (flags only — never paths or values).
+  The system locale is also sent as the Rybbit session `language` field.
+  The session `timezone` column stays Rybbit's IP geolocation; the machine clock
+  is `system_timezone` on the person profile and on each event.
   **App version is attached to every server-side event** via `buildRuntimeProperties()`,
   not only `mcp_session_started`.
 - **MCP-only usage** (no UI required): process lifecycle, MCP client identity
@@ -34,8 +38,11 @@ The user profile also stores **install cohort** fields (persisted locally, then
 sent as identify traits): `first_install_at`, `first_usage_surface`
 (`mcp` | `server` | `web`), and `first_mcp_client_name` when an MCP client first
 connects. It also stores **total installed RAM (GB)**, **memory tier (bucketed GB)**,
-and the **detected Photoshop version** when available — these hardware fields are
-on the person profile only, not repeated on every event.
+**CPU model** (`machine`), **OS uptime in hours**, and the **detected Photoshop
+version** when available. RAM and the memory tier stay on the person profile.
+`machine`, `uptime_hours`, locale, and timezone ride on every server event.
+`photoshop_version` is added to later events in that process once Photoshop
+answers with a version.
 
 Country/region signals come from Rybbit GeoIP on ingest and from
 `system_locale_region` / `browser_locale_region` as a secondary hint.

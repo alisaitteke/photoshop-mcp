@@ -87,19 +87,14 @@ model runs:
 
 While you type, the composer shows the route Jev picked; hover the chip to see
 Jev's signals (multi-step, specific, needs a look). Thresholds live in
-`src/ui/intent/router.ts`; the command list in `src/ui/intent/catalog.ts`.
+`src/ui/intent/router.ts`. The choices are the registered MCP tools: each
+criterion is the tool's "Use when" line (or its first sentence). Argument
+slots come from the tool schema (enum, number, boolean, enum list). A required
+path or other free-text value goes to the planner, and so does "undo all" /
+"tüm değişiklikleri geri al", which is not a step count. Flatten, merge and
+delete never run instantly.
 
-**Recipes.** A recipe is already a fixed multi-tool workflow, so matching one
-runs many Photoshop steps without an LLM. Recipes qualify when their inputs are
-choices, numbers or yes/no flags, because Jev picks from options and never
-writes text: remove background, color grade (preset), enhance portrait
-(strength), gradient fade (direction), dodge & burn, frequency separation
-(radius), organize layers, passport photo (size, print sheet), export for web
-(size, format), social exports (one yes/no per platform) and split carousel
-(slide count). A value that is not stated uses the recipe's default; a required
-one (the slide count) must be stated. Recipes that need a path or free text
-(sky blend, batch mockups/watermarks, CSV cards) and remove distraction (needs a
-selection) go through the planner.
+**Recipes.** A recipe is one registered tool, so Jev can pick it like any other command. Slots still come only from the schema. A value that is not stated uses the tool default; a required number (the slide count) must be stated. A required path or other free-text argument (sky blend, batch mockups, CSV cards) is not filled by Jev and goes through the planner.
 
 **Chains.** A prompt is cut at connecting words (`ve`, `sonra`, `ardından`,
 `-ıp/-ip`, `and then`, commas, sentence ends). Names such as "black and white"
@@ -116,8 +111,7 @@ parallel). A second round runs only when a picked command has values to fill,
 again one call per command with just its own text. If that round fails, commands
 with values go to the planner instead of running with defaults.
 
-A multi-step prompt only goes to **Ask first** when it is very vague; otherwise
-it is planned, since several clear steps are not a reason to ask a question.
+**Ask first** only when Jev picks `other` and the request is vague. A tool it did pick is planned or run, even if the "specific" signal is low.
 
 Turn it on in **Settings → Routing**: paste a key from
 [console.typesafe.ai](https://console.typesafe.ai/) and press **Save** (the key is

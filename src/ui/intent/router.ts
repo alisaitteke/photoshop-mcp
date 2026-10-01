@@ -3,6 +3,7 @@ import {
   OTHER_DESCRIPTION,
   OTHER_INTENT,
   findIntent,
+  hasUnboundedQuantifier,
   type InstantIntent,
   type SlotValues,
 } from './catalog.js';
@@ -19,9 +20,10 @@ import {
  *   clarify  – too vague → agent loop told to ask one question first
  *
  * Jev decides, code acts: thresholds live here, not in the model. Jev only
- * picks from options, so anything that needs text is split or parsed by code:
- * chains are cut at connecting words ("ve", "sonra", "and then", commas) and
- * Jev labels each part; numbers are pre-parsed and Jev picks one.
+ * picks from options (one per registered MCP tool), so anything that needs
+ * free text is left to the planner. Chains are cut at connecting words
+ * ("ve", "sonra", "and then", commas) and Jev labels each part; numbers are
+ * pre-parsed and Jev picks one. "All / tüm / hepsi" is not a step count.
  *
  * Two rounds at most. Round one routes the whole prompt and, in parallel,
  * labels each part of a split prompt on its own (Jev is most accurate when the
@@ -340,6 +342,7 @@ export function instantTargets(
     whole &&
     single &&
     !single.risky &&
+    !single.unfillable &&
     whole.confidence >= THRESHOLDS.instant &&
     signals.multiStep < THRESHOLDS.multiStepMax &&
     !partDisagrees(answers, steps, single.id)
@@ -354,7 +357,7 @@ export function instantTargets(
   for (let i = 0; i < steps.length; i++) {
     const answer = choiceOf(answers, `step_${i + 1}`);
     const intent = answer ? findIntent(answer.choice) : undefined;
-    if (!answer || !intent || intent.risky || answer.confidence < THRESHOLDS.instant) return null;
+    if (!answer || !intent || intent.risky || intent.unfillable || answer.confidence < THRESHOLDS.instant) return null;
     targets.push({ intent, text: steps[i]!, prefix: `s${i + 1}`, confidence: answer.confidence });
   }
   return targets;
@@ -419,16 +422,22 @@ export function decide(
   const intent = findIntent(intentAnswer.choice);
 
   const targets = instantTargets(answers, ctx.prompt ?? '', steps);
+  let unbounded = false;
   if (targets) {
     const calls: InstantCall[] = [];
     for (const target of targets) {
       if (!slotsAnswered && (target.intent.slots?.length ?? 0) > 0) break;
       const { values, missing } = resolveSlots(target.intent, answers, target.prefix);
       if (missing.length > 0) break;
+      const openNumber = (target.intent.slots ?? []).some((slot) => slot.kind === 'number' && values[slot.key] === undefined);
+      if (openNumber && hasUnboundedQuantifier(target.text)) {
+        unbounded = true;
+        break;
+      }
       const label = target.intent.describeCall?.(values) ?? target.intent.label;
       calls.push({ tool: target.intent.tool, args: target.intent.args(values), preview: Boolean(target.intent.preview), label });
     }
-    if (calls.length === targets.length) {
+    if (!unbounded && calls.length === targets.length) {
       const chain = calls.length > 1;
       return {
         ...base,
@@ -449,9 +458,19 @@ export function decide(
     }
   }
 
+  if (unbounded) {
+    return {
+      ...base,
+      route: 'plan',
+      label: 'Plan',
+      reason: 'The request names every change rather than a step count, so the model plans it.',
+    };
+  }
+
   const clarifyBelow =
     signals.multiStep >= THRESHOLDS.planMin ? THRESHOLDS.clarifyBelowMultiStep : THRESHOLDS.clarifyBelow;
-  if (signals.actionable < clarifyBelow) {
+  // A picked tool is specific enough to plan. Ask first only when nothing matched.
+  if (!intent && signals.actionable < clarifyBelow) {
     return { ...base, route: 'clarify', label: 'Ask first', reason: 'Too vague to act on safely; the model asks one question first.' };
   }
   if (signals.needsVisual >= THRESHOLDS.visualMin) {
@@ -466,6 +485,14 @@ export function decide(
   if (risky) {
     return { ...base, route: 'plan', label: 'Plan', reason: `${risky.label} is hard to undo, so it goes through a plan.` };
   }
+  if (intent?.unfillable) {
+    return {
+      ...base,
+      route: 'plan',
+      label: 'Plan',
+      reason: `${intent.label} needs a value Jev cannot write, so the model plans it.`,
+    };
+  }
   const partial = intent !== undefined && partDisagrees(answers, steps, intent.id);
   return {
     ...base,
@@ -476,7 +503,9 @@ export function decide(
         ? 'Several operations; one planning call, then the steps run directly.'
         : partial
           ? 'Part of the request is not that one command, so the model plans it.'
-          : 'Not a single known command; the model plans it.',
+          : intent
+            ? 'Not confident enough to run that one command directly, so the model plans it.'
+            : 'Not a single known command; the model plans it.',
   };
 }
 

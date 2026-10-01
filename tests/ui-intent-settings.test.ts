@@ -32,7 +32,7 @@ describe('intent router settings', () => {
   it('turns an instant decision into a plan when instant commands are off', () => {
     const instant = decide(
       {
-        intent: { choice: 'undo', confidence: 0.97 },
+        intent: { choice: 'photoshop_undo', confidence: 0.97 },
         multi_step: { noul: 0.02 },
         needs_visual: { noul: 0.02 },
         actionable: { noul: 0.95 },

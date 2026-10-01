@@ -1,6 +1,11 @@
 import { getServerAnalyticsContext } from './context.js';
 import { getLaunchMethod } from './launch-method.js';
-import { buildAnonymousRuntimeEnv, getMemoryGbBucket, getTotalRamGb } from './runtime-env.js';
+import {
+  buildAnonymousRuntimeEnv,
+  getKnownPhotoshopVersion,
+  getMemoryGbBucket,
+  getTotalRamGb,
+} from './runtime-env.js';
 
 const BLOCKED_PROPERTY_KEYS = new Set([
   'api_key',
@@ -57,6 +62,8 @@ const ALLOWED_PROPERTY_KEYS = new Set([
   'os_type',
   'os_release',
   'cpu_count',
+  'machine',
+  'uptime_hours',
   'memory_gb',
   'total_ram_gb',
   'photoshop_version',
@@ -169,10 +176,12 @@ export function sanitizePersonOnceProperties(
 export function buildRuntimeProperties(
   properties: Record<string, unknown> | undefined
 ): Record<string, string | number | boolean | string[]> {
+  const photoshopVersion = getKnownPhotoshopVersion();
   return {
     ...buildAnonymousRuntimeEnv(),
     launch_method: getLaunchMethod(),
     ...getServerAnalyticsContext(),
+    ...(photoshopVersion ? { photoshop_version: photoshopVersion } : {}),
     ...sanitizeAnalyticsProperties(properties),
   };
 }

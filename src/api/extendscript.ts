@@ -1448,6 +1448,12 @@ export const ExtendScriptSnippets = {
     if (layer.kind === LayerKind.TEXT) {
       throw new Error('Cannot fill a text layer. Rasterize it first.');
     }
+    var rasterized = false;
+    if (layer.kind === LayerKind.SMARTOBJECT) {
+      layer.rasterize(RasterizeType.ENTIRELAYER);
+      rasterized = true;
+      layer = doc.activeLayer;
+    }
 
     var color = new SolidColor();
     color.rgb.red = ${red};
@@ -1471,10 +1477,131 @@ export const ExtendScriptSnippets = {
 
     return {
       filled: true,
+      rasterized: rasterized,
       layerName: layer.name,
       color: { red: ${red}, green: ${green}, blue: ${blue} }
     };
   `,
+
+  /**
+   * Two-color linear gradient on the active layer's pixels (not the mask).
+   * Document.gradients does not exist in ExtendScript; this uses the gradient tool action.
+   */
+  fillLinearGradient: (
+    fromRed: number,
+    fromGreen: number,
+    fromBlue: number,
+    toRed: number,
+    toGreen: number,
+    toBlue: number,
+    direction: 'left_to_right' | 'right_to_left' | 'top_to_bottom' | 'bottom_to_top'
+  ) => {
+    const axis = {
+      left_to_right: { fromH: 0, fromV: 50, toH: 100, toV: 50 },
+      right_to_left: { fromH: 100, fromV: 50, toH: 0, toV: 50 },
+      top_to_bottom: { fromH: 50, fromV: 0, toH: 50, toV: 100 },
+      bottom_to_top: { fromH: 50, fromV: 100, toH: 50, toV: 0 },
+    }[direction];
+    return `
+    ${helperFunctions}
+    if (app.documents.length === 0) {
+      throw new Error('No active document');
+    }
+    var doc = app.activeDocument;
+    var layer = doc.activeLayer;
+    if (!layer) throw new Error('No active layer');
+    if (layer.allLocked) {
+      throw new Error('Cannot fill a fully locked layer: ' + layer.name);
+    }
+    if (layer.kind === LayerKind.TEXT) {
+      throw new Error('Cannot fill a text layer. Rasterize it first.');
+    }
+    if (layer.isBackgroundLayer) {
+      layer.isBackgroundLayer = false;
+    }
+
+    app.displayDialogs = DialogModes.NO;
+    var docW = doc.width.as('px');
+    var docH = doc.height.as('px');
+    var fromX = docW * (${axis.fromH} / 100.0);
+    var fromY = docH * (${axis.fromV} / 100.0);
+    var toX = docW * (${axis.toH} / 100.0);
+    var toY = docH * (${axis.toV} / 100.0);
+
+    var hadSelection = false;
+    try { hadSelection = doc.selection.bounds != null; } catch (eSel) { hadSelection = false; }
+    if (!hadSelection) doc.selection.selectAll();
+
+    function __mcp_gradPoint(x, y) {
+      var desc = new ActionDescriptor();
+      desc.putUnitDouble(cTID('Hrzn'), cTID('#Pxl'), x);
+      desc.putUnitDouble(cTID('Vrtc'), cTID('#Pxl'), y);
+      return desc;
+    }
+    function __mcp_gradRgb(r, g, b) {
+      var desc = new ActionDescriptor();
+      desc.putDouble(cTID('Rd  '), r);
+      desc.putDouble(cTID('Grn '), g);
+      desc.putDouble(cTID('Bl  '), b);
+      return desc;
+    }
+    function __mcp_gradStop(location, r, g, b) {
+      var desc = new ActionDescriptor();
+      desc.putInteger(cTID('Lctn'), location);
+      desc.putInteger(cTID('Mdpn'), 50);
+      desc.putObject(cTID('Clr '), cTID('RGBC'), __mcp_gradRgb(r, g, b));
+      desc.putEnumerated(cTID('Type'), cTID('Clry'), cTID('UsrS'));
+      return desc;
+    }
+
+    var args = new ActionDescriptor();
+    args.putObject(cTID('From'), cTID('Pnt '), __mcp_gradPoint(fromX, fromY));
+    args.putObject(cTID('T   '), cTID('Pnt '), __mcp_gradPoint(toX, toY));
+    args.putEnumerated(cTID('Md  '), cTID('BlnM'), cTID('Nrml'));
+    args.putEnumerated(cTID('Type'), cTID('GrdT'), cTID('Lnr '));
+    args.putBoolean(cTID('Dthr'), true);
+    args.putBoolean(cTID('UsMs'), false);
+    args.putBoolean(cTID('Rvrs'), false);
+
+    var gradDesc = new ActionDescriptor();
+    gradDesc.putString(cTID('Nm  '), 'Custom');
+    gradDesc.putEnumerated(cTID('GrdF'), cTID('GrdF'), cTID('CstS'));
+    gradDesc.putDouble(cTID('Intr'), 4096.0);
+
+    var colorList = new ActionList();
+    colorList.putObject(cTID('Clrt'), __mcp_gradStop(0, ${fromRed}, ${fromGreen}, ${fromBlue}));
+    colorList.putObject(cTID('Clrt'), __mcp_gradStop(4096, ${toRed}, ${toGreen}, ${toBlue}));
+    gradDesc.putList(cTID('Clrs'), colorList);
+
+    var xferList = new ActionList();
+    var xferA = new ActionDescriptor();
+    xferA.putInteger(cTID('Lctn'), 0);
+    xferA.putInteger(cTID('Mdpn'), 50);
+    xferA.putUnitDouble(cTID('Opct'), cTID('#Prc'), 100.0);
+    xferList.putObject(cTID('TrnS'), xferA);
+    var xferB = new ActionDescriptor();
+    xferB.putInteger(cTID('Lctn'), 4096);
+    xferB.putInteger(cTID('Mdpn'), 50);
+    xferB.putUnitDouble(cTID('Opct'), cTID('#Prc'), 100.0);
+    xferList.putObject(cTID('TrnS'), xferB);
+    gradDesc.putList(cTID('Trns'), xferList);
+
+    args.putObject(cTID('Grad'), cTID('Grdn'), gradDesc);
+    executeAction(cTID('Grdn'), args, DialogModes.NO);
+
+    if (!hadSelection) {
+      try { doc.selection.deselect(); } catch (eDeselect) {}
+    }
+
+    return {
+      filled: true,
+      layerName: layer.name,
+      direction: '${direction}',
+      from: { red: ${fromRed}, green: ${fromGreen}, blue: ${fromBlue} },
+      to: { red: ${toRed}, green: ${toGreen}, blue: ${toBlue} }
+    };
+  `;
+  },
 
   /**
    * Resize image
@@ -1673,6 +1800,18 @@ export const ExtendScriptSnippets = {
       throw new Error('Cannot transform background layer');
     }
     
+    try {
+      var __mcpScaleBounds = layer.bounds;
+      var __mcpScaleW = __mcpScaleBounds[2].as('px') - __mcpScaleBounds[0].as('px');
+      var __mcpScaleH = __mcpScaleBounds[3].as('px') - __mcpScaleBounds[1].as('px');
+      if (!(__mcpScaleW > 0) || !(__mcpScaleH > 0)) {
+        throw new Error('Layer has no pixels (empty bounding rectangle). Fill the layer before scaling.');
+      }
+    } catch (eScaleBounds) {
+      var __mcpScaleMsg = eScaleBounds && eScaleBounds.message ? String(eScaleBounds.message) : '';
+      if (__mcpScaleMsg.indexOf('empty bounding rectangle') !== -1) throw eScaleBounds;
+    }
+
     var anchor = ${centerAnchor ? 'AnchorPosition.MIDDLECENTER' : 'AnchorPosition.TOPLEFT'};
     layer.resize(${scalePercent}, ${scalePercent}, anchor);
     
@@ -3550,6 +3689,22 @@ export const ExtendScriptSnippets = {
     ${getContextInfo}
     var context = getContextInfo();
     if (context.hasDocument && context.document) {
+      var doc = app.activeDocument;
+      try { context.document.saved = doc.saved; } catch (eSaved) {}
+      try { context.document.path = doc.fullName.fsName; } catch (ePath) {}
+      try { context.document.bitsPerChannel = String(doc.bitsPerChannel); } catch (eBits) {}
+      context.document.layers = [];
+      try {
+        var layerLimit = Math.min(doc.layers.length, 40);
+        for (var li = 0; li < layerLimit; li++) {
+          var lyr = doc.layers[li];
+          var layerEntry = { name: String(lyr.name) };
+          try { layerEntry.kind = String(lyr.kind); } catch (eKind) {}
+          try { layerEntry.visible = lyr.visible; } catch (eVis) {}
+          context.document.layers.push(layerEntry);
+        }
+      } catch (eLayers) {}
+
       var abs = __mcp_listArtboards();
       context.document.artboards = abs;
       context.document.artboardCount = abs.length;
@@ -3561,6 +3716,25 @@ export const ExtendScriptSnippets = {
         }
       }
       context.activeArtboard = activeAb;
+    }
+
+    context.documents = [];
+    var activeId = null;
+    try {
+      if (app.documents.length > 0) activeId = app.activeDocument.id;
+    } catch (eActive) {
+      activeId = null;
+    }
+    for (var di = 0; di < app.documents.length; di++) {
+      var openDoc = app.documents[di];
+      var entry = { id: null, name: '', is_active: false };
+      try { entry.id = openDoc.id; } catch (eId) {}
+      try { entry.name = String(openDoc.name); } catch (eName) {}
+      try { entry.width = openDoc.width.as('px'); } catch (eW) {}
+      try { entry.height = openDoc.height.as('px'); } catch (eH) {}
+      try { entry.saved = openDoc.saved; } catch (eOpenSaved) {}
+      try { entry.is_active = activeId !== null && openDoc.id === activeId; } catch (eA) {}
+      context.documents.push(entry);
     }
     return context;
   `,

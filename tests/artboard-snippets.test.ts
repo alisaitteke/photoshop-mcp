@@ -24,11 +24,17 @@ describe('artboard ExtendScript snippets', () => {
     expect(jsx).toContain('__mcp_findArtboard(42, null)');
   });
 
-  it('includes artboards on get_state', () => {
+  it('includes artboards and open-document identity on get_state', () => {
     const jsx = ExtendScriptSnippets.getState();
     expect(jsx).toContain('artboardCount');
     expect(jsx).toContain('activeArtboard');
     expect(jsx).toContain('openDocumentCount');
+    expect(jsx).toContain('context.document.path = doc.fullName.fsName');
+    expect(jsx).toContain('context.document.saved = doc.saved');
+    expect(jsx).toContain('context.document.bitsPerChannel');
+    expect(jsx).toContain('context.document.layers');
+    expect(jsx).toContain('context.documents');
+    expect(jsx).toContain('entry.name = String(openDoc.name)');
   });
 
   it('lists each open document with artboard_count and saved, then restores the active tab', () => {
