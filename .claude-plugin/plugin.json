@@ -1,7 +1,7 @@
 {
   "name": "photoshop-mcp",
   "displayName": "Photoshop MCP",
-  "version": "1.7.31",
+  "version": "1.7.32",
   "description": "Control Adobe Photoshop from Claude Code — 127 tools, recipes, generative AI.",
   "author": {
     "name": "Ali Sait Teke"

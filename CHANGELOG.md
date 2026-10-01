@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.32] - 2026-10-01
+
+[v1.7.31...v1.7.32](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.31...v1.7.32)
+
+### Fixed
+
+- Tool counts in the docs and package listing now match the server: 127 tools (111 atomic + 16 recipes). The 1.7.31 publish stopped on this check before npm.
+
 ## [1.7.31] - 2026-10-01
 
 [v1.7.30...v1.7.31](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.30...v1.7.31)
