@@ -257,14 +257,14 @@ one-liner.
 
 | Directory | Listing / submit | Notes |
 | --------- | ---------------- | ----- |
-| AIBase | [mcp.aibase.com/zh/server/1639703110358409836](https://mcp.aibase.com/zh/server/1639703110358409836) — update via [mcp.aibase.cn/submit](https://mcp.aibase.cn/submit) | Existing card; Chinese copy has gone stale (still said “50+ tools” in 2026). Re-submit with 123 tools, recipes, UI, Windows/macOS, and `npx -y @alisaitteke/photoshop-mcp`. |
+| AIBase | [mcp.aibase.com/zh/server/1639703110358409836](https://mcp.aibase.com/zh/server/1639703110358409836) — update via [mcp.aibase.cn/submit](https://mcp.aibase.cn/submit) | Existing card; Chinese copy has gone stale (still said “50+ tools” in 2026). Re-submit with 127 tools, recipes, UI, Windows/macOS, and `npx -y @alisaitteke/photoshop-mcp`. |
 | mcp.so | skip | [mcp.so/submit](https://mcp.so/submit) is a **$39** paid featured listing. Do not pay. They may still scrape GitHub/registry on their own. |
 | MCP Hub CN | [mcp-cn.com](https://mcp-cn.com/) | Optional. Use the same CN one-liner if they expose a submit/收录 flow. |
 | ModelScope MCP 广场 | [modelscope.cn/mcp](https://modelscope.cn/mcp) | Optional. Catalog-only / local stdio if they allow it — this server cannot be hosted in their cloud (needs a local Photoshop). Skip hosted-deploy prompts. |
 
 CN one-liner for forms:
 
-> 跨平台（Windows / macOS）Photoshop MCP 服务器：123 个工具（含配方工作流与生成式 AI）、独立 Web UI。通过 Cursor / Claude 用自然语言控制 Photoshop。非 Adobe 官方。https://photoshop-mcp.com/
+> 跨平台（Windows / macOS）Photoshop MCP 服务器：127 个工具（含配方工作流与生成式 AI）、独立 Web UI。通过 Cursor / Claude 用自然语言控制 Photoshop。非 Adobe 官方。https://photoshop-mcp.com/
 
 ## Website
 
