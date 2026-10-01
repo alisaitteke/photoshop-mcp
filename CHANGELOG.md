@@ -7,11 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.31] - 2026-10-01
+
+[v1.7.30...v1.7.31](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.30...v1.7.31)
+
 ### Added
 
 - Anonymous Rybbit sessions now include the system language, the machine CPU model, OS uptime in hours, and the Photoshop version once it is known. The session language column uses the system locale. The machine clock stays on `system_timezone`; Rybbit still fills the session timezone from IP geolocation.
+- `photoshop_fill_gradient` paints a two-color gradient on layer pixels.
 - `photoshop_get_preview` renders an MCP App (`ui://photoshop/preview`) in hosts that support it: document size, top-level layer names, a before/after slider, and long-edge web-export buttons. Hosts that cannot draw the app still receive the JPEG.
 - Cursor and Claude Code plugin skills `photoshop-remove-background` and `photoshop-recipes` carry the phrase-to-tool glossary. Server `instructions` keep the session contract and the short remove-background hard rule.
+
+### Changed
+
+- The standalone chat routes from the registered MCP tools. Jev picks a tool from its "Use when" line and fills enum, number, and boolean arguments from the schema. A required path or other free-text value, and flatten, merge, or delete, still go through the planner.
+- Mutating tools require `document_id`. Null uses the active document. `photoshop_create_document` defaults to 1920×1080 and returns the new document id. `photoshop_get_state` lists every open file.
 
 ## [1.7.30] - 2026-10-01
 
