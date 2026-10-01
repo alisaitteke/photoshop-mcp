@@ -107,7 +107,10 @@ Error recovery contract
     Photoshop. Ping and \`get_state\` wait until that restart.
   - \`artboard_not_found\` — call \`photoshop_list_artboards\` or
     \`photoshop_create_artboard\`.
-  - \`font_not_found\` — call \`photoshop_list_fonts\` and retry with a listed name.
+  - \`font_not_found\` — the name is not in Photoshop's font list. Call
+    \`photoshop_list_fonts\` and retry with a listed \`postScriptName\`. To add a
+    font file the user already has, call \`photoshop_install_font\`. It reloads
+    the open app's font list with \`app.refreshFonts()\`; do not quit Photoshop.
   - \`not_text_layer\` — select or create a text layer (\`photoshop_create_text_layer\`).
 
 Multi-step etiquette

@@ -2422,6 +2422,24 @@ export const ExtendScriptSnippets = {
   `,
 
   /**
+   * Rebuild Photoshop's in-memory font list without quitting.
+   * Application.refreshFonts() — Adobe Photoshop JavaScript Reference;
+   * Photoshop 2026's CC Libraries panel calls the same method.
+   */
+  refreshFonts: (postScriptNames: string[]) => `
+    app.refreshFonts();
+    var wanted = [${postScriptNames.map((name) => jsStringLiteral(name)).join(', ')}];
+    var visible = [];
+    for (var i = 0; i < wanted.length; i++) {
+      try {
+        var font = app.fonts.getByName(wanted[i]);
+        if (font && font.postScriptName) visible.push(String(font.postScriptName));
+      } catch (e) {}
+    }
+    return { visible: visible, total: app.fonts.length };
+  `,
+
+  /**
    * Set text color
    */
   setTextColor: (red: number, green: number, blue: number) => `

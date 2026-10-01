@@ -1,6 +1,6 @@
 # Available Tools
 
-**122 tools total** — 106 atomic `photoshop_*` tools plus 16 recipe `photoshop_recipe_*` workflows (single undo step each).
+**123 tools total** — 107 atomic `photoshop_*` tools plus 16 recipe `photoshop_recipe_*` workflows (single undo step each).
 
 Reference for all atomic `photoshop_*` MCP tools exposed by this server (parameters, examples, and return shapes).
 
@@ -17,6 +17,8 @@ photoshop_ping()
 ```
 
 On by default. 15 minutes after the first successful ping (and again after a 7-day cooldown if unanswered), a later successful ping may append a `FEEDBACK_NUDGE` block. Host agents must ask in the user's conversation language (never default to English), in first person (as if they will improve the MCP themselves — they must not start implementing), then call `photoshop_submit_feedback`, then continue the original request. Set `PSMCP_FEEDBACK=0` (or turn off MCPB **Product feedback prompts**) to skip the question.
+
+When a newer `@alisaitteke/photoshop-mcp` release is on npm, a successful ping may instead append an `UPDATE_AVAILABLE` block with the installed and latest versions and one update step for how this copy was installed (npx, MCPB, global npm, or a git checkout). The server looks up the latest version in the background at most once a day and caches it in `~/.photoshop-mcp/update-check.json`, so ping never waits on the network. The notice is shown at most once every 7 days. Host agents mention it in one sentence in the user's language, do not ask a question or run the update, and continue the original request. A ping carries at most one of `UPDATE_AVAILABLE` / `FEEDBACK_NUDGE`. Set `PSMCP_UPDATE_CHECK=0` (or turn off MCPB **Update notices**) to disable it; `NO_UPDATE_NOTIFIER` and `CI` also disable it.
 
 #### `photoshop_submit_feedback`
 Record the user's answer to a product-feedback nudge from `photoshop_ping`.
@@ -630,11 +632,28 @@ List installed fonts available to Photoshop. First call may be slow (`app.fonts`
 
 **Returns:** `{ fonts: [{ name, postScriptName, family, style }], total, truncated }`
 
-Use `postScriptName` when setting fonts manually via `execute_script`; `photoshop_set_text_font` and `photoshop_create_text_layer` resolve display names automatically.
+Use `postScriptName` when setting fonts manually via `execute_script`; `photoshop_set_text_font` and `photoshop_create_text_layer` resolve display names automatically. A font that is not installed can be added with `photoshop_install_font`, which reloads the open app's font list.
 
 ```javascript
 // Example: Find Arial variants
 photoshop_list_fonts({ query: "Arial", limit: 20 })
+```
+
+#### `photoshop_install_font`
+Install a `.ttf`, `.otf`, `.ttc`, or `.otc` for the current user. Does not download the file.
+
+- macOS: copies it to `~/Library/Fonts` (Font Book, Current User).
+- Windows: installs it for the current user only.
+
+If Photoshop is open, the tool calls `app.refreshFonts()` (`Application.refreshFonts` in the Photoshop JavaScript Reference) so `photoshop_list_fonts` sees the new names without quitting. The result includes `post_script_names` to pass to `photoshop_set_text_font`.
+
+Fredoka Bold is the named instance `Fredoka-Bold` inside Google Fonts' variable file `Fredoka[wdth,wght].ttf` (SIL Open Font License). It is not a separate Bold file.
+
+**Parameters:**
+- `file_path` (string, required): Absolute path to the font file
+
+```javascript
+photoshop_install_font({ file_path: "/Users/me/Fonts/Fredoka[wdth,wght].ttf" })
 ```
 
 #### `photoshop_set_text_font`

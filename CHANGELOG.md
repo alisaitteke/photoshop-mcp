@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `photoshop_install_font` installs a `.ttf`, `.otf`, or `.ttc` for the current user and reloads the open app's font list with `app.refreshFonts()`. Fredoka Bold is the `Fredoka-Bold` instance inside the variable font, not a separate file.
+
 ## [1.7.27] - 2026-09-30
 
 [v1.7.26...v1.7.27](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.26...v1.7.27)

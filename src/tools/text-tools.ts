@@ -3,6 +3,7 @@ import { PhotoshopConnection } from '../platform/connection.js';
 import { PhotoshopAPIFactory } from '../api/photoshop-api.js';
 import { ExtendScriptSnippets } from '../api/extendscript.js';
 import { atomicFailure, atomicFailureFromError, atomicSuccess, parseSnippetResult, runSnippet } from './atomic-shared.js';
+import { installUserFont } from '../platform/install-font.js';
 import {
   emitTextRangesLiteral,
   emitTextStyleLiteral,
@@ -42,11 +43,35 @@ export function createTextTools(connection: PhotoshopConnection): ToolDefinition
     },
     {
       tool: {
+        name: 'photoshop_install_font',
+        description:
+          'Install a font file for the current user and reload Photoshop\'s font list without quitting.\n\n' +
+          'Use when: photoshop_list_fonts does not include a font the user wants, and they already have the font file.\n' +
+          'Does not download fonts. file_path is an absolute path to a .ttf, .otf, .ttc, or .otc.\n' +
+          'macOS copies it to ~/Library/Fonts (Font Book, Current User). Windows installs it for the current user only, not for all users.\n' +
+          'If Photoshop is open, this calls app.refreshFonts() so the new PostScript names are listed immediately. Do not quit Photoshop.\n\n' +
+          'Fredoka Bold is the Bold named instance inside the variable font Fredoka[wdth,wght].ttf (SIL Open Font License, Google Fonts). Its PostScript name is Fredoka-Bold. There is no separate Fredoka Bold file in that release.\n\n' +
+          'Returns: installed_path, post_script_names, fonts_refreshed. Side effects: writes the current-user font folder and reloads the open app\'s font list.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            file_path: {
+              type: 'string',
+              description: 'Absolute path to a .ttf, .otf, .ttc, or .otc file',
+            },
+          },
+          required: ['file_path'],
+        },
+      },
+      handler: async (args) => installFont(connection, args),
+    },
+    {
+      tool: {
         name: 'photoshop_set_text_font',
         description:
           'Set font family and size for active text layer.\n\n' +
           'Accepts display name (e.g. "Arial") or PostScript name (e.g. "ArialMT") — resolved via app.fonts.\n' +
-          'Use photoshop_list_fonts to discover available fonts.',
+          'Use photoshop_list_fonts to discover available fonts. If the font is not listed, install its file with photoshop_install_font. That reloads the open app\'s font list; do not quit Photoshop.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -244,6 +269,103 @@ export function createTextTools(connection: PhotoshopConnection): ToolDefinition
       handler: async (args) => setTextRanges(connection, args),
     },
   ];
+}
+
+async function installFont(
+  connection: PhotoshopConnection,
+  args: Record<string, unknown>
+): Promise<ToolResult> {
+  const filePath = args.file_path;
+  if (typeof filePath !== 'string' || !filePath.trim()) {
+    return atomicFailure({
+      ok: false,
+      code: 'invalid_arguments',
+      message: 'file_path is required.',
+    });
+  }
+  try {
+    const installed = await installUserFont(filePath);
+    const refresh = await refreshPhotoshopFontList(connection, installed.postScriptNames);
+    const names = installed.postScriptNames.length
+      ? installed.postScriptNames.join(', ')
+      : 'the name returned by photoshop_list_fonts';
+    const summary = installFontSummary(installed.alreadyInstalled, names, refresh);
+    return atomicSuccess(
+      summary,
+      {
+        installed_path: installed.installedPath,
+        post_script_names: installed.postScriptNames,
+        family: installed.family,
+        already_installed: installed.alreadyInstalled,
+        fonts_refreshed: refresh.refreshed,
+        visible_post_script_names: refresh.visible,
+        needs_photoshop_restart: refresh.photoshopRunning && !refresh.refreshed,
+      },
+      'photoshop_list_fonts'
+    );
+  } catch (error) {
+    return atomicFailureFromError(error);
+  }
+}
+
+interface FontRefreshResult {
+  refreshed: boolean;
+  visible: string[];
+  photoshopRunning: boolean;
+}
+
+/**
+ * Application.refreshFonts() forces the font list to refresh.
+ * Adobe documents it on Application in the Photoshop JavaScript Reference,
+ * and Photoshop 2026's CC Libraries panel calls app.refreshFonts() before
+ * looking a font up. Copying a file into the user font folder does not
+ * update an already-open session by itself.
+ */
+async function refreshPhotoshopFontList(
+  connection: PhotoshopConnection,
+  postScriptNames: string[]
+): Promise<FontRefreshResult> {
+  try {
+    const api = await new PhotoshopAPIFactory(connection).createAPI();
+    const result = await api.executeScript(
+      ExtendScriptSnippets.refreshFonts(postScriptNames),
+      undefined,
+      { launch: false }
+    );
+    const visible = readVisiblePostScriptNames(result);
+    const refreshed = postScriptNames.length === 0 || visible.length > 0;
+    return { refreshed, visible, photoshopRunning: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      refreshed: false,
+      visible: [],
+      photoshopRunning: !/not running/i.test(message),
+    };
+  }
+}
+
+function readVisiblePostScriptNames(result: unknown): string[] {
+  if (!result || typeof result !== 'object' || !('visible' in result)) return [];
+  const visible = (result as { visible?: unknown }).visible;
+  if (!Array.isArray(visible)) return [];
+  return visible.filter((name): name is string => typeof name === 'string' && name.length > 0);
+}
+
+function installFontSummary(
+  alreadyInstalled: boolean,
+  names: string,
+  refresh: FontRefreshResult
+): string {
+  if (refresh.refreshed) {
+    return alreadyInstalled
+      ? `Font is already installed. Photoshop reloaded its font list. Use postScriptName: ${names}.`
+      : `Installed the font and reloaded Photoshop's font list. Use postScriptName: ${names}.`;
+  }
+  if (!refresh.photoshopRunning) {
+    return `Installed the font for the current user. Photoshop is not open, so the names will be listed when it starts. Use postScriptName: ${names}.`;
+  }
+  return `Installed the font, but it was still missing after app.refreshFonts(). Quit Photoshop and open it again, then use postScriptName: ${names}.`;
 }
 
 async function listFonts(

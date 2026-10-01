@@ -15,7 +15,7 @@
 
 **Prerequisites:** Photoshop running on Windows or macOS, Node.js 18+. This is unofficial and not affiliated with Adobe.
 
-**Tool surface:** 122 MCP tools — 106 atomic `photoshop_*` + 16 recipe `photoshop_recipe_*`; 23 MCP prompt templates (`ps.*`).
+**Tool surface:** 123 MCP tools — 107 atomic `photoshop_*` + 16 recipe `photoshop_recipe_*`; 23 MCP prompt templates (`ps.*`).
 
 ## Architecture (agent view)
 
@@ -94,6 +94,7 @@ Examples: [examples/cursor-config.json](examples/cursor-config.json), [examples/
 | Photoshop not found | Start Photoshop; set `PHOTOSHOP_PATH` if non-standard install |
 | Tool times out | Retry `photoshop_ping` until it succeeds. Ping runs a short script and returns `extendscript_timeout` while Photoshop is still busy; only then call `get_state`. Pass `timeout_ms` on `photoshop_execute_script` (max 600s), or set `PHOTOSHOP_SCRIPT_TIMEOUT`; batch recipes already use 600s. |
 | Scratch disk full | `scratch_disk_full` means Photoshop froze or refused the command because the scratch disk is full. Free at least 100 GB on the OS drive (the default scratch disk), then restart Photoshop. Ping again only after that restart. |
+| Font not in the list | `font_not_found`. Photoshop only lists fonts installed for this user. `photoshop_install_font` copies a `.ttf`/`.otf`/`.ttc` the user already has into the current-user font folder and calls `app.refreshFonts()` so an open Photoshop sees it. Use the returned `postScriptName`. |
 | `generative_unavailable` / `version_unsupported` | Call `get_capabilities`; feature may need newer Photoshop or Adobe login |
 | Neural filter fails | **Add Plugin** → `uxp-plugin/manifest.json` → **Load** in UXP Developer Tools — see [docs/development.md](docs/development.md#uxp-bridge-plugin-neural-filters) |
 | No active document | Ask user to open/create a document, then `get_state` |

@@ -48,6 +48,15 @@ Photoshop shows "Could not initialize Photoshop because the scratch disks are fu
 2. Restart Photoshop.
 3. To use another drive, open **Photoshop > Settings > Scratch Disks** (macOS) or **Edit > Preferences > Scratch Disks** (Windows), or hold Cmd+Option (macOS) / Ctrl+Alt (Windows) while launching.
 
+### Font is not in the list
+
+Photoshop's `app.fonts` list is the fonts installed for the current user. Copying a file into the user font folder does not update an already-open session. `Application.refreshFonts()` does, without quitting.
+
+1. Install the font file with `photoshop_install_font` (absolute path to a `.ttf`, `.otf`, `.ttc`, or `.otc`). On macOS this copies it to `~/Library/Fonts`. On Windows it installs for the current user only. When Photoshop is open, the tool calls `app.refreshFonts()`.
+2. `photoshop_list_fonts`, then set the `postScriptName` from the install result.
+
+Fredoka Bold is the named instance `Fredoka-Bold` inside the variable font `Fredoka[wdth,wght].ttf` (SIL Open Font License). Google Fonts does not ship a separate Bold file for the current Fredoka release.
+
 ### `photoshop_execute_script` returns `Result: undefined`
 
 **Symptom:** The tool succeeds but the result text is `"undefined"`, or you assume the script did not run.

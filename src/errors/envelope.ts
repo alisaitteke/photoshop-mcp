@@ -64,7 +64,6 @@ const ERROR_PATTERNS: Array<{
   { pattern: /uxp.?bridge|neural filter.*bridge/i, code: 'uxp_bridge_unavailable', suggested_next_tool: 'photoshop_get_capabilities' },
   { pattern: /generative/i, code: 'generative_unavailable', suggested_next_tool: 'photoshop_get_capabilities' },
   { pattern: /syntax error|error 8:/i, code: 'extendscript_runtime_error', suggested_next_tool: 'photoshop_get_state' },
-  { pattern: /font_not_found/i, code: 'font_not_found', suggested_next_tool: 'photoshop_list_fonts' },
   { pattern: /not a text layer/i, code: 'not_text_layer', suggested_next_tool: 'photoshop_create_text_layer' },
   { pattern: /file not found|does not exist/i, code: 'file_not_found' },
   { pattern: /color mode/i, code: 'unsupported_color_mode', suggested_next_tool: 'photoshop_get_document_info' },
@@ -113,6 +112,14 @@ export function diagnoseScratchDiskTimeout(freeBytes: number | null): PhotoshopE
 export function classifyError(message: string): PhotoshopErrorEnvelope {
   if (SCRATCH_DISK_FULL_PATTERN.test(message)) {
     return scratchDiskFullEnvelope(message);
+  }
+  if (/font_not_found/i.test(message)) {
+    return {
+      ok: false,
+      code: 'font_not_found',
+      message: `${message} Photoshop only lists fonts already installed for this user. Install the .ttf, .otf, or .ttc with photoshop_install_font (it reloads the font list in the open app), then retry with a postScriptName from that result.`,
+      suggested_next_tool: 'photoshop_list_fonts',
+    };
   }
 
   for (const { pattern, code, suggested_next_tool } of ERROR_PATTERNS) {

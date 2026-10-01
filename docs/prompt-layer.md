@@ -1,7 +1,7 @@
 # AI / Prompt Layer for Photoshop
 
-The photoshop-mcp server exposes 106 atomic `photoshop_*` tools plus 16 recipe
-`photoshop_recipe_*` tools (122 total), along with a thin
+The photoshop-mcp server exposes 107 atomic `photoshop_*` tools plus 16 recipe
+`photoshop_recipe_*` tools (123 total), along with a thin
 AI/prompt layer ported from TTT: server-level instructions, MCP prompt templates,
 recipe tools, state/preview tools, version-aware capabilities, and structured
 error envelopes.
