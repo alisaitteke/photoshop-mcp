@@ -24,8 +24,14 @@ export function createAdjustmentTools(connection: PhotoshopConnection): ToolDefi
       tool: {
         name: 'photoshop_adjust_brightness_contrast',
         description:
-          'Adjust brightness and contrast of the active layer.\n\n' +
-          'Users often say: fix exposure, add contrast, brighten, darken.',
+          'Apply Image > Adjustments > Brightness/Contrast once to the active layer. Values are deltas on pixels, not an adjustment layer.\n\n' +
+          'Users often say: fix exposure, add contrast, brighten, darken.\n\n' +
+          'Use when: a quick brightness/contrast pass on the current raster layer.\n' +
+          'Do NOT use when: exposure in stops on an editable layer — use photoshop_adjust_exposure.\n' +
+          'Do NOT use when: a non-destructive tonal curve — use photoshop_adjust_curves.\n' +
+          'Do NOT use when: automatic black and white points — use photoshop_auto_levels.\n\n' +
+          'Returns: the brightness and contrast values applied.\n' +
+          'Preconditions: active document and active layer. Text and Smart Objects are rasterized first. Side effects: destructive pixels, one history step. Calling again applies another delta. Reversible with photoshop_undo.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -50,7 +56,13 @@ export function createAdjustmentTools(connection: PhotoshopConnection): ToolDefi
     {
       tool: {
         name: 'photoshop_adjust_hue_saturation',
-        description: 'Adjust hue, saturation, and lightness of the active layer',
+        description:
+          'Shift hue, saturation, and lightness on the active layer via Image > Adjustments > Hue/Saturation. Values are applied once to pixels, not stored as an adjustment layer.\n\n' +
+          'Use when: a direct color shift on the current layer is enough.\n' +
+          'Do NOT use when: the change must stay editable — use photoshop_adjust_vibrance or photoshop_adjust_curves.\n' +
+          'Do NOT use when: the user wants a cinematic grade — use photoshop_recipe_apply_color_grade.\n\n' +
+          'Returns: the hue, saturation, and lightness that were applied.\n' +
+          'Preconditions: active document and active layer. Text and Smart Objects are rasterized first, and a non-Normal blend mode is reset to Normal. Side effects: destructive pixel edit, one history step. Reversible with photoshop_undo.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -82,8 +94,14 @@ export function createAdjustmentTools(connection: PhotoshopConnection): ToolDefi
       tool: {
         name: 'photoshop_auto_levels',
         description:
-          'Apply auto levels adjustment to the active layer.\n\n' +
-          'Users often say: fix flat image, auto tone, make it pop (mild).',
+          'Run Auto Levels on the active layer. Photoshop sets the black, white, and gray points; there is no amount parameter.\n\n' +
+          'Users often say: fix flat image, auto tone, make it pop (mild).\n\n' +
+          'Use when: a one-shot automatic level fix on the current layer.\n' +
+          'Do NOT use when: only contrast should move — use photoshop_auto_contrast.\n' +
+          'Do NOT use when: you want a specific brightness and contrast delta — use photoshop_adjust_brightness_contrast.\n' +
+          'Do NOT use when: the correction must stay an editable adjustment layer — use photoshop_adjust_curves.\n\n' +
+          'Returns: confirmation that Auto Levels ran.\n' +
+          'Preconditions: active document and active layer. Text and Smart Objects are rasterized first. Side effects: destructive pixels, one history step. Reversible with photoshop_undo.',
         inputSchema: {
           type: 'object',
           properties: {},
@@ -94,7 +112,14 @@ export function createAdjustmentTools(connection: PhotoshopConnection): ToolDefi
     {
       tool: {
         name: 'photoshop_auto_contrast',
-        description: 'Apply auto contrast adjustment to the active layer',
+        description:
+          'Run Auto Contrast on the active layer. Photoshop picks the contrast; there is no amount parameter.\n\n' +
+          'Use when: a one-shot automatic contrast fix on the current layer.\n' +
+          'Do NOT use when: you need numeric brightness and contrast — use photoshop_adjust_brightness_contrast.\n' +
+          'Do NOT use when: black, white, and gray points should move — use photoshop_auto_levels.\n' +
+          'Do NOT use when: a non-destructive curve — use photoshop_adjust_curves.\n\n' +
+          'Returns: confirmation that Auto Contrast ran.\n' +
+          'Preconditions: active document and active layer. Text and Smart Objects are rasterized first. Side effects: destructive pixels, one history step. Reversible with photoshop_undo.',
         inputSchema: {
           type: 'object',
           properties: {},

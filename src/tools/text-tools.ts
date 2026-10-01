@@ -93,7 +93,14 @@ export function createTextTools(connection: PhotoshopConnection): ToolDefinition
     {
       tool: {
         name: 'photoshop_set_text_color',
-        description: 'Set color for active text layer',
+        description:
+          'Set one RGB color on the whole active text layer.\n\n' +
+          'Use when: the entire text layer should share one color.\n' +
+          'Do NOT use when: creating the layer — pass red, green, and blue on photoshop_create_text_layer.\n' +
+          'Do NOT use when: only a character range should change color — use photoshop_set_text_ranges.\n' +
+          'Do NOT use when: font, size, tracking, or alignment should change too — use photoshop_set_text_style.\n\n' +
+          'Returns: the RGB color applied.\n' +
+          'Preconditions: active document and an active text layer. Side effects: updates the text color. The same RGB is idempotent. Reversible with photoshop_undo.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -124,7 +131,13 @@ export function createTextTools(connection: PhotoshopConnection): ToolDefinition
     {
       tool: {
         name: 'photoshop_set_text_alignment',
-        description: 'Set text alignment for active text layer',
+        description:
+          'Set justification on the whole active text layer (LEFT through FULLYJUSTIFIED).\n\n' +
+          'Use when: the entire text layer should share one alignment.\n' +
+          'Do NOT use when: creating the layer — pass `alignment` on photoshop_create_text_layer.\n' +
+          'Do NOT use when: only a character range should change, or font, color, and tracking should change too — use photoshop_set_text_ranges or photoshop_set_text_style.\n\n' +
+          'Returns: confirmation of the alignment.\n' +
+          'Preconditions: active document and an active text layer. Side effects: updates TextItem.justification. The same alignment is idempotent. Reversible with photoshop_undo.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -142,7 +155,13 @@ export function createTextTools(connection: PhotoshopConnection): ToolDefinition
     {
       tool: {
         name: 'photoshop_update_text_content',
-        description: 'Update the text content of active text layer',
+        description:
+          'Replace the string contents of the active text layer. Font, color, and alignment stay as they are.\n\n' +
+          'Use when: the wording of an existing text layer should change.\n' +
+          'Do NOT use when: no text layer exists yet — use photoshop_create_text_layer.\n' +
+          'Do NOT use when: only style should change — use photoshop_set_text_style, photoshop_set_text_font, photoshop_set_text_color, or photoshop_set_text_alignment.\n\n' +
+          'Returns: confirmation with the new text.\n' +
+          'Preconditions: active document and an active text layer. Side effects: replaces the characters. The same string is idempotent. Reversible with photoshop_undo.',
         inputSchema: {
           type: 'object',
           properties: {

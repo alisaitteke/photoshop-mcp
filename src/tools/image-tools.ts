@@ -8,7 +8,14 @@ export function createImageTools(connection: PhotoshopConnection): ToolDefinitio
     {
       tool: {
         name: 'photoshop_resize_image',
-        description: 'Resize the active image to specified dimensions',
+        description:
+          'Resample the active document to a new pixel width and height (bicubic). Every layer scales and the canvas size changes.\n\n' +
+          'Use when: the user gives exact output pixel dimensions for the whole document.\n' +
+          'Do NOT use when: only one layer should scale — use photoshop_scale_layer or photoshop_fit_layer_to_document.\n' +
+          'Do NOT use when: AI upscale is requested and photoshop_get_capabilities reports generative_upscale — use photoshop_generative_upscale.\n' +
+          'Do NOT use when: cropping to a region — use photoshop_crop_document.\n\n' +
+          'Returns: the resulting width and height in pixels.\n' +
+          'Preconditions: active document. Side effects: resamples all layers, one history step. Reversible with photoshop_undo.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -31,7 +38,13 @@ export function createImageTools(connection: PhotoshopConnection): ToolDefinitio
     {
       tool: {
         name: 'photoshop_crop_document',
-        description: 'Crop the document to specified bounds',
+        description:
+          'Crop the active document to a pixel rectangle (left, top, right, bottom). Pixels outside that rectangle are deleted and the canvas shrinks.\n\n' +
+          'Use when: the user gives explicit crop bounds in pixels.\n' +
+          'Do NOT use when: only one layer should scale inside the existing canvas — use photoshop_fit_layer_to_document or photoshop_scale_layer.\n' +
+          'Do NOT use when: the whole image should be resampled to a new width and height — use photoshop_resize_image.\n\n' +
+          'Returns: the new document width and height.\n' +
+          'Preconditions: active document; right > left and bottom > top. Side effects: destructive crop of every layer, one history step. Reversible with photoshop_undo.',
         inputSchema: {
           type: 'object',
           properties: {

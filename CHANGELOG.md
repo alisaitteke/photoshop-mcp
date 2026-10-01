@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The 31 lowest-scoring tool descriptions now say when to use the tool, which tool to call instead, and whether the edit destroys pixels or comes back with undo. `photoshop_move_layer_to_position` reorders the stack against a named layer; a canvas move stays on `photoshop_move_layer`. `photoshop_play_action` runs whatever the named action recorded, which `photoshop_execute_script` does not.
+- Every tool advertises MCP annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`). A description that says pixels are untouched is not marked destructive.
+
 ## [1.7.29] - 2026-10-01
 
 [v1.7.28...v1.7.29](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.28...v1.7.29)

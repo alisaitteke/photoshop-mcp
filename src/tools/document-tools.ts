@@ -54,7 +54,13 @@ export function createDocumentTools(connection: PhotoshopConnection): ToolDefini
     {
       tool: {
         name: 'photoshop_get_document_info',
-        description: 'Get information about the active Photoshop document',
+        description:
+          'Read the active document id, name, size, resolution, and color mode. Does not change pixels or which tab is active.\n\n' +
+          'Use when: you need dimensions or color mode of the front document only.\n' +
+          'Do NOT use when: several documents are open and you need every tab — use photoshop_list_documents.\n' +
+          'Do NOT use when: you also need the active layer and selection — use photoshop_get_state.\n\n' +
+          'Returns: document context JSON.\n' +
+          'Preconditions: an open document. Side effects: none.',
         inputSchema: {
           type: 'object',
           properties: {},

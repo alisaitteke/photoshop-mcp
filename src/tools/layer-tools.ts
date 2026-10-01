@@ -31,7 +31,14 @@ export function createLayerTools(connection: PhotoshopConnection): ToolDefinitio
     {
       tool: {
         name: 'photoshop_delete_layer',
-        description: 'Delete the active layer',
+        description:
+          'Delete the active layer, including its pixels, mask, and effects.\n\n' +
+          'Use when: the user wants that layer removed from the stack.\n' +
+          'Do NOT use when: it should only be hidden — use photoshop_set_layer_visibility.\n' +
+          'Do NOT use when: only the mask should go — use photoshop_delete_layer_mask.\n' +
+          'Do NOT use when: the whole stack should collapse — use photoshop_flatten_image.\n\n' +
+          'Returns: confirmation that the layer was deleted.\n' +
+          'Preconditions: active document and a deletable active layer. Side effects: destroys the layer. Reversible with photoshop_undo while history holds it.',
         inputSchema: {
           type: 'object',
           properties: {},
@@ -131,7 +138,14 @@ export function createLayerTools(connection: PhotoshopConnection): ToolDefinitio
     {
       tool: {
         name: 'photoshop_fill_layer',
-        description: 'Fill the active layer with a color',
+        description:
+          'Fill the active layer with a solid RGB color. If a selection exists, only that region is filled and the selection stays; otherwise the whole layer is filled and the selection is cleared.\n\n' +
+          'Use when: a flat color fill on the active layer or on the current selection.\n' +
+          'Do NOT use when: a new empty layer is needed first — use photoshop_create_layer, then this.\n' +
+          'Do NOT use when: the selection should be filled with surrounding content — use photoshop_content_aware_fill.\n' +
+          'Do NOT use when: the active layer is text — rasterize with photoshop_rasterize_layer first, or recolor type with photoshop_set_text_color.\n\n' +
+          'Returns: the RGB color applied.\n' +
+          'Preconditions: active document and an unlocked non-text layer. Side effects: overwrites those pixels, one history step. The same color on the same pixels is idempotent. Reversible with photoshop_undo.',
         inputSchema: {
           type: 'object',
           properties: {

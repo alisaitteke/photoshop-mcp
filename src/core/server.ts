@@ -18,6 +18,7 @@ import { PromptRegistry } from './prompt-registry.js';
 import { Session } from './session.js';
 import { wrapToolHandler } from '../errors/envelope.js';
 import { withOptionalDocumentId, wrapDocumentIdHandler } from './document-target.js';
+import { withToolAnnotations } from './tool-annotations.js';
 import { buildPhotoshopInstructions } from '../prompts/instructions.js';
 import { registerPhotoshopPrompts } from '../prompts/registry.js';
 import { createDocumentTools } from '../tools/document-tools.js';
@@ -87,7 +88,7 @@ export class PhotoshopMCPServer {
   }
 
   private registerToolDefinition(definition: ToolDefinition): void {
-    const tool = withOptionalDocumentId(definition.tool);
+    const tool = withToolAnnotations(withOptionalDocumentId(definition.tool));
     this.toolRegistry.register(tool.name, {
       tool,
       handler: wrapToolHandler(tool.name, wrapDocumentIdHandler(definition.handler)),

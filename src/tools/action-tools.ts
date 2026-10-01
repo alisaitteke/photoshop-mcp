@@ -9,7 +9,13 @@ export function createActionTools(connection: PhotoshopConnection): ToolDefiniti
     {
       tool: {
         name: 'photoshop_play_action',
-        description: 'Play a recorded action from the Actions palette',
+        description:
+          'Play a named action from a named action set in the Actions panel. The action runs whatever steps were recorded; this tool does not limit them.\n\n' +
+          'Use when: the user names an existing action and action set to replay.\n' +
+          'Do NOT use when: no recorded action exists — use a photoshop_recipe_* tool or an atomic photoshop_* tool.\n' +
+          'Do NOT use when: you need to run arbitrary JSX — use photoshop_execute_script.\n\n' +
+          'Returns: the action result text.\n' +
+          'Preconditions: actionName and actionSetName must match the Actions panel; an open document if the action expects one. Side effects: whatever the action recorded (it may delete layers, change pixels, or save). photoshop_undo reverts only the history steps the action left behind.',
         inputSchema: {
           type: 'object',
           properties: {
