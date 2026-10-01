@@ -194,6 +194,7 @@ lives at the repo root:
 | ---- | ------- |
 | [`.cursor-plugin/plugin.json`](.cursor-plugin/plugin.json) | Plugin manifest (`logo`, name, version) |
 | [`mcp.json`](mcp.json) | Stdio server (`npx -y @alisaitteke/photoshop-mcp`) |
+| [`skills/`](skills/) | Plugin skills loaded with the local plugin copy |
 | [`assets/logo.svg`](assets/logo.svg) | Icon referenced by `logo` |
 
 `npm run sync:server-version` keeps the plugin `version` aligned with
@@ -210,6 +211,8 @@ mkdir -p "$PLUGIN/.cursor-plugin" "$PLUGIN/assets"
 cp .cursor-plugin/plugin.json "$PLUGIN/.cursor-plugin/"
 cp mcp.json "$PLUGIN/"
 cp assets/logo.svg "$PLUGIN/assets/"
+rm -rf "$PLUGIN/skills"
+cp -R skills "$PLUGIN/skills"
 ```
 
 Then **Developer: Reload Window**. Confirm **Customize → Plugins** shows

@@ -9,7 +9,7 @@
 | -------- | ---- |
 | Cursor | Install the `photoshop-mcp` plugin (Customize → Plugins / Marketplace) so the Photoshop logo appears in the MCP list. Fallback: `mcpServers` → `npx -y @alisaitteke/photoshop-mcp` (stdio, generic icon) |
 | Claude Desktop / VS Code | Configure `mcpServers` → `npx -y @alisaitteke/photoshop-mcp` (stdio) |
-| Claude Code | `claude mcp add photoshop -- npx -y @alisaitteke/photoshop-mcp` |
+| Claude Code | Install this repo as a plugin (skills + MCP). Tools only: `claude mcp add photoshop -- npx -y @alisaitteke/photoshop-mcp` |
 | Standalone chat UI (no IDE) | `npx -p @alisaitteke/photoshop-mcp ui` |
 | Local development | `npm install && npm run build && node dist/index.js` — see [docs/development.md](docs/development.md) |
 
@@ -35,7 +35,7 @@ Deep dive: [docs/architecture.md](docs/architecture.md).
 
 ## Recommended workflow
 
-Follow the server `instructions` advertised on MCP `initialize` ([src/prompts/instructions.ts](src/prompts/instructions.ts)):
+Follow the server `instructions` advertised on MCP `initialize` ([src/prompts/instructions.ts](src/prompts/instructions.ts)). Plugin installs also load [skills/photoshop-remove-background](skills/photoshop-remove-background/SKILL.md) and [skills/photoshop-recipes](skills/photoshop-recipes/SKILL.md) when the request matches; those hold the phrase-to-tool glossary. The initialize text stays the session contract.
 
 ```
 1. DISCOVER: tools/list + prompts/list (or get_capabilities once per session)
@@ -123,6 +123,8 @@ More: [docs/troubleshooting.md](docs/troubleshooting.md).
 | [src/prompts/](src/prompts/) | MCP prompt templates |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | PR and release workflow |
 | [`.cursor-plugin/plugin.json`](.cursor-plugin/plugin.json) | Cursor Plugin manifest (MCP list logo) |
+| [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) | Claude Code plugin manifest (same `skills/`) |
+| [`skills/`](skills/) | Plugin skills: remove-background hard rule detail and recipe routing |
 | [`mcp.json`](mcp.json) | Cursor Plugin stdio server config |
 
 ## Contributing (agents editing this repo)

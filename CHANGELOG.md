@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `photoshop_get_preview` renders an MCP App (`ui://photoshop/preview`) in hosts that support it: document size, top-level layer names, a before/after slider, and long-edge web-export buttons. Hosts that cannot draw the app still receive the JPEG.
+- Cursor and Claude Code plugin skills `photoshop-remove-background` and `photoshop-recipes` carry the phrase-to-tool glossary. Server `instructions` keep the session contract and the short remove-background hard rule.
+
 ## [1.7.30] - 2026-10-01
 
 [v1.7.29...v1.7.30](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.29...v1.7.30)

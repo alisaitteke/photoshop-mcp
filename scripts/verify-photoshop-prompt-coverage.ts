@@ -7,6 +7,9 @@
  * Run: npm run verify:photoshop-prompts
  */
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { ToolRegistry } from '../src/core/tool-registry.js';
 import { PromptRegistry } from '../src/core/prompt-registry.js';
 import { registerPhotoshopPrompts } from '../src/prompts/registry.js';
@@ -140,9 +143,40 @@ for (const marker of [
   'photoshop_get_capabilities',
   'photoshop_recipe_',
   'suggested_next_tool',
+  'photoshop_rasterize_layer',
+  'photoshop_recipe_remove_background',
+]) {
+  assert.ok(
+    instructions.includes(marker),
+    `Photoshop instructions should mention "${marker}".`
+  );
+}
+
+for (const marker of [
   'User intent glossary',
-  'ps.gradient_blend',
   'Degrade paths',
+  'ps.gradient_blend',
+  'ps.generative_fill',
+  'photoshop_recipe_gradient_fade',
+]) {
+  assert.equal(
+    instructions.includes(marker),
+    false,
+    `Photoshop instructions should leave "${marker}" to the plugin skills.`
+  );
+}
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const recipesSkill = readFileSync(join(root, 'skills/photoshop-recipes/SKILL.md'), 'utf8');
+const removeSkill = readFileSync(
+  join(root, 'skills/photoshop-remove-background/SKILL.md'),
+  'utf8'
+);
+for (const marker of [
+  'User intent glossary',
+  'Degrade paths',
+  'ps.gradient_blend',
+  'ps.generative_fill',
   'photoshop_recipe_gradient_fade',
   'photoshop_recipe_sky_blend',
   'photoshop_recipe_remove_distraction',
@@ -151,11 +185,23 @@ for (const marker of [
   'photoshop_generative_remove',
   'photoshop_sky_replacement',
   'photoshop_neural_filter',
-  'ps.generative_fill',
+  'Instagram',
+  'vesikalık',
+  'carousel',
+]) {
+  assert.ok(recipesSkill.includes(marker), `photoshop-recipes skill should mention "${marker}".`);
+}
+for (const marker of [
+  'photoshop_get_state',
+  'photoshop_recipe_remove_background',
+  'photoshop_get_preview',
+  'photoshop_rasterize_layer',
+  'arka planı sil',
+  'STOP',
 ]) {
   assert.ok(
-    instructions.includes(marker),
-    `Photoshop instructions should mention "${marker}".`
+    removeSkill.includes(marker),
+    `photoshop-remove-background skill should mention "${marker}".`
   );
 }
 

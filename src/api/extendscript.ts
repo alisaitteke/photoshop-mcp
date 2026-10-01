@@ -3578,6 +3578,19 @@ export const ExtendScriptSnippets = {
     var doc = app.activeDocument;
     var w = doc.width.as('px');
     var h = doc.height.as('px');
+    var docName = '';
+    try { docName = String(doc.name); } catch (eName) {}
+    var colorMode = '';
+    try { colorMode = String(doc.mode); } catch (eMode) {}
+    var docId = null;
+    try { docId = doc.id; } catch (eId) {}
+    var layerNames = [];
+    try {
+      var layerLimit = Math.min(doc.layers.length, 40);
+      for (var li = 0; li < layerLimit; li++) {
+        layerNames.push(String(doc.layers[li].name));
+      }
+    } catch (eLayers) {}
     var maxDim = ${maxDimension};
     var scale = 1;
     if (w > maxDim || h > maxDim) {
@@ -3607,7 +3620,13 @@ export const ExtendScriptSnippets = {
       path: tmpFile.fsName,
       width: Math.round(w * scale),
       height: Math.round(h * scale),
-      mimeType: 'image/jpeg'
+      mimeType: 'image/jpeg',
+      documentId: docId,
+      documentName: docName,
+      documentWidth: Math.round(w),
+      documentHeight: Math.round(h),
+      colorMode: colorMode,
+      layers: layerNames
     };
   `,
 

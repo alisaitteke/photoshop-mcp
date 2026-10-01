@@ -5,7 +5,10 @@ import {
   CallToolRequestSchema,
   ListPromptsRequestSchema,
   GetPromptRequestSchema,
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+import { listPreviewResources, readPreviewResource } from '../apps/preview-resources.js';
 import { Logger } from '../utils/logger.js';
 import {
   onMcpClientConnected,
@@ -77,6 +80,7 @@ export class PhotoshopMCPServer {
         capabilities: {
           tools: {},
           prompts: {},
+          resources: {},
         },
         instructions: buildPhotoshopInstructions(),
       }
@@ -204,6 +208,14 @@ export class PhotoshopMCPServer {
     this.server.setRequestHandler(ListPromptsRequestSchema, async () => {
       this.logger.debug('Listing available prompts');
       return { prompts: this.promptRegistry.list() };
+    });
+
+    this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
+      return listPreviewResources();
+    });
+
+    this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+      return readPreviewResource(request.params.uri);
     });
 
     this.server.setRequestHandler(GetPromptRequestSchema, async (request) => {

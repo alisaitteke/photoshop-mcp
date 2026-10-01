@@ -34,3 +34,9 @@ const plugin = JSON.parse(readFileSync(pluginPath, 'utf8'));
 plugin.version = pkg.version;
 writeFileSync(pluginPath, JSON.stringify(plugin, null, 2) + '\n');
 console.log(`.cursor-plugin/plugin.json synced to v${pkg.version}`);
+
+const claudePluginPath = join(ROOT, '.claude-plugin', 'plugin.json');
+const claudePlugin = JSON.parse(readFileSync(claudePluginPath, 'utf8'));
+claudePlugin.version = pkg.version;
+writeFileSync(claudePluginPath, JSON.stringify(claudePlugin, null, 2) + '\n');
+console.log(`.claude-plugin/plugin.json synced to v${pkg.version}`);

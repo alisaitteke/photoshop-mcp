@@ -1,4 +1,6 @@
 import { readFile, unlink } from 'node:fs/promises';
+import { PREVIEW_APP_URI } from '../apps/preview-frames.js';
+import { buildPreviewToolResult, parsePreviewScriptPayload } from '../apps/preview-result.js';
 import { ToolDefinition, ToolResult } from '../core/tool-registry.js';
 import { ExtendScriptSnippets } from '../api/extendscript.js';
 import { PhotoshopAPIFactory } from '../api/photoshop-api.js';
@@ -37,8 +39,11 @@ export function createStateTools(connection: PhotoshopConnection): ToolDefinitio
           'Export the active document as a base64 JPEG preview for visual verification.\n\n' +
           'Use when: after visual edits to confirm result before reporting success to the user.\n' +
           'Do NOT use when: you only need numeric state — use photoshop_get_state (much cheaper).\n\n' +
-          'Returns: MCP image content block (JPEG) plus metadata text.\n' +
+          'Returns: MCP image content block (JPEG) plus metadata text (document size, color mode, up to 40 top-level layer names). Hosts that support MCP Apps also render ui://photoshop/preview.\n' +
           'Preconditions: active document required. Side effects: creates and deletes a temp file; does not modify the document.',
+        _meta: {
+          ui: { resourceUri: PREVIEW_APP_URI },
+        },
         inputSchema: {
           type: 'object',
           properties: {
@@ -99,12 +104,16 @@ async function getPreview(
   let tempPath: string | undefined;
 
   try {
-    const result = (await runScript(
-      connection,
-      ExtendScriptSnippets.exportPreview(maxDimension, quality)
-    )) as { path: string; width: number; height: number; mimeType: string };
+    const payload = parsePreviewScriptPayload(
+      parseExtendScriptPayload(
+        await runScript(connection, ExtendScriptSnippets.exportPreview(maxDimension, quality))
+      )
+    );
+    if (!payload) {
+      return envelopeToToolResult(classifyError('Preview script returned no file path'));
+    }
 
-    tempPath = result.path;
+    tempPath = payload.path;
     const buffer = await readFile(tempPath);
 
     if (buffer.byteLength > PREVIEW_MAX_BYTES) {
@@ -115,30 +124,7 @@ async function getPreview(
       );
     }
 
-    const base64 = buffer.toString('base64');
-
-    return {
-      content: [
-        {
-          type: 'image',
-          data: base64,
-          mimeType: result.mimeType || 'image/jpeg',
-        },
-        {
-          type: 'text',
-          text: JSON.stringify(
-            {
-              ok: true,
-              width: result.width,
-              height: result.height,
-              bytes: buffer.byteLength,
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+    return buildPreviewToolResult(payload, buffer.toString('base64'), buffer.byteLength);
   } catch (error) {
     return envelopeToToolResult(
       classifyError(error instanceof Error ? error.message : String(error))
