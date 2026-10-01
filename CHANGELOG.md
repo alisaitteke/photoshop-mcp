@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `photoshop_ping` can tell the user when a newer release is on npm. The server looks up the latest version in the background at most once a day, so ping never waits on the network. A successful ping may then append an `UPDATE_AVAILABLE` block, at most once every 7 days, with one update step for how this copy was installed (npx, MCPB, global npm, or a git checkout). The host agent mentions it in one sentence and continues the request without asking a question. A ping never carries both this and `FEEDBACK_NUDGE`. Off with `PSMCP_UPDATE_CHECK=0`, MCPB **Update notices**, `NO_UPDATE_NOTIFIER`, or `CI`.
+
 ## [1.7.28] - 2026-10-01
 
 [v1.7.27...v1.7.28](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.27...v1.7.28)

@@ -7,6 +7,7 @@ import { hasAnalyticsKey } from '../analytics/config.js';
 import { isAnalyticsEnabled } from '../analytics/identity.js';
 import { envelopeToToolResult } from '../errors/envelope.js';
 import { getPhotoshopMcpHomeDir, PHOTOSHOP_MCP_SURFACE_ENV } from '../lib/export-paths.js';
+import { takeUpdateNoticeBlock } from '../update/check.js';
 
 export const FEEDBACK_NUDGE_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 export const FEEDBACK_NUDGE_MIN_AGE_MS = 15 * 60 * 1000;
@@ -183,7 +184,11 @@ export function buildFeedbackNudgeBlock(): string {
   ].join('\n');
 }
 
-/** First text block is always the connection string so existing ping clients keep working. */
+/**
+ * First text block is always the connection string so existing ping clients keep working.
+ * A connected ping carries at most one extra block: UPDATE_AVAILABLE wins, and a due
+ * FEEDBACK_NUDGE waits for a later ping (its cooldown is not started).
+ */
 export function buildPingToolResult(connected: boolean, now = Date.now()): CallToolResult {
   const content: CallToolResult['content'] = [
     {
@@ -192,12 +197,17 @@ export function buildPingToolResult(connected: boolean, now = Date.now()): CallT
     },
   ];
 
-  if (connected && isFeedbackNudgeEnabled()) {
-    markFeedbackFirstSeen(now);
-    if (isFeedbackNudgeDue(now)) {
-      markFeedbackNudgeShown(now);
-      content.push({ type: 'text', text: buildFeedbackNudgeBlock() });
-    }
+  if (!connected) return { content };
+
+  const feedbackEnabled = isFeedbackNudgeEnabled();
+  if (feedbackEnabled) markFeedbackFirstSeen(now);
+
+  const updateBlock = takeUpdateNoticeBlock(now);
+  if (updateBlock) {
+    content.push({ type: 'text', text: updateBlock });
+  } else if (feedbackEnabled && isFeedbackNudgeDue(now)) {
+    markFeedbackNudgeShown(now);
+    content.push({ type: 'text', text: buildFeedbackNudgeBlock() });
   }
 
   return { content };

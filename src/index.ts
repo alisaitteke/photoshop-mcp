@@ -12,6 +12,7 @@ import {
 } from './analytics/index.js';
 import type { McpShutdownReason } from './analytics/mcp-session.js';
 import { PhotoshopMCPServer } from './core/server.js';
+import { refreshUpdateCheck } from './update/check.js';
 import { Logger } from './utils/logger.js';
 
 const logger = new Logger('Main');
@@ -24,6 +25,9 @@ async function main() {
     logger.info('Starting Photoshop MCP Server...');
 
     ensureAnalyticsIdentity();
+
+    // Background npm lookup (cached 24h, 3s timeout). photoshop_ping reads the cache only.
+    void refreshUpdateCheck();
 
     mcpServer = new PhotoshopMCPServer({ serverVersion: getAppVersion() });
     await mcpServer.start();

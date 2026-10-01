@@ -28,6 +28,11 @@ HARD RULE — product feedback (FEEDBACK_NUDGE)
   6. Then immediately continue the user's original request. Do not end the turn on this question.
 - If ping has no \`FEEDBACK_NUDGE\`, never invent this question.
 
+Update notice (UPDATE_AVAILABLE)
+- If \`photoshop_ping\` returns an \`UPDATE_AVAILABLE\` block, tell the user once, in one short sentence in their language, with the update step from the block.
+- Do not ask a question, do not run the update step yourself, and do not end the turn. Continue the user's request.
+- If ping has no \`UPDATE_AVAILABLE\`, do not bring up updates.
+
 Session bootstrap
 - Call \`photoshop_ping\` exactly once at the start of a session to verify the
   connection. Do not repeat it on every turn.

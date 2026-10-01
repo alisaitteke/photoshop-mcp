@@ -644,6 +644,7 @@ Zur Claude Desktop-Konfiguration hinzufügen (`~/Library/Application Support/Cla
 - `PHOTOSHOP_SCRIPT_TIMEOUT`: Standard-ExtendScript-Timeout in Millisekunden (Standard `30000`, max. `600000`)
 - `LOG_LEVEL`: Protokollierungsstufe (0=DEBUG, 1=INFO, 2=WARN, 3=ERROR)
 - `PSMCP_FEEDBACK`: `0` / `false` / `no` deaktiviert die Produkt-Feedback-Ping-Frage (standardmäßig an)
+- `PSMCP_UPDATE_CHECK`: `0` / `false` / `no` deaktiviert die tägliche npm-Versionsprüfung und den Update-Hinweis beim Ping (standardmäßig an)
 - `ANALYTICS_DISABLED`: Auf `1` oder `true` setzen, um anonyme Nutzungsanalysen vollständig zu deaktivieren
 - `POSTHOG_DISABLED`: Veralteter Alias für `ANALYTICS_DISABLED`
 - `RYBBIT_API_KEY`: (Optional) Rybbit-Ingest-Schlüssel — umgeht Bot-Erkennung für Server-Events

@@ -686,6 +686,7 @@ const q = query({
 - `PHOTOSHOP_SCRIPT_TIMEOUT`: Varsayılan ExtendScript zaman aşımı (ms; varsayılan `30000`, en fazla `600000`)
 - `LOG_LEVEL`: Günlük kaydı düzeyi (0=DEBUG, 1=INFO, 2=WARN, 3=ERROR)
 - `PSMCP_FEEDBACK`: Ürün-geri bildirim ping sorusunu kapatmak için `0` / `false` / `no` (varsayılan açık)
+- `PSMCP_UPDATE_CHECK`: Günlük npm sürüm kontrolünü ve ping'deki yeni sürüm bildirimini kapatmak için `0` / `false` / `no` (varsayılan açık)
 - `ANALYTICS_DISABLED`: Anonim kullanım analizlerini tamamen devre dışı bırakmak için `1` veya `true`
   olarak ayarlayın
 - `POSTHOG_DISABLED`: `ANALYTICS_DISABLED` için eski takma ad

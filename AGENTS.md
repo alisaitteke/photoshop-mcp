@@ -86,6 +86,7 @@ Examples: [examples/cursor-config.json](examples/cursor-config.json), [examples/
 | `PHOTOSHOP_SCRIPT_TIMEOUT` | Default ExtendScript timeout in ms (default `30000`, max `600000`) |
 | `PSMCP_UI_TOKEN` | Pin standalone UI API token (see README) |
 | `PSMCP_FEEDBACK` | Set `0` to disable the product-feedback ping question (on by default) |
+| `PSMCP_UPDATE_CHECK` | Set `0` to disable the daily npm version check and the `UPDATE_AVAILABLE` ping notice (on by default; also off with `NO_UPDATE_NOTIFIER` or `CI`) |
 
 ## Troubleshooting (common agent blockers)
 

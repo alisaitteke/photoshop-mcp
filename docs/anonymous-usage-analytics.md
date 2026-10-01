@@ -133,6 +133,14 @@ the user-facing question does not mention a team or anonymous sending.
 `mcp_product_feedback` is still flushed immediately after submit so it is not
 left in the 5-second analytics queue.
 
+The update check is separate from analytics and sends no identifiers. At most
+once a day the server requests the `latest` dist-tag from
+`registry.npmjs.org` (the only header besides `accept` is
+`user-agent: photoshop-mcp/<version>`) and caches the answer in
+`~/.photoshop-mcp/update-check.json`. It is off with `PSMCP_UPDATE_CHECK=0`
+(or MCPB **Update notices** off), `NO_UPDATE_NOTIFIER`, `CI`, and on the
+standalone UI surface. Turning analytics off does not turn it off.
+
 ## Model tracking
 
 | Surface | Where to see model | Notes |

@@ -48,6 +48,7 @@ import { createArtboardTools } from '../tools/artboard-tools.js';
 import { ensureUxpBridgeServer } from '../platform/uxp-bridge-server.js';
 import { submitFeedbackFromArgs } from '../feedback/nudge.js';
 import { probePhotoshopEngine } from './ping-engine.js';
+import { refreshUpdateCheck } from '../update/check.js';
 
 export interface PhotoshopMCPServerOptions {
   serverVersion: string;
@@ -105,7 +106,7 @@ export class PhotoshopMCPServer {
           'Verify that the Photoshop scripting engine can run a script.\n\n' +
           'Use when: once at session start, and after extendscript_timeout until this call succeeds.\n' +
           'Do NOT use when: on every tool call — after a successful ping, use photoshop_get_state. Do not call get_state or get_layers while this ping is still failing.\n\n' +
-          'Returns: "Successfully connected to Photoshop" only after a short script runs inside Photoshop. While a previous script is still running, returns extendscript_timeout — retry photoshop_ping. If that timeout happens while the OS drive has under 10 GB free, returns scratch_disk_full instead: free space on the scratch disk and restart Photoshop. If Photoshop is not installed or not running, returns a failure string and does not launch the app. May append a FEEDBACK_NUDGE block 15 minutes after the first successful ping, then at most once per 7 days (disabled with PSMCP_FEEDBACK=0).\n' +
+          'Returns: "Successfully connected to Photoshop" only after a short script runs inside Photoshop. While a previous script is still running, returns extendscript_timeout — retry photoshop_ping. If that timeout happens while the OS drive has under 10 GB free, returns scratch_disk_full instead: free space on the scratch disk and restart Photoshop. If Photoshop is not installed or not running, returns a failure string and does not launch the app. May append a FEEDBACK_NUDGE block 15 minutes after the first successful ping, then at most once per 7 days (disabled with PSMCP_FEEDBACK=0). May append an UPDATE_AVAILABLE block when a newer photoshop-mcp release is on npm, at most once per 7 days (disabled with PSMCP_UPDATE_CHECK=0). A single ping carries at most one of these blocks.\n' +
           'Preconditions: none. Side effects: may trigger Photoshop detection. Does not launch Photoshop.',
         inputSchema: { type: 'object', properties: {} },
       },
@@ -237,6 +238,9 @@ export class PhotoshopMCPServer {
   }
 
   private async pingPhotoshop() {
+    // Long-lived hosts (Claude Desktop) keep one server across chats; refresh the cached
+    // release here too (at most once per 24h), racing the probe so this ping can use it.
+    void refreshUpdateCheck();
     return probePhotoshopEngine(this.session.getConnection());
   }
 
