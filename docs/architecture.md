@@ -107,7 +107,7 @@ Shipped in the same npm package (`photoshop-mcp-ui` bin). Stack:
 | Frontend | Vue 3, Tailwind v4, shadcn-vue |
 | Backend | Hono on Node (`src/ui/server.ts`) |
 | Persistence | better-sqlite3 at `~/.photoshop-mcp/data.db` |
-| LLM (API key) | Vercel AI SDK — Anthropic, OpenAI, Google, OpenRouter |
+| LLM (API key) | Vercel AI SDK — Anthropic, OpenAI, Google, OpenRouter, Requesty |
 | LLM (CLI account) | Claude Agent SDK / Gemini CLI headless |
 | Photoshop | Same MCP server over stdio (`src/ui/agent/mcp-transport.ts`) |
 

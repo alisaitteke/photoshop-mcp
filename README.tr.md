@@ -53,6 +53,7 @@ Hepsi bu. `127.0.0.1` üzerinde yerel bir sunucu başlar (rastgele boş port) ve
 | **OpenAI** | GPT-5, GPT-4.1, o-series | [platform.openai.com](https://platform.openai.com/api-keys) | — |
 | **Google** | Gemini 2.5 Pro / Flash / Flash-Lite | [aistudio.google.com](https://aistudio.google.com/apikey) | `npm i -g @google/gemini-cli` → `gemini auth login` |
 | **OpenRouter** | 100'den fazla sağlayıcı modeli | [openrouter.ai](https://openrouter.ai/keys) | — |
+| **Requesty** | Tek API ile 700'den fazla model | [app.requesty.ai](https://app.requesty.ai/api-keys) | - |
 
 ### Kimlik doğrulama modları
 

@@ -3,12 +3,14 @@ import { customAdapter } from './custom.js';
 import { googleAdapter } from './google.js';
 import { openaiAdapter } from './openai.js';
 import { openrouterAdapter } from './openrouter.js';
+import { requestyAdapter } from './requesty.js';
 import type { ProviderAdapter, ProviderId } from './types.js';
 
 export const providers: Record<ProviderId, ProviderAdapter> = {
   anthropic: anthropicAdapter,
   openai: openaiAdapter,
   openrouter: openrouterAdapter,
+  requesty: requestyAdapter,
   google: googleAdapter,
   custom: customAdapter,
 };
