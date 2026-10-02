@@ -9,7 +9,12 @@ export function createLayerTransformTools(connection: PhotoshopConnection): Tool
       tool: {
         name: 'photoshop_fit_layer_to_document',
         description:
-          'Scale the active layer to fit the document canvas while maintaining aspect ratio',
+          'Scale the active layer to the document canvas, keeping aspect ratio. `fillDocument: false` (default) fits inside and may letterbox; `true` covers the canvas and may crop the layer.\n\n' +
+          'Use when: a placed layer should match the canvas size.\n' +
+          'Do NOT use when: you want a specific percent — use photoshop_scale_layer.\n' +
+          'Do NOT use when: the document canvas itself should change size — use photoshop_resize_image or photoshop_crop_document.\n\n' +
+          'Returns: confirmation of the fit.\n' +
+          'Preconditions: active document and active layer. Side effects: transforms that layer. Does not change document dimensions. Reversible with photoshop_undo.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -27,7 +32,14 @@ export function createLayerTransformTools(connection: PhotoshopConnection): Tool
     {
       tool: {
         name: 'photoshop_scale_layer',
-        description: 'Scale the active layer by a percentage',
+        description:
+          'Scale the active layer by a percentage (100 leaves the size unchanged). `centerAnchor` true (default) scales from the center; false scales from the top-left.\n\n' +
+          'Use when: a numeric percent scale on one layer.\n' +
+          'Do NOT use when: the layer should fit the canvas automatically — use photoshop_fit_layer_to_document.\n' +
+          'Do NOT use when: the document dimensions should change — use photoshop_resize_image.\n' +
+          'Do NOT use when: the layer has no pixels yet — fill it first. An empty layer fails with an empty bounding rectangle.\n\n' +
+          'Returns: the scale percent applied.\n' +
+          'Preconditions: active document and active layer. Side effects: transforms that layer, one history step. 100% does not change size; any other percent is not idempotent. Reversible with photoshop_undo.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -71,7 +83,13 @@ export function createLayerTransformTools(connection: PhotoshopConnection): Tool
     {
       tool: {
         name: 'photoshop_rotate_layer',
-        description: 'Rotate the active layer',
+        description:
+          'Rotate the active layer by `degrees` (positive is clockwise) around its center. The document canvas does not rotate.\n\n' +
+          'Use when: one layer needs a rotation.\n' +
+          'Do NOT use when: the layer should scale or move in pixels — use photoshop_scale_layer or photoshop_move_layer.\n' +
+          'Do NOT use when: the whole canvas orientation should change — this tool does not rotate the document.\n\n' +
+          'Returns: the degrees applied.\n' +
+          'Preconditions: active document and active layer. Side effects: transforms that layer, one history step. A second call adds another rotation. Reversible with photoshop_undo.',
         inputSchema: {
           type: 'object',
           properties: {

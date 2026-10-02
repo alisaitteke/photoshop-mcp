@@ -7,6 +7,7 @@ import {
 } from '../../api/extendscript.js';
 import { PhotoshopAPIFactory } from '../../api/photoshop-api.js';
 import { parseExtendScriptPayload } from '../../utils/extendscript-result.js';
+import { jsString } from '../../utils/js-string.js';
 
 export interface RecipeSuccess {
   ok: true;
@@ -179,7 +180,7 @@ function __mcp_json_stringify(value) {
 `;
 
 export function wrapInSuspendHistory(historyName: string, body: string): string {
-  const escapedName = historyName.replace(/"/g, '\\"');
+  const escapedName = jsString(historyName);
   return `
     ${RECIPE_ACTION_HELPERS}
     ${EXTENDSCRIPT_JSON_HELPER}
@@ -282,13 +283,14 @@ export function toolException(error: unknown, code = 'recipe_exception'): ToolRe
 export async function executeRecipe(
   connection: PhotoshopConnection,
   historyName: string,
-  body: string
+  body: string,
+  timeoutMs?: number
 ): Promise<ToolResult> {
   try {
     const apiFactory = new PhotoshopAPIFactory(connection);
     const api = await apiFactory.createAPI();
     const script = wrapInSuspendHistory(historyName, body);
-    const raw = await api.executeScript(script);
+    const raw = await api.executeScript(script, timeoutMs);
     const parsed = parseRecipeResult(raw);
     if (!parsed) {
       return toolFailure({
@@ -306,13 +308,14 @@ export async function executeRecipe(
 /** Like executeRecipe but without suspendHistory or an active-document requirement. */
 export async function executeStandaloneRecipe(
   connection: PhotoshopConnection,
-  body: string
+  body: string,
+  timeoutMs?: number
 ): Promise<ToolResult> {
   try {
     const apiFactory = new PhotoshopAPIFactory(connection);
     const api = await apiFactory.createAPI();
     const script = wrapInStandaloneScript(body);
-    const raw = await api.executeScript(script);
+    const raw = await api.executeScript(script, timeoutMs);
     const parsed = parseRecipeResult(raw);
     if (!parsed) {
       return toolFailure({
@@ -332,7 +335,8 @@ export function clampInt(value: unknown, min: number, max: number, fallback: num
   return Math.max(min, Math.min(max, Math.round(value)));
 }
 
-export { jsString } from '../../utils/js-string.js';
+export { jsString };
+export { BATCH_SCRIPT_TIMEOUT_MS } from '../../platform/script-timeout.js';
 
 export function gradientMaskAxisPercents(
   direction: GradientMaskDirection,

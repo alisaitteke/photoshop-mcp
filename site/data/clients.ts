@@ -17,7 +17,7 @@ export const SERVER = {
 } as const;
 
 export const STDIO_COMMAND = `npx -y ${PACKAGE}`;
-export const UI_COMMAND = `npx -p ${PACKAGE} photoshop-mcp-ui`;
+export const UI_COMMAND = `npx -p ${PACKAGE} ui`;
 
 export type Os = 'mac' | 'windows' | 'linux';
 export type Tier = 1 | 2 | 3;

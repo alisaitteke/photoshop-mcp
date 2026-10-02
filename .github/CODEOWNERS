@@ -1,0 +1,23 @@
+# Changes to these paths need a review from a code owner before merging
+# (enforced by the "master protection" ruleset).
+
+# CI, release and repository automation
+/.github/                 @alisaitteke
+/scripts/                 @alisaitteke
+
+# Packaging, dependencies and published metadata
+/package.json             @alisaitteke
+/package-lock.json        @alisaitteke
+/web/package.json         @alisaitteke
+/web/package-lock.json    @alisaitteke
+/server.json              @alisaitteke
+/mcp.json                 @alisaitteke
+/glama.json               @alisaitteke
+/mcpb/                    @alisaitteke
+/.cursor-plugin/          @alisaitteke
+
+# Security- and privacy-sensitive code
+/src/ui/server.ts         @alisaitteke
+/src/ui/security/         @alisaitteke
+/src/ui/providers/        @alisaitteke
+/src/analytics/           @alisaitteke

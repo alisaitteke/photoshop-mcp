@@ -1,6 +1,7 @@
 import type { PlanStepStatus } from '@/lib/api';
 import type { ToolCall } from '@/stores/chat';
-import type { ToolOrbStatus } from '@/components/ToolCallOrb.vue';
+
+export type ToolStepStatus = 'pending' | 'running' | 'done' | 'error' | 'success';
 
 /** Parse envelope `ok` from persisted result content; undefined when not an envelope. */
 export function envelopeOkFromContent(content: string): boolean | undefined {
@@ -17,10 +18,10 @@ export function envelopeOkFromContent(content: string): boolean | undefined {
 }
 
 /** Derive display status; re-checks result.content for persisted chats with wrong status. */
-export function effectiveToolOrbStatus(
+export function effectiveToolStatus(
   tc: ToolCall,
   stepStatus?: PlanStepStatus
-): ToolOrbStatus {
+): ToolStepStatus {
   const envelopeOk = tc.result?.content ? envelopeOkFromContent(tc.result.content) : undefined;
   if (envelopeOk === false) return 'error';
   if (tc.status === 'error' || stepStatus === 'error') return 'error';

@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "description": "Build-time deps for the preview MCP App bundle. Kept out of the server package so its peers do not reshape the server install.",
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "1.7.5",
+    "esbuild": "0.25.12"
+  }
+}

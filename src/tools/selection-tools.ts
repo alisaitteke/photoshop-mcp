@@ -199,7 +199,8 @@ export function createSelectionTools(connection: PhotoshopConnection): ToolDefin
           'Use when: masking, cropping a region, or preparing for layer mask.\n' +
           'Do NOT use when: subject isolation is needed — use photoshop_recipe_remove_background.\n\n' +
           'Returns: selection bounds [left, top, right, bottom].\n' +
-          'Preconditions: active document. Side effects: replaces current selection.',
+          'Preconditions: active document. Side effects: replaces, adds, subtracts, or intersects the current selection.\n' +
+          'mode intersect/add/subtract uses Action Manager and does not depend on the SelectionType enum.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -219,6 +220,12 @@ export function createSelectionTools(connection: PhotoshopConnection): ToolDefin
               type: 'number',
               description: 'Bottom edge in pixels',
             },
+            mode: {
+              type: 'string',
+              enum: ['replace', 'add', 'subtract', 'intersect'],
+              description:
+                'How this rectangle combines with the current selection. Default replace. Use intersect when SelectionType.INTERSECT is unavailable.',
+            },
           },
           required: ['left', 'top', 'right', 'bottom'],
         },
@@ -228,7 +235,13 @@ export function createSelectionTools(connection: PhotoshopConnection): ToolDefin
     {
       tool: {
         name: 'photoshop_select_all',
-        description: 'Select the entire document',
+        description:
+          'Select every pixel of the active document. Does not change layer pixels.\n\n' +
+          'Use when: the next fill, mask, or filter should cover the whole canvas.\n' +
+          'Do NOT use when: only a region is needed — use photoshop_select_rectangle or photoshop_select_subject.\n' +
+          'Do NOT use when: the selection should be cleared — use photoshop_deselect.\n\n' +
+          'Returns: confirmation that the document is selected.\n' +
+          'Preconditions: active document. Side effects: replaces the current selection. Idempotent. Reversible with photoshop_undo.',
         inputSchema: {
           type: 'object',
           properties: {},
@@ -239,7 +252,13 @@ export function createSelectionTools(connection: PhotoshopConnection): ToolDefin
     {
       tool: {
         name: 'photoshop_deselect',
-        description: 'Deselect all selections',
+        description:
+          'Clear the current pixel selection. Pixels are unchanged.\n\n' +
+          'Use when: a selection should be cleared before the next edit.\n' +
+          'Do NOT use when: you want the inverse region selected — use photoshop_invert_selection.\n' +
+          'Do NOT use when: you want every pixel selected — use photoshop_select_all.\n\n' +
+          'Returns: confirmation that the selection was cleared.\n' +
+          'Preconditions: active document. Safe when nothing is selected. Side effects: selection only. Idempotent. Reversible with photoshop_undo if a selection existed.',
         inputSchema: {
           type: 'object',
           properties: {},
@@ -250,7 +269,13 @@ export function createSelectionTools(connection: PhotoshopConnection): ToolDefin
     {
       tool: {
         name: 'photoshop_invert_selection',
-        description: 'Invert the current selection',
+        description:
+          'Invert the current pixel selection: selected pixels become unselected and the rest become selected. Layer pixels are unchanged.\n\n' +
+          'Use when: a selection exists and the user wants the opposite region.\n' +
+          'Do NOT use when: no selection exists — create one with photoshop_select_rectangle or photoshop_select_all.\n' +
+          'Do NOT use when: the layer colors should invert — use photoshop_invert.\n\n' +
+          'Returns: confirmation that the selection was inverted.\n' +
+          'Preconditions: active document and an existing selection. Side effects: selection only. Calling twice restores the original selection. Reversible with photoshop_undo.',
         inputSchema: {
           type: 'object',
           properties: {},
@@ -289,7 +314,13 @@ export function createSelectionTools(connection: PhotoshopConnection): ToolDefin
     {
       tool: {
         name: 'photoshop_apply_layer_mask',
-        description: 'Apply (merge) the layer mask to the layer',
+        description:
+          'Bake the active layer mask into its pixels and remove the mask. Pixels the mask hid are deleted.\n\n' +
+          'Use when: the user wants the mask permanently applied.\n' +
+          'Do NOT use when: the mask should stay editable — leave it, or create one with photoshop_create_layer_mask.\n' +
+          'Do NOT use when: the mask should be discarded without changing pixels — use photoshop_delete_layer_mask.\n\n' +
+          'Returns: confirmation that the mask was applied.\n' +
+          'Preconditions: active document and an active layer that has a mask. Side effects: destroys masked-out pixels and the mask. Reversible with photoshop_undo while history holds it.',
         inputSchema: {
           type: 'object',
           properties: {},
@@ -543,12 +574,18 @@ async function selectRectangle(
   const top = args.top as number;
   const right = args.right as number;
   const bottom = args.bottom as number;
+  const modeRaw = typeof args.mode === 'string' ? args.mode : 'replace';
+  const mode = (['replace', 'add', 'subtract', 'intersect'] as const).includes(
+    modeRaw as 'replace' | 'add' | 'subtract' | 'intersect'
+  )
+    ? (modeRaw as 'replace' | 'add' | 'subtract' | 'intersect')
+    : 'replace';
 
   try {
     const apiFactory = new PhotoshopAPIFactory(connection);
     const api = await apiFactory.createAPI();
 
-    const script = ExtendScriptSnippets.selectRectangle(left, top, right, bottom);
+    const script = ExtendScriptSnippets.selectRectangle(left, top, right, bottom, mode);
     await api.executeScript(script);
 
     return {

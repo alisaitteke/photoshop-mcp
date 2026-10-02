@@ -1,6 +1,6 @@
 # Available Tools
 
-**116 tools total** — 100 atomic `photoshop_*` tools plus 16 recipe `photoshop_recipe_*` workflows (single undo step each).
+**127 tools total** — 111 atomic `photoshop_*` tools plus 16 recipe `photoshop_recipe_*` workflows (single undo step each).
 
 Reference for all atomic `photoshop_*` MCP tools exposed by this server (parameters, examples, and return shapes).
 
@@ -9,11 +9,29 @@ Reference for all atomic `photoshop_*` MCP tools exposed by this server (paramet
 ### Connection & Info
 
 #### `photoshop_ping`
-Test connection to Photoshop.
+Run a short script in Photoshop. Success means the scripting engine is idle. While a previous script is still running, the call returns `extendscript_timeout` instead of succeeding; retry ping before `photoshop_get_state` or `photoshop_get_layers`. If the OS drive has under 10 GB free, a timeout is reported as `scratch_disk_full` instead. Does not launch Photoshop when it is not running.
 
 ```javascript
 // Example: Check if Photoshop is accessible
 photoshop_ping()
+```
+
+On by default. 15 minutes after the first successful ping (and again after a 7-day cooldown if unanswered), a later successful ping may append a `FEEDBACK_NUDGE` block. Host agents must ask in the user's conversation language (never default to English), in first person (as if they will improve the MCP themselves — they must not start implementing), then call `photoshop_submit_feedback`, then continue the original request. Set `PSMCP_FEEDBACK=0` (or turn off MCPB **Product feedback prompts**) to skip the question.
+
+When a newer `@alisaitteke/photoshop-mcp` release is on npm, a successful ping may instead append an `UPDATE_AVAILABLE` block with the installed and latest versions and one update step for how this copy was installed (npx, MCPB, global npm, or a git checkout). The server looks up the latest version in the background at most once a day and caches it in `~/.photoshop-mcp/update-check.json`, so ping never waits on the network. The notice is shown at most once every 7 days. Host agents mention it in one sentence in the user's language, do not ask a question or run the update, and continue the original request. A ping carries at most one of `UPDATE_AVAILABLE` / `FEEDBACK_NUDGE`. Set `PSMCP_UPDATE_CHECK=0` (or turn off MCPB **Update notices**) to disable it; `NO_UPDATE_NOTIFIER` and `CI` also disable it.
+
+#### `photoshop_submit_feedback`
+Record the user's answer to a product-feedback nudge from `photoshop_ping`.
+
+**Parameters:**
+- `choice` (string, required): `yes`, `not_now`, or `dont_ask`
+- `suggestion` (string, optional): short feature request when `choice` is `yes`
+
+```javascript
+photoshop_submit_feedback({
+  choice: 'yes',
+  suggestion: 'batch rename layers from a CSV'
+})
 ```
 
 #### `photoshop_get_version`
@@ -54,7 +72,7 @@ photoshop_get_document_info()
 ```
 
 #### `photoshop_list_documents`
-List all open documents with id, name, dimensions, resolution, and active-tab flag (read-only).
+List all open documents with id, name, dimensions, resolution, `saved`, `artboard_count`, and active-tab flag. Briefly activates each tab to count artboards, then restores the original active document.
 
 **Parameters:** none
 
@@ -81,6 +99,45 @@ photoshop_set_active_document({ index: 0 })
 
 Mutating tools (and most document-scoped reads) also accept optional `document_id`. Pass the id from `photoshop_get_state` / `photoshop_list_documents` so a Photoshop UI tab switch cannot retarget the edit. Omitted = current active document (previous behavior). Unknown ids fail with `document_not_found`.
 
+#### `photoshop_list_artboards`
+List artboards in the active document (id, name, pixel bounds, `is_active`). Empty when the file is a regular canvas.
+
+```javascript
+photoshop_list_artboards()
+```
+
+#### `photoshop_create_artboard`
+Create an artboard. First artboard converts a regular document. Additional boards are placed 32px to the right unless `left`/`top` are set.
+
+**Parameters:**
+- `width` / `height` (number, required): size in pixels
+- `name` (string, optional)
+- `left` / `top` (number, optional): origin in pixels
+
+```javascript
+photoshop_create_artboard({ name: "iPhone", width: 390, height: 844 })
+photoshop_create_artboard({ name: "iPad", width: 768, height: 1024 })
+```
+
+#### `photoshop_set_active_artboard`
+Select an artboard by `artboard_id` (preferred) or unique `name`.
+
+```javascript
+photoshop_set_active_artboard({ artboard_id: 12 })
+```
+
+#### `photoshop_export_artboards`
+Export every artboard to a folder (duplicate + crop). Uses a 600s script timeout.
+
+**Parameters:**
+- `folder` (string, required): absolute output directory
+- `format` (string, optional): PNG, JPEG, WEBP, AVIF
+- `quality` (number, optional): 0–100
+
+```javascript
+photoshop_export_artboards({ folder: "/tmp/boards", format: "PNG" })
+```
+
 #### `photoshop_save_document`
 Save the active document.
 
@@ -99,14 +156,16 @@ photoshop_save_document({
 ```
 
 #### `photoshop_close_document`
-Close the active document.
+Close a document tab. Defaults to the active document; pass `document_id` from `photoshop_list_documents` to close a specific file.
 
 **Parameters:**
 - `save` (boolean, optional): Save before closing (default: false)
+- `document_id` (number, optional): Close that open document instead of the front tab
 
 ```javascript
 // Example: Close without saving
 photoshop_close_document({ save: false })
+photoshop_close_document({ save: false, document_id: 42 })
 ```
 
 ### Layer Operations
@@ -131,7 +190,7 @@ photoshop_delete_layer()
 ```
 
 #### `photoshop_create_text_layer`
-Create a text layer.
+Create a text layer. Optional typography fields avoid a follow-up `execute_script`.
 
 **Parameters:**
 - `text` (string, required): Text content
@@ -139,15 +198,28 @@ Create a text layer.
 - `y` (number, optional): Y position in pixels (default: 100)
 - `fontSize` (number, optional): Font size in points (default: 24)
 - `fontName` (string, optional): Font display or PostScript name (see `photoshop_list_fonts`)
+- `tracking` (number, optional): Character spacing in 1/1000 em (−1000 to 10000)
+- `leading` (number, optional): Line height in points
+- `auto_leading` (boolean, optional): Photoshop auto leading
+- `kind` (string, optional): `point` or `paragraph`
+- `box_width` / `box_height` (number, optional): Paragraph text box size in pixels (implies `kind=paragraph`)
+- `alignment` (string, optional): LEFT, CENTER, RIGHT, LEFTJUSTIFIED, CENTERJUSTIFIED, RIGHTJUSTIFIED, FULLYJUSTIFIED
+- `red` / `green` / `blue` (number, optional): Text color 0–255
 
 ```javascript
-// Example: Create a text layer with Arial
+// Example: Paragraph title with tracking
 photoshop_create_text_layer({
   text: "Hello World",
   x: 200,
   y: 150,
   fontSize: 48,
-  fontName: "Arial"
+  fontName: "Arial",
+  tracking: 80,
+  leading: 56,
+  kind: "paragraph",
+  box_width: 600,
+  box_height: 160,
+  alignment: "CENTER"
 })
 ```
 
@@ -560,11 +632,28 @@ List installed fonts available to Photoshop. First call may be slow (`app.fonts`
 
 **Returns:** `{ fonts: [{ name, postScriptName, family, style }], total, truncated }`
 
-Use `postScriptName` when setting fonts manually via `execute_script`; `photoshop_set_text_font` and `photoshop_create_text_layer` resolve display names automatically.
+Use `postScriptName` when setting fonts manually via `execute_script`; `photoshop_set_text_font` and `photoshop_create_text_layer` resolve display names automatically. A font that is not installed can be added with `photoshop_install_font`, which reloads the open app's font list.
 
 ```javascript
 // Example: Find Arial variants
 photoshop_list_fonts({ query: "Arial", limit: 20 })
+```
+
+#### `photoshop_install_font`
+Install a `.ttf`, `.otf`, `.ttc`, or `.otc` for the current user. Does not download the file.
+
+- macOS: copies it to `~/Library/Fonts` (Font Book, Current User).
+- Windows: installs it for the current user only.
+
+If Photoshop is open, the tool calls `app.refreshFonts()` (`Application.refreshFonts` in the Photoshop JavaScript Reference) so `photoshop_list_fonts` sees the new names without quitting. The result includes `post_script_names` to pass to `photoshop_set_text_font`.
+
+Fredoka Bold is the named instance `Fredoka-Bold` inside Google Fonts' variable file `Fredoka[wdth,wght].ttf` (SIL Open Font License). It is not a separate Bold file.
+
+**Parameters:**
+- `file_path` (string, required): Absolute path to the font file
+
+```javascript
+photoshop_install_font({ file_path: "/Users/me/Fonts/Fredoka[wdth,wght].ttf" })
 ```
 
 #### `photoshop_set_text_font`
@@ -619,6 +708,37 @@ Update text content of active text layer.
 ```javascript
 // Example: Update text
 photoshop_update_text_content({ text: "New Text" })
+```
+
+#### `photoshop_set_text_style`
+Layer-wide typography on the active text layer (tracking, leading, paragraph box, alignment, font, size, color).
+
+**Parameters:** all optional, at least one required — same names as `photoshop_create_text_layer` style fields (`tracking`, `leading`, `auto_leading`, `kind`, `box_width`, `box_height`, `alignment`, `fontName`, `fontSize`, `red`/`green`/`blue`).
+
+```javascript
+photoshop_set_text_style({
+  tracking: 120,
+  leading: 40,
+  kind: "paragraph",
+  box_width: 500,
+  box_height: 180,
+  alignment: "CENTER"
+})
+```
+
+#### `photoshop_set_text_ranges`
+Mixed fonts/sizes/colors inside one text layer (`textStyleRange`). `from` inclusive, `to` exclusive.
+
+**Parameters:**
+- `ranges` (array, required): `{ from, to, fontName?, fontSize?, red?, green?, blue? }[]` (max 64, no overlaps)
+
+```javascript
+photoshop_set_text_ranges({
+  ranges: [
+    { from: 0, to: 5, red: 220, green: 40, blue: 40, fontName: "Arial" },
+    { from: 6, to: 11, red: 30, green: 80, blue: 200, fontName: "Times New Roman" }
+  ]
+})
 ```
 
 ### Selections & Masks
@@ -889,8 +1009,11 @@ Execute custom ExtendScript code (advanced).
 
 **Parameters:**
 - `code` (string, required): ExtendScript code
+- `timeout_ms` (number, optional): 1000–600000 (default 30000, or `PHOTOSHOP_SCRIPT_TIMEOUT`)
 
 Your code runs inside a wrapping IIFE on the server side. Use an explicit `return` to pass data back — a bare trailing expression or assignment (e.g. `layer.name = "X"`) evaluates to `undefined`, so the tool result shows `"undefined"` even when the mutation succeeded.
+
+Long loops should pass `timeout_ms`. Batch recipes (`batch_watermark`, `csv_to_cards`, …) already use 600s.
 
 ```javascript
 // Example: Rename the active layer and return confirmation
@@ -1146,3 +1269,4 @@ Export a copy as PNG/JPEG (Save for Web) or WebP/AVIF (native, PS 23.2+). Return
 - `path` (string, required): Absolute output path
 - `format` (string, optional): `PNG` | `JPEG` | `WEBP` | `AVIF` (default PNG)
 - `quality` (number, optional): 0-100 (default 80)
+- `artboard_id` (number, optional): export only that artboard (from `photoshop_list_artboards`)

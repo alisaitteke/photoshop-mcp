@@ -1,6 +1,6 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PHOTOSHOP_EXPORT_CHAT_ID_ENV } from '../../lib/export-paths.js';
+import { PHOTOSHOP_EXPORT_CHAT_ID_ENV, PHOTOSHOP_MCP_SURFACE_ENV } from '../../lib/export-paths.js';
 import { PLAN_OUT_PATH_ENV } from './planner-submit.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -30,6 +30,16 @@ export function sanitizedEnv(): Record<string, string> {
   return out;
 }
 
+/** Env for the MCP child spawned by the standalone UI (skips the host-tool feedback nudge). */
+export function buildUiMcpChildEnv(chatId?: string): Record<string, string> {
+  return {
+    ...sanitizedEnv(),
+    LOG_LEVEL: process.env.LOG_LEVEL ?? '2',
+    [PHOTOSHOP_MCP_SURFACE_ENV]: 'ui',
+    ...(chatId ? { [PHOTOSHOP_EXPORT_CHAT_ID_ENV]: chatId } : {}),
+  };
+}
+
 export function buildMcpServerConfig(chatId?: string): {
   command: string;
   args: string[];
@@ -38,11 +48,7 @@ export function buildMcpServerConfig(chatId?: string): {
   return {
     command: process.execPath,
     args: buildSpawnArgs(),
-    env: {
-      ...sanitizedEnv(),
-      LOG_LEVEL: process.env.LOG_LEVEL ?? '2',
-      ...(chatId ? { [PHOTOSHOP_EXPORT_CHAT_ID_ENV]: chatId } : {}),
-    },
+    env: buildUiMcpChildEnv(chatId),
   };
 }
 
@@ -55,8 +61,7 @@ export function buildPlannerMcpServerConfig(planOutPath: string): {
     command: process.execPath,
     args: buildPlannerSpawnArgs(),
     env: {
-      ...sanitizedEnv(),
-      LOG_LEVEL: process.env.LOG_LEVEL ?? '2',
+      ...buildUiMcpChildEnv(),
       [PLAN_OUT_PATH_ENV]: planOutPath,
     },
   };

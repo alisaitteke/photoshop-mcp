@@ -14,6 +14,269 @@ function sTID(s) { return app.stringIDToTypeID(s); }
 `;
 
 /**
+ * Artboard helpers — ExtendScript DOM has no Artboard class; they are LayerSets
+ * with Action Manager keys artboardEnabled + artboardRect.
+ * @see https://developer.adobe.com/photoshop/uxp/2022/ps-reference/classes/document (document.artboards, 22.5+)
+ * @see https://community.adobe.com/questions-712/action-manager-scripting-1094053
+ * @see https://graphicdesign.stackexchange.com/questions/122658/scripting-artboards-names-in-photoshop
+ */
+const artboardHelpers = `
+function __mcp_amNumber(desc, key) {
+  try { return desc.getDouble(key); } catch (eDouble) {}
+  try { return desc.getUnitDoubleValue(key); } catch (eUnit) {}
+  return 0;
+}
+
+function __mcp_unlockBackgroundIfNeeded() {
+  try {
+    var bg = app.activeDocument.backgroundLayer;
+    if (bg) bg.isBackgroundLayer = false;
+  } catch (eBg) {}
+}
+
+function __mcp_listArtboards() {
+  var artboards = [];
+  if (app.documents.length === 0) return artboards;
+  var s2t = stringIDToTypeID;
+  var count = 0;
+  try {
+    var refCount = new ActionReference();
+    refCount.putProperty(s2t('property'), s2t('numberOfLayers'));
+    refCount.putEnumerated(s2t('document'), s2t('ordinal'), s2t('targetEnum'));
+    count = executeActionGet(refCount).getInteger(s2t('numberOfLayers'));
+  } catch (eCount) {
+    return artboards;
+  }
+
+  var activeArtboardId = __mcp_activeArtboardId();
+
+  for (var i = 1; i <= count; i++) {
+    try {
+      var refAb = new ActionReference();
+      refAb.putProperty(s2t('property'), s2t('artboardEnabled'));
+      refAb.putIndex(s2t('layer'), i);
+      var descAb = executeActionGet(refAb);
+      if (!descAb.hasKey(s2t('artboardEnabled')) || !descAb.getBoolean(s2t('artboardEnabled'))) {
+        continue;
+      }
+
+      var refId = new ActionReference();
+      refId.putProperty(s2t('property'), s2t('layerID'));
+      refId.putIndex(s2t('layer'), i);
+      var id = executeActionGet(refId).getInteger(s2t('layerID'));
+
+      var refName = new ActionReference();
+      refName.putProperty(s2t('property'), s2t('name'));
+      refName.putIndex(s2t('layer'), i);
+      var name = executeActionGet(refName).getString(s2t('name'));
+
+      var refRect = new ActionReference();
+      refRect.putProperty(s2t('property'), s2t('artboard'));
+      refRect.putIndex(s2t('layer'), i);
+      var rect = executeActionGet(refRect).getObjectValue(s2t('artboard')).getObjectValue(s2t('artboardRect'));
+      var left = __mcp_amNumber(rect, s2t('left'));
+      var top = __mcp_amNumber(rect, s2t('top'));
+      var right = __mcp_amNumber(rect, s2t('right'));
+      var bottom = __mcp_amNumber(rect, s2t('bottom'));
+
+      artboards.push({
+        id: id,
+        name: name,
+        left: left,
+        top: top,
+        right: right,
+        bottom: bottom,
+        width: right - left,
+        height: bottom - top,
+        is_active: activeArtboardId !== null && id === activeArtboardId
+      });
+    } catch (eSkip) {}
+  }
+  return artboards;
+}
+
+function __mcp_isArtboardId(id) {
+  try {
+    var s2t = stringIDToTypeID;
+    var ref = new ActionReference();
+    ref.putProperty(s2t('property'), s2t('artboardEnabled'));
+    ref.putIdentifier(s2t('layer'), id);
+    var desc = executeActionGet(ref);
+    return desc.hasKey(s2t('artboardEnabled')) && desc.getBoolean(s2t('artboardEnabled'));
+  } catch (e) {
+    return false;
+  }
+}
+
+function __mcp_activeArtboardId() {
+  try {
+    var layer = app.activeDocument.activeLayer;
+    while (layer) {
+      try {
+        if (layer.typename === 'LayerSet' && __mcp_isArtboardId(layer.id)) {
+          return layer.id;
+        }
+      } catch (eKind) {}
+      try {
+        if (!layer.parent || layer.parent.typename === 'Document') break;
+        layer = layer.parent;
+      } catch (eParent) {
+        break;
+      }
+    }
+  } catch (eActive) {}
+  return null;
+}
+
+function __mcp_findArtboard(artboardId, artboardName) {
+  var abs = __mcp_listArtboards();
+  if (typeof artboardId === 'number') {
+    for (var i = 0; i < abs.length; i++) {
+      if (abs[i].id === artboardId) return abs[i];
+    }
+    return null;
+  }
+  if (artboardName) {
+    var matches = [];
+    for (var j = 0; j < abs.length; j++) {
+      if (abs[j].name === artboardName) matches.push(abs[j]);
+    }
+    if (matches.length === 1) return matches[0];
+    if (matches.length > 1) {
+      return { ambiguous: true, count: matches.length, name: artboardName };
+    }
+  }
+  return null;
+}
+
+function __mcp_selectLayerById(id) {
+  var desc = new ActionDescriptor();
+  var ref = new ActionReference();
+  ref.putIdentifier(stringIDToTypeID('layer'), id);
+  desc.putReference(charIDToTypeID('null'), ref);
+  desc.putBoolean(charIDToTypeID('MkVs'), false);
+  executeAction(charIDToTypeID('slct'), desc, DialogModes.NO);
+}
+
+function __mcp_nextArtboardOrigin() {
+  var abs = __mcp_listArtboards();
+  if (abs.length === 0) {
+    return { left: 0, top: 0 };
+  }
+  var maxRight = abs[0].right;
+  var minTop = abs[0].top;
+  for (var i = 1; i < abs.length; i++) {
+    if (abs[i].right > maxRight) maxRight = abs[i].right;
+    if (abs[i].top < minTop) minTop = abs[i].top;
+  }
+  return { left: maxRight + 32, top: minTop };
+}
+
+function __mcp_makeArtboard(left, top, right, bottom, name) {
+  var s2t = stringIDToTypeID;
+  var c2t = charIDToTypeID;
+  function putName(desc) {
+    if (!name) return;
+    var using = new ActionDescriptor();
+    using.putString(c2t('Nm  '), name);
+    desc.putObject(c2t('Usng'), s2t('artboardSection'), using);
+  }
+  try {
+    var desc = new ActionDescriptor();
+    var ref = new ActionReference();
+    ref.putClass(s2t('artboardSection'));
+    desc.putReference(s2t('null'), ref);
+    putName(desc);
+    var rect = new ActionDescriptor();
+    rect.putDouble(s2t('top'), top);
+    rect.putDouble(s2t('left'), left);
+    rect.putDouble(s2t('bottom'), bottom);
+    rect.putDouble(s2t('right'), right);
+    desc.putObject(s2t('artboardRect'), s2t('classFloatRect'), rect);
+    executeAction(s2t('make'), desc, DialogModes.NO);
+    return;
+  } catch (eFloat) {}
+
+  var desc2 = new ActionDescriptor();
+  var ref2 = new ActionReference();
+  ref2.putClass(s2t('artboardSection'));
+  desc2.putReference(s2t('null'), ref2);
+  putName(desc2);
+  var rect2 = new ActionDescriptor();
+  rect2.putUnitDouble(c2t('Top '), c2t('#Pxl'), top);
+  rect2.putUnitDouble(c2t('Left'), c2t('#Pxl'), left);
+  rect2.putUnitDouble(c2t('Btom'), c2t('#Pxl'), bottom);
+  rect2.putUnitDouble(c2t('Rght'), c2t('#Pxl'), right);
+  desc2.putObject(s2t('artboardRect'), s2t('rectangle'), rect2);
+  executeAction(s2t('make'), desc2, DialogModes.NO);
+}
+
+function __mcp_safeFileName(name) {
+  var s = String(name);
+  var out = '';
+  var bad = '\\/:*?"<>|';
+  for (var i = 0; i < s.length; i++) {
+    var ch = s.charAt(i);
+    out += bad.indexOf(ch) >= 0 ? '_' : ch;
+  }
+  return out;
+}
+
+function __mcp_duplicateCropToArtboard(ab) {
+  var dup = app.activeDocument.duplicate();
+  var w = dup.width.as('px');
+  var h = dup.height.as('px');
+  var left = Math.max(0, Math.min(w - 1, ab.left));
+  var top = Math.max(0, Math.min(h - 1, ab.top));
+  var right = Math.max(left + 1, Math.min(w, ab.right));
+  var bottom = Math.max(top + 1, Math.min(h, ab.bottom));
+  dup.crop([
+    new UnitValue(left, 'px'),
+    new UnitValue(top, 'px'),
+    new UnitValue(right, 'px'),
+    new UnitValue(bottom, 'px')
+  ]);
+  return dup;
+}
+
+function __mcp_exportDoc(doc, outFile, format, quality) {
+  app.displayDialogs = DialogModes.NO;
+  if (format === 'PNG' || format === 'JPEG') {
+    var opts = new ExportOptionsSaveForWeb();
+    if (format === 'PNG') {
+      opts.format = SaveDocumentType.PNG;
+      opts.PNG8 = false;
+    } else {
+      opts.format = SaveDocumentType.JPEG;
+      opts.quality = quality;
+    }
+    doc.exportDocument(outFile, ExportType.SAVEFORWEB, opts);
+    return { ok: true, method: 'save_for_web' };
+  }
+  var saveCandidates = format === 'WEBP'
+    ? ['WebPSaveOptions']
+    : ['AVIFSaveOptions', 'AvifSaveOptions'];
+  var lastError = '';
+  for (var c = 0; c < saveCandidates.length; c++) {
+    try {
+      var opts2 = eval('new ' + saveCandidates[c] + '()');
+      try { opts2.quality = quality; } catch (eQ) {}
+      doc.saveAs(outFile, opts2, true, Extension.LOWERCASE);
+      return { ok: true, method: 'native_save_as' };
+    } catch (eSave) {
+      lastError = eSave.message || String(eSave);
+    }
+  }
+  return {
+    ok: false,
+    code: 'version_unsupported',
+    message: format + ' export not available in this Photoshop build: ' + lastError,
+    suggested_next_tool: 'photoshop_save_document'
+  };
+}
+`;
+
+/**
  * Selection helpers shared by getSelectionBounds and selection modifier snippets.
  * @see https://stackoverflow.com/questions/41552883/determine-if-selection-is-present
  * @see https://www.indesignjs.de/extendscriptAPI/photoshop-latest/Selection.html
@@ -32,6 +295,43 @@ function __mcp_requireSelection() {
     return { ok: false, code: 'selection_required', message: 'Active pixel selection required' };
   }
   return null;
+}
+
+function __mcp_modifySelection(charId, pixels) {
+  var desc = new ActionDescriptor();
+  var key = charId === 'Fthr' ? 'Rds ' : 'By  ';
+  desc.putUnitDouble(cTID(key), cTID('#Pxl'), pixels);
+  executeAction(cTID(charId), desc, DialogModes.NO);
+}
+
+function __mcp_selectRect(left, top, right, bottom, mode) {
+  var modifier = mode || 'replace';
+  if (modifier === 'replace') {
+    var desc = new ActionDescriptor();
+    var ref = new ActionReference();
+    ref.putProperty(cTID('Chnl'), cTID('fsel'));
+    desc.putReference(cTID('null'), ref);
+    var rect = new ActionDescriptor();
+    rect.putUnitDouble(cTID('Top '), cTID('#Pxl'), top);
+    rect.putUnitDouble(cTID('Left'), cTID('#Pxl'), left);
+    rect.putUnitDouble(cTID('Btom'), cTID('#Pxl'), bottom);
+    rect.putUnitDouble(cTID('Rght'), cTID('#Pxl'), right);
+    desc.putObject(cTID('T   '), cTID('Rctn'), rect);
+    desc.putBoolean(cTID('AntA'), true);
+    executeAction(cTID('setd'), desc, DialogModes.NO);
+    return;
+  }
+
+  var typeName = modifier === 'add' ? 'EXTEND' : (modifier === 'subtract' ? 'DIMINISH' : 'INTERSECT');
+  var selType = null;
+  try {
+    if (typeof SelectionType !== 'undefined') selType = SelectionType[typeName];
+  } catch (eEnum) {}
+  if (!selType) {
+    throw new Error('SelectionType.' + typeName + ' is not available');
+  }
+  var pts = [[left, top], [right, top], [right, bottom], [left, bottom]];
+  app.activeDocument.selection.select(pts, selType, 0, true);
 }
 
 function __mcp_readSelectionBounds(doc) {
@@ -108,12 +408,308 @@ function resolveFontPostScriptName(name) {
 `;
 
 /**
+ * Layer-wide TextItem style (tracking/leading/paragraph box) plus AM textStyleRange
+ * for mixed font/color in one layer. DOM covers Photoshop 2020+; ranges use setd/TxLr.
+ */
+const textStyleHelpers = `
+function __mcp_unitAs(value, unit) {
+  try { return value.as(unit); } catch (eAs) {}
+  try { return Number(value); } catch (eNum) {}
+  return null;
+}
+
+function __mcp_justificationName(j) {
+  try {
+    if (j === Justification.LEFT) return 'LEFT';
+    if (j === Justification.CENTER) return 'CENTER';
+    if (j === Justification.RIGHT) return 'RIGHT';
+    if (j === Justification.LEFTJUSTIFIED) return 'LEFTJUSTIFIED';
+    if (j === Justification.CENTERJUSTIFIED) return 'CENTERJUSTIFIED';
+    if (j === Justification.RIGHTJUSTIFIED) return 'RIGHTJUSTIFIED';
+    if (j === Justification.FULLYJUSTIFIED) return 'FULLYJUSTIFIED';
+  } catch (eJust) {}
+  return String(j);
+}
+
+function __mcp_textKindName(k) {
+  try {
+    if (k === TextType.PARAGRAPHTEXT) return 'paragraph';
+  } catch (eKind) {}
+  return 'point';
+}
+
+function __mcp_requireTextLayer() {
+  if (app.documents.length === 0) {
+    throw new Error('No active document');
+  }
+  var layer = app.activeDocument.activeLayer;
+  if (!layer || layer.kind !== LayerKind.TEXT) {
+    throw new Error('Active layer is not a text layer');
+  }
+  return layer;
+}
+
+function __mcp_readTextStyle(t) {
+  var out = {
+    contents: '',
+    font: null,
+    size: null,
+    tracking: null,
+    auto_leading: false,
+    leading: null,
+    kind: 'point',
+    box_width: null,
+    box_height: null,
+    alignment: 'LEFT',
+    red: null,
+    green: null,
+    blue: null
+  };
+  try { out.contents = String(t.contents); } catch (eContents) {}
+  try { out.font = t.font; } catch (eFont) {}
+  try { out.size = __mcp_unitAs(t.size, 'pt'); } catch (eSize) {}
+  try { out.tracking = t.tracking; } catch (eTrack) {}
+  try {
+    var useAuto = false;
+    try { useAuto = !!t.useAutoLeading; } catch (eUse) {
+      try { useAuto = !!t.autoLeading; } catch (eAuto) {}
+    }
+    out.auto_leading = useAuto;
+  } catch (eAutoLead) {}
+  try {
+    var leadVal = t.leading;
+    var leadNum = null;
+    try { leadNum = leadVal.as('pt'); } catch (eAsPt) {}
+    if (leadNum === null || isNaN(leadNum)) {
+      try { leadNum = leadVal.value; } catch (eVal) {}
+    }
+    if (leadNum === null || isNaN(leadNum)) {
+      leadNum = Number(leadVal);
+    }
+    if (!isNaN(leadNum)) out.leading = leadNum;
+  } catch (eLead) {}
+  try { out.kind = __mcp_textKindName(t.kind); } catch (eKind) {}
+  if (out.kind === 'paragraph') {
+    try { out.box_width = __mcp_unitAs(t.width, 'px'); } catch (eW) {}
+    try { out.box_height = __mcp_unitAs(t.height, 'px'); } catch (eH) {}
+  }
+  try { out.alignment = __mcp_justificationName(t.justification); } catch (eAlign) {}
+  try {
+    out.red = Math.round(t.color.rgb.red);
+    out.green = Math.round(t.color.rgb.green);
+    out.blue = Math.round(t.color.rgb.blue);
+  } catch (eColor) {}
+  return out;
+}
+
+function __mcp_applyTextStyle(t, opts) {
+  if (!opts) return;
+  if (opts.font) {
+    var ps = resolveFontPostScriptName(opts.font);
+    if (!ps) throw new Error('font_not_found: ' + opts.font);
+    t.font = ps;
+  }
+  if (opts.size !== undefined && opts.size !== null) {
+    t.size = opts.size;
+  }
+  if (opts.tracking !== undefined && opts.tracking !== null) {
+    t.tracking = opts.tracking;
+  }
+  var kind = opts.kind;
+  if (!kind && (opts.box_width || opts.box_height)) kind = 'paragraph';
+  if (kind === 'paragraph') {
+    t.kind = TextType.PARAGRAPHTEXT;
+    if (opts.box_width) t.width = new UnitValue(opts.box_width, 'px');
+    if (opts.box_height) t.height = new UnitValue(opts.box_height, 'px');
+  } else if (kind === 'point') {
+    t.kind = TextType.POINTTEXT;
+  }
+  if (opts.auto_leading === true) {
+    try { t.useAutoLeading = true; } catch (eUseOn) {}
+    try { t.autoLeading = true; } catch (eAutoOn) {}
+  } else if (opts.leading !== undefined && opts.leading !== null) {
+    try { t.useAutoLeading = false; } catch (eUseOff) {}
+    try { t.autoLeading = false; } catch (eAutoOff) {}
+    try {
+      t.leading = opts.leading;
+    } catch (eLeadNum) {
+      t.leading = new UnitValue(opts.leading, 'pt');
+    }
+  }
+  if (opts.alignment) {
+    t.justification = Justification[opts.alignment];
+  }
+  if (opts.red !== undefined && opts.red !== null) {
+    var color = new SolidColor();
+    color.rgb.red = opts.red;
+    color.rgb.green = opts.green;
+    color.rgb.blue = opts.blue;
+    t.color = color;
+  }
+}
+
+function __mcp_defaultRangeStyle(t) {
+  var d = {
+    font: null,
+    size: 12,
+    red: 0,
+    green: 0,
+    blue: 0
+  };
+  try { d.font = t.font; } catch (eFont) {}
+  try {
+    var sz = __mcp_unitAs(t.size, 'pt');
+    if (sz !== null && !isNaN(sz)) d.size = sz;
+  } catch (eSize) {}
+  try {
+    d.red = Math.round(t.color.rgb.red);
+    d.green = Math.round(t.color.rgb.green);
+    d.blue = Math.round(t.color.rgb.blue);
+  } catch (eColor) {}
+  return d;
+}
+
+function __mcp_putRangeStyle(st, font, size, red, green, blue) {
+  var s2t = stringIDToTypeID;
+  var c2t = charIDToTypeID;
+  if (font) st.putString(s2t('fontPostScriptName'), font);
+  if (size !== undefined && size !== null) {
+    st.putUnitDouble(c2t('Sz  '), c2t('#Pnt'), size);
+  }
+  if (red !== undefined && red !== null) {
+    var col = new ActionDescriptor();
+    col.putDouble(c2t('Rd  '), red);
+    col.putDouble(c2t('Grn '), green);
+    col.putDouble(c2t('Bl  '), blue);
+    st.putObject(c2t('Clr '), c2t('RGBC'), col);
+  }
+}
+
+function __mcp_setTextRanges(ranges) {
+  var layer = __mcp_requireTextLayer();
+  var t = layer.textItem;
+  var snap = __mcp_readTextStyle(t);
+  var contents = String(t.contents);
+  var len = contents.length;
+  var def = __mcp_defaultRangeStyle(t);
+  var covering = [];
+  var cursor = 0;
+  var i;
+  for (i = 0; i < ranges.length; i++) {
+    var r = ranges[i];
+    var from = r.from;
+    var to = r.to;
+    if (from > len) continue;
+    if (to > len) to = len;
+    if (to <= from) continue;
+    if (from > cursor) {
+      covering.push({ from: cursor, to: from, font: def.font, size: def.size, red: def.red, green: def.green, blue: def.blue });
+    }
+    var spanFont = def.font;
+    if (r.font) {
+      spanFont = resolveFontPostScriptName(r.font);
+      if (!spanFont) throw new Error('font_not_found: ' + r.font);
+    }
+    covering.push({
+      from: from,
+      to: to,
+      font: spanFont,
+      size: r.size !== undefined && r.size !== null ? r.size : def.size,
+      red: r.red !== undefined && r.red !== null ? r.red : def.red,
+      green: r.green !== undefined && r.green !== null ? r.green : def.green,
+      blue: r.blue !== undefined && r.blue !== null ? r.blue : def.blue
+    });
+    cursor = to;
+  }
+  if (cursor < len) {
+    covering.push({ from: cursor, to: len, font: def.font, size: def.size, red: def.red, green: def.green, blue: def.blue });
+  }
+
+  var c2t = charIDToTypeID;
+  var textDesc = new ActionDescriptor();
+  textDesc.putString(c2t('Txt '), contents);
+  var list = new ActionList();
+  for (i = 0; i < covering.length; i++) {
+    var span = covering[i];
+    var rd = new ActionDescriptor();
+    rd.putInteger(c2t('From'), span.from);
+    rd.putInteger(c2t('T   '), span.to);
+    var st = new ActionDescriptor();
+    __mcp_putRangeStyle(st, span.font, span.size, span.red, span.green, span.blue);
+    rd.putObject(c2t('TxtS'), c2t('TxtS'), st);
+    list.putObject(c2t('Txtt'), rd);
+  }
+  textDesc.putList(c2t('Txtt'), list);
+
+  var desc = new ActionDescriptor();
+  var ref = new ActionReference();
+  ref.putEnumerated(c2t('TxLr'), c2t('Ordn'), c2t('Trgt'));
+  desc.putReference(c2t('null'), ref);
+  desc.putObject(c2t('T   '), c2t('TxLr'), textDesc);
+  executeAction(c2t('setd'), desc, DialogModes.NO);
+
+  t = app.activeDocument.activeLayer.textItem;
+  __mcp_applyTextStyle(t, {
+    tracking: snap.tracking,
+    leading: snap.leading,
+    auto_leading: snap.auto_leading,
+    kind: snap.kind,
+    box_width: snap.box_width,
+    box_height: snap.box_height,
+    alignment: snap.alignment
+  });
+  return { style: __mcp_readTextStyle(t), ranges: covering };
+}
+
+function __mcp_readTextRanges() {
+  var s2t = stringIDToTypeID;
+  var ranges = [];
+  try {
+    var ref = new ActionReference();
+    ref.putProperty(s2t('property'), s2t('textKey'));
+    ref.putEnumerated(s2t('layer'), s2t('ordinal'), s2t('targetEnum'));
+    var desc = executeActionGet(ref);
+    if (!desc.hasKey(s2t('textKey'))) return ranges;
+    var textKey = desc.getObjectValue(s2t('textKey'));
+    if (!textKey.hasKey(s2t('textStyleRange'))) return ranges;
+    var list = textKey.getList(s2t('textStyleRange'));
+    for (var i = 0; i < list.count; i++) {
+      var item = list.getObjectValue(i);
+      var from = item.getInteger(s2t('from'));
+      var to = item.getInteger(s2t('to'));
+      var entry = { from: from, to: to, font: null, size: null, red: null, green: null, blue: null };
+      if (item.hasKey(s2t('textStyle'))) {
+        var st = item.getObjectValue(s2t('textStyle'));
+        try {
+          if (st.hasKey(s2t('fontPostScriptName'))) entry.font = st.getString(s2t('fontPostScriptName'));
+        } catch (eFont) {}
+        try {
+          if (st.hasKey(s2t('size'))) entry.size = st.getUnitDoubleValue(s2t('size'));
+        } catch (eSize) {}
+        try {
+          if (st.hasKey(s2t('color'))) {
+            var col = st.getObjectValue(s2t('color'));
+            entry.red = Math.round(col.getDouble(s2t('red')));
+            entry.green = Math.round(col.getDouble(s2t('green')));
+            entry.blue = Math.round(col.getDouble(s2t('blue')));
+          }
+        } catch (eCol) {}
+      }
+      ranges.push(entry);
+    }
+  } catch (eRead) {}
+  return ranges;
+}
+`;
+
+/**
  * Helper function to get current context information
  */
 const getContextInfo = `
 function getContextInfo() {
   var context = {
-    hasDocument: app.documents.length > 0
+    hasDocument: app.documents.length > 0,
+    openDocumentCount: app.documents.length
   };
   
   if (context.hasDocument) {
@@ -473,6 +1069,8 @@ export const ExtendScriptSnippets = {
    * @see https://developer.adobe.com/photoshop/uxp/ps_reference/classes/documents/
    */
   listDocuments: () => `
+    ${helperFunctions}
+    ${artboardHelpers}
     ${getContextInfo}
 
     var docs = [];
@@ -490,13 +1088,31 @@ export const ExtendScriptSnippets = {
       var entry = {
         id: d.id,
         name: d.name,
-        is_active: false
+        is_active: false,
+        artboard_count: 0,
+        saved: null
       };
       try { entry.width = d.width.as('px'); } catch (eW) {}
       try { entry.height = d.height.as('px'); } catch (eH) {}
       try { entry.resolution = d.resolution; } catch (eR) {}
       try { entry.is_active = activeId !== null && d.id === activeId; } catch (eA) {}
+      try { entry.saved = d.saved; } catch (eS) {}
+      try {
+        app.activeDocument = d;
+        entry.artboard_count = __mcp_listArtboards().length;
+      } catch (eAb) {
+        entry.artboard_count = 0;
+      }
       docs.push(entry);
+    }
+
+    if (activeId !== null) {
+      for (var r = 0; r < app.documents.length; r++) {
+        if (app.documents[r].id === activeId) {
+          try { app.activeDocument = app.documents[r]; } catch (eRest) {}
+          break;
+        }
+      }
     }
 
     return {
@@ -597,9 +1213,17 @@ export const ExtendScriptSnippets = {
   /**
    * Create a text layer
    */
-  createTextLayer: (text: string, x = 100, y = 100, fontSize = 24, fontName?: string) => `
+  createTextLayer: (
+    text: string,
+    x = 100,
+    y = 100,
+    fontSize = 24,
+    fontName?: string,
+    styleLiteral = '{}'
+  ) => `
     ${getContextInfo}
     ${resolveFontPostScriptName}
+    ${textStyleHelpers}
     
     if (app.documents.length === 0) {
       throw new Error('No active document');
@@ -617,6 +1241,7 @@ export const ExtendScriptSnippets = {
     }
     textLayer.textItem.font = __psFont;
     ` : ''}
+    __mcp_applyTextStyle(textLayer.textItem, ${styleLiteral});
     
     var result = {
       created: true,
@@ -625,6 +1250,7 @@ export const ExtendScriptSnippets = {
       position: { x: ${x}, y: ${y} },
       fontSize: ${fontSize},
       ${fontName ? `font: textLayer.textItem.font,` : ''}
+      style: __mcp_readTextStyle(textLayer.textItem),
       context: getContextInfo()
     };
     return result;
@@ -822,6 +1448,12 @@ export const ExtendScriptSnippets = {
     if (layer.kind === LayerKind.TEXT) {
       throw new Error('Cannot fill a text layer. Rasterize it first.');
     }
+    var rasterized = false;
+    if (layer.kind === LayerKind.SMARTOBJECT) {
+      layer.rasterize(RasterizeType.ENTIRELAYER);
+      rasterized = true;
+      layer = doc.activeLayer;
+    }
 
     var color = new SolidColor();
     color.rgb.red = ${red};
@@ -845,10 +1477,131 @@ export const ExtendScriptSnippets = {
 
     return {
       filled: true,
+      rasterized: rasterized,
       layerName: layer.name,
       color: { red: ${red}, green: ${green}, blue: ${blue} }
     };
   `,
+
+  /**
+   * Two-color linear gradient on the active layer's pixels (not the mask).
+   * Document.gradients does not exist in ExtendScript; this uses the gradient tool action.
+   */
+  fillLinearGradient: (
+    fromRed: number,
+    fromGreen: number,
+    fromBlue: number,
+    toRed: number,
+    toGreen: number,
+    toBlue: number,
+    direction: 'left_to_right' | 'right_to_left' | 'top_to_bottom' | 'bottom_to_top'
+  ) => {
+    const axis = {
+      left_to_right: { fromH: 0, fromV: 50, toH: 100, toV: 50 },
+      right_to_left: { fromH: 100, fromV: 50, toH: 0, toV: 50 },
+      top_to_bottom: { fromH: 50, fromV: 0, toH: 50, toV: 100 },
+      bottom_to_top: { fromH: 50, fromV: 100, toH: 50, toV: 0 },
+    }[direction];
+    return `
+    ${helperFunctions}
+    if (app.documents.length === 0) {
+      throw new Error('No active document');
+    }
+    var doc = app.activeDocument;
+    var layer = doc.activeLayer;
+    if (!layer) throw new Error('No active layer');
+    if (layer.allLocked) {
+      throw new Error('Cannot fill a fully locked layer: ' + layer.name);
+    }
+    if (layer.kind === LayerKind.TEXT) {
+      throw new Error('Cannot fill a text layer. Rasterize it first.');
+    }
+    if (layer.isBackgroundLayer) {
+      layer.isBackgroundLayer = false;
+    }
+
+    app.displayDialogs = DialogModes.NO;
+    var docW = doc.width.as('px');
+    var docH = doc.height.as('px');
+    var fromX = docW * (${axis.fromH} / 100.0);
+    var fromY = docH * (${axis.fromV} / 100.0);
+    var toX = docW * (${axis.toH} / 100.0);
+    var toY = docH * (${axis.toV} / 100.0);
+
+    var hadSelection = false;
+    try { hadSelection = doc.selection.bounds != null; } catch (eSel) { hadSelection = false; }
+    if (!hadSelection) doc.selection.selectAll();
+
+    function __mcp_gradPoint(x, y) {
+      var desc = new ActionDescriptor();
+      desc.putUnitDouble(cTID('Hrzn'), cTID('#Pxl'), x);
+      desc.putUnitDouble(cTID('Vrtc'), cTID('#Pxl'), y);
+      return desc;
+    }
+    function __mcp_gradRgb(r, g, b) {
+      var desc = new ActionDescriptor();
+      desc.putDouble(cTID('Rd  '), r);
+      desc.putDouble(cTID('Grn '), g);
+      desc.putDouble(cTID('Bl  '), b);
+      return desc;
+    }
+    function __mcp_gradStop(location, r, g, b) {
+      var desc = new ActionDescriptor();
+      desc.putInteger(cTID('Lctn'), location);
+      desc.putInteger(cTID('Mdpn'), 50);
+      desc.putObject(cTID('Clr '), cTID('RGBC'), __mcp_gradRgb(r, g, b));
+      desc.putEnumerated(cTID('Type'), cTID('Clry'), cTID('UsrS'));
+      return desc;
+    }
+
+    var args = new ActionDescriptor();
+    args.putObject(cTID('From'), cTID('Pnt '), __mcp_gradPoint(fromX, fromY));
+    args.putObject(cTID('T   '), cTID('Pnt '), __mcp_gradPoint(toX, toY));
+    args.putEnumerated(cTID('Md  '), cTID('BlnM'), cTID('Nrml'));
+    args.putEnumerated(cTID('Type'), cTID('GrdT'), cTID('Lnr '));
+    args.putBoolean(cTID('Dthr'), true);
+    args.putBoolean(cTID('UsMs'), false);
+    args.putBoolean(cTID('Rvrs'), false);
+
+    var gradDesc = new ActionDescriptor();
+    gradDesc.putString(cTID('Nm  '), 'Custom');
+    gradDesc.putEnumerated(cTID('GrdF'), cTID('GrdF'), cTID('CstS'));
+    gradDesc.putDouble(cTID('Intr'), 4096.0);
+
+    var colorList = new ActionList();
+    colorList.putObject(cTID('Clrt'), __mcp_gradStop(0, ${fromRed}, ${fromGreen}, ${fromBlue}));
+    colorList.putObject(cTID('Clrt'), __mcp_gradStop(4096, ${toRed}, ${toGreen}, ${toBlue}));
+    gradDesc.putList(cTID('Clrs'), colorList);
+
+    var xferList = new ActionList();
+    var xferA = new ActionDescriptor();
+    xferA.putInteger(cTID('Lctn'), 0);
+    xferA.putInteger(cTID('Mdpn'), 50);
+    xferA.putUnitDouble(cTID('Opct'), cTID('#Prc'), 100.0);
+    xferList.putObject(cTID('TrnS'), xferA);
+    var xferB = new ActionDescriptor();
+    xferB.putInteger(cTID('Lctn'), 4096);
+    xferB.putInteger(cTID('Mdpn'), 50);
+    xferB.putUnitDouble(cTID('Opct'), cTID('#Prc'), 100.0);
+    xferList.putObject(cTID('TrnS'), xferB);
+    gradDesc.putList(cTID('Trns'), xferList);
+
+    args.putObject(cTID('Grad'), cTID('Grdn'), gradDesc);
+    executeAction(cTID('Grdn'), args, DialogModes.NO);
+
+    if (!hadSelection) {
+      try { doc.selection.deselect(); } catch (eDeselect) {}
+    }
+
+    return {
+      filled: true,
+      layerName: layer.name,
+      direction: '${direction}',
+      from: { red: ${fromRed}, green: ${fromGreen}, blue: ${fromBlue} },
+      to: { red: ${toRed}, green: ${toGreen}, blue: ${toBlue} }
+    };
+  `;
+  },
 
   /**
    * Resize image
@@ -874,6 +1627,8 @@ export const ExtendScriptSnippets = {
    * Get all layer names
    */
   getLayerNames: () => `
+    ${helperFunctions}
+    ${artboardHelpers}
     ${getContextInfo}
     
     if (app.documents.length === 0) {
@@ -885,13 +1640,20 @@ export const ExtendScriptSnippets = {
       for (var i = 0; i < container.layers.length; i++) {
         var layer = container.layers[i];
         try {
-          layers.push({
+          var entry = {
             name: layer.name,
             kind: String(layer.kind),
             visible: layer.visible,
             opacity: layer.opacity,
-            blendMode: String(layer.blendMode)
-          });
+            blendMode: String(layer.blendMode),
+            is_artboard: false
+          };
+          try {
+            if (layer.typename === 'LayerSet') {
+              entry.is_artboard = __mcp_isArtboardId(layer.id);
+            }
+          } catch (eAb) {}
+          layers.push(entry);
         } catch (e) {
           var layerName = 'layer_' + layers.length;
           try { layerName = layer.name; } catch (e2) {}
@@ -1038,6 +1800,18 @@ export const ExtendScriptSnippets = {
       throw new Error('Cannot transform background layer');
     }
     
+    try {
+      var __mcpScaleBounds = layer.bounds;
+      var __mcpScaleW = __mcpScaleBounds[2].as('px') - __mcpScaleBounds[0].as('px');
+      var __mcpScaleH = __mcpScaleBounds[3].as('px') - __mcpScaleBounds[1].as('px');
+      if (!(__mcpScaleW > 0) || !(__mcpScaleH > 0)) {
+        throw new Error('Layer has no pixels (empty bounding rectangle). Fill the layer before scaling.');
+      }
+    } catch (eScaleBounds) {
+      var __mcpScaleMsg = eScaleBounds && eScaleBounds.message ? String(eScaleBounds.message) : '';
+      if (__mcpScaleMsg.indexOf('empty bounding rectangle') !== -1) throw eScaleBounds;
+    }
+
     var anchor = ${centerAnchor ? 'AnchorPosition.MIDDLECENTER' : 'AnchorPosition.TOPLEFT'};
     layer.resize(${scalePercent}, ${scalePercent}, anchor);
     
@@ -1787,6 +2561,24 @@ export const ExtendScriptSnippets = {
   `,
 
   /**
+   * Rebuild Photoshop's in-memory font list without quitting.
+   * Application.refreshFonts() — Adobe Photoshop JavaScript Reference;
+   * Photoshop 2026's CC Libraries panel calls the same method.
+   */
+  refreshFonts: (postScriptNames: string[]) => `
+    app.refreshFonts();
+    var wanted = [${postScriptNames.map((name) => jsStringLiteral(name)).join(', ')}];
+    var visible = [];
+    for (var i = 0; i < wanted.length; i++) {
+      try {
+        var font = app.fonts.getByName(wanted[i]);
+        if (font && font.postScriptName) visible.push(String(font.postScriptName));
+      } catch (e) {}
+    }
+    return { visible: visible, total: app.fonts.length };
+  `,
+
+  /**
    * Set text color
    */
   setTextColor: (red: number, green: number, blue: number) => `
@@ -1847,6 +2639,24 @@ export const ExtendScriptSnippets = {
     
     return { 
       text: layer.textItem.contents
+    };
+  `,
+
+  setTextStyle: (styleLiteral: string) => `
+    ${resolveFontPostScriptName}
+    ${textStyleHelpers}
+    var layer = __mcp_requireTextLayer();
+    __mcp_applyTextStyle(layer.textItem, ${styleLiteral});
+    return { style: __mcp_readTextStyle(layer.textItem) };
+  `,
+
+  setTextRanges: (rangesLiteral: string) => `
+    ${resolveFontPostScriptName}
+    ${textStyleHelpers}
+    var applied = __mcp_setTextRanges(${rangesLiteral});
+    return {
+      style: applied.style,
+      ranges: __mcp_readTextRanges()
     };
   `,
 
@@ -1945,7 +2755,11 @@ export const ExtendScriptSnippets = {
     var selErr = __mcp_requireSelection();
     if (selErr) return selErr;
 
-    doc.selection.expand(new UnitValue(${pixels}, 'px'));
+    try {
+      __mcp_modifySelection('Expn', ${pixels});
+    } catch (eExp) {
+      doc.selection.expand(new UnitValue(${pixels}, 'px'));
+    }
 
     var result = {
       ok: true,
@@ -1976,7 +2790,11 @@ export const ExtendScriptSnippets = {
     var selErr = __mcp_requireSelection();
     if (selErr) return selErr;
 
-    doc.selection.contract(new UnitValue(${pixels}, 'px'));
+    try {
+      __mcp_modifySelection('Cntc', ${pixels});
+    } catch (eCnt) {
+      doc.selection.contract(new UnitValue(${pixels}, 'px'));
+    }
 
     var result = {
       ok: true,
@@ -2007,7 +2825,11 @@ export const ExtendScriptSnippets = {
     var selErr = __mcp_requireSelection();
     if (selErr) return selErr;
 
-    doc.selection.feather(new UnitValue(${pixels}, 'px'));
+    try {
+      __mcp_modifySelection('Fthr', ${pixels});
+    } catch (eFth) {
+      doc.selection.feather(new UnitValue(${pixels}, 'px'));
+    }
 
     var result = {
       ok: true,
@@ -2045,7 +2867,13 @@ export const ExtendScriptSnippets = {
     var chan = doc.channels.add();
     chan.name = name;
     chan.kind = ChannelType.SELECTEDAREA;
-    doc.selection.store(chan, SelectionType.REPLACE);
+    try {
+      doc.selection.store(chan);
+    } catch (eStore) {
+      var replaceMode = 1;
+      try { replaceMode = SelectionType.REPLACE; } catch (eEnum) {}
+      doc.selection.store(chan, replaceMode);
+    }
 
     return {
       ok: true,
@@ -2058,19 +2886,30 @@ export const ExtendScriptSnippets = {
   /**
    * Create rectangular selection
    */
-  selectRectangle: (left: number, top: number, right: number, bottom: number) => `
+  selectRectangle: (
+    left: number,
+    top: number,
+    right: number,
+    bottom: number,
+    mode: 'replace' | 'add' | 'subtract' | 'intersect' = 'replace'
+  ) => `
+    ${helperFunctions}
+    ${selectionHelpers}
+
     if (app.documents.length === 0) {
       throw new Error('No active document');
     }
     var doc = app.activeDocument;
-    
-    var bounds = [[${left}, ${top}], [${right}, ${top}], [${right}, ${bottom}], [${left}, ${bottom}]];
-    doc.selection.select(bounds);
-    
-    return { 
+    __mcp_selectRect(${left}, ${top}, ${right}, ${bottom}, '${mode}');
+
+    var result = {
       selection: 'rectangle',
+      mode: '${mode}',
       bounds: [${left}, ${top}, ${right}, ${bottom}]
     };
+    var boundsRead = __mcp_readSelectionBounds(doc);
+    if (boundsRead) result.selection_bounds = boundsRead;
+    return result;
   `,
 
   /**
@@ -2845,8 +3684,59 @@ export const ExtendScriptSnippets = {
    * Lightweight session state snapshot (read-only).
    */
   getState: () => `
+    ${helperFunctions}
+    ${artboardHelpers}
     ${getContextInfo}
-    return getContextInfo();
+    var context = getContextInfo();
+    if (context.hasDocument && context.document) {
+      var doc = app.activeDocument;
+      try { context.document.saved = doc.saved; } catch (eSaved) {}
+      try { context.document.path = doc.fullName.fsName; } catch (ePath) {}
+      try { context.document.bitsPerChannel = String(doc.bitsPerChannel); } catch (eBits) {}
+      context.document.layers = [];
+      try {
+        var layerLimit = Math.min(doc.layers.length, 40);
+        for (var li = 0; li < layerLimit; li++) {
+          var lyr = doc.layers[li];
+          var layerEntry = { name: String(lyr.name) };
+          try { layerEntry.kind = String(lyr.kind); } catch (eKind) {}
+          try { layerEntry.visible = lyr.visible; } catch (eVis) {}
+          context.document.layers.push(layerEntry);
+        }
+      } catch (eLayers) {}
+
+      var abs = __mcp_listArtboards();
+      context.document.artboards = abs;
+      context.document.artboardCount = abs.length;
+      var activeAb = null;
+      for (var i = 0; i < abs.length; i++) {
+        if (abs[i].is_active) {
+          activeAb = abs[i];
+          break;
+        }
+      }
+      context.activeArtboard = activeAb;
+    }
+
+    context.documents = [];
+    var activeId = null;
+    try {
+      if (app.documents.length > 0) activeId = app.activeDocument.id;
+    } catch (eActive) {
+      activeId = null;
+    }
+    for (var di = 0; di < app.documents.length; di++) {
+      var openDoc = app.documents[di];
+      var entry = { id: null, name: '', is_active: false };
+      try { entry.id = openDoc.id; } catch (eId) {}
+      try { entry.name = String(openDoc.name); } catch (eName) {}
+      try { entry.width = openDoc.width.as('px'); } catch (eW) {}
+      try { entry.height = openDoc.height.as('px'); } catch (eH) {}
+      try { entry.saved = openDoc.saved; } catch (eOpenSaved) {}
+      try { entry.is_active = activeId !== null && openDoc.id === activeId; } catch (eA) {}
+      context.documents.push(entry);
+    }
+    return context;
   `,
 
   /**
@@ -2862,6 +3752,19 @@ export const ExtendScriptSnippets = {
     var doc = app.activeDocument;
     var w = doc.width.as('px');
     var h = doc.height.as('px');
+    var docName = '';
+    try { docName = String(doc.name); } catch (eName) {}
+    var colorMode = '';
+    try { colorMode = String(doc.mode); } catch (eMode) {}
+    var docId = null;
+    try { docId = doc.id; } catch (eId) {}
+    var layerNames = [];
+    try {
+      var layerLimit = Math.min(doc.layers.length, 40);
+      for (var li = 0; li < layerLimit; li++) {
+        layerNames.push(String(doc.layers[li].name));
+      }
+    } catch (eLayers) {}
     var maxDim = ${maxDimension};
     var scale = 1;
     if (w > maxDim || h > maxDim) {
@@ -2891,7 +3794,13 @@ export const ExtendScriptSnippets = {
       path: tmpFile.fsName,
       width: Math.round(w * scale),
       height: Math.round(h * scale),
-      mimeType: 'image/jpeg'
+      mimeType: 'image/jpeg',
+      documentId: docId,
+      documentName: docName,
+      documentWidth: Math.round(w),
+      documentHeight: Math.round(h),
+      colorMode: colorMode,
+      layers: layerNames
     };
   `,
 
@@ -2937,6 +3846,58 @@ export const ExtendScriptSnippets = {
     function __mcp_hasSelection(doc) {
       try { return doc.selection.bounds != null; } catch (e) { return false; }
     }
+
+    function __mcp_historyIndex(doc) {
+      try {
+        if (doc.activeHistoryState && doc.activeHistoryState.index != null) {
+          return doc.activeHistoryState.index;
+        }
+      } catch (eHist) {}
+      try { return doc.historyStates.length; } catch (eLen) {}
+      return 0;
+    }
+
+    /**
+     * Firefly inpainting. Empty descriptors on removeTool/generativeFill raise
+     * Photoshop Error 8 ("Syntax error"). The recorded event is syntheticFill.
+     * @see https://community.adobe.com/feature-requests-713/please-please-create-a-larger-generative-ai-prompt-field-1615149
+     */
+    function __mcp_syntheticFill(doc, prompt, workflow) {
+      try {
+        var bg = doc.backgroundLayer;
+        if (bg) bg.isBackgroundLayer = false;
+      } catch (eBg) {}
+      var text = prompt || '';
+      var flow = workflow || 'in_painting';
+      var last = '';
+      var withOptions = [false, true];
+      for (var i = 0; i < withOptions.length; i++) {
+        try {
+          var desc = new ActionDescriptor();
+          var ref = new ActionReference();
+          ref.putEnumerated(sTID('document'), sTID('ordinal'), sTID('targetEnum'));
+          desc.putReference(sTID('null'), ref);
+          try { desc.putInteger(sTID('documentID'), doc.id); } catch (eDoc) {}
+          try { desc.putInteger(sTID('layerID'), doc.activeLayer.id); } catch (eLayer) {}
+          desc.putString(sTID('prompt'), text);
+          desc.putString(sTID('serviceID'), 'clio');
+          desc.putEnumerated(sTID('workflowType'), sTID('genWorkflow'), sTID(flow));
+          if (withOptions[i]) {
+            var clio = new ActionDescriptor();
+            clio.putString(sTID('gi_PROMPT'), text);
+            clio.putString(sTID('gi_MODE'), flow === 'text_to_image' ? 't2i' : 'ginp');
+            var opts = new ActionDescriptor();
+            opts.putObject(sTID('clio'), sTID('clio'), clio);
+            desc.putObject(sTID('serviceOptionsList'), sTID('null'), opts);
+          }
+          executeAction(sTID('syntheticFill'), desc, DialogModes.NO);
+          return withOptions[i] ? 'syntheticFill_clio' : 'syntheticFill';
+        } catch (eFill) {
+          last = eFill.message || String(eFill);
+        }
+      }
+      throw new Error(last || 'syntheticFill failed');
+    }
   `,
 
   generativeFill: (prompt: string) => {
@@ -2979,7 +3940,7 @@ export const ExtendScriptSnippets = {
       return {
         ok: true,
         summary: 'Generative fill invoked via ' + result.action_id,
-        details: { action_id: result.action_id, prompt: ${escaped}, wait },
+        details: { action_id: result.action_id, prompt: ${escaped}, wait: wait },
         next_suggested_tool: 'photoshop_get_preview'
       };
     `;
@@ -3005,23 +3966,19 @@ export const ExtendScriptSnippets = {
     }
 
     if (${featherPx} > 0) {
-      try { doc.selection.feather(${featherPx}); } catch (eF) {}
+      try { doc.selection.feather(new UnitValue(${featherPx}, 'px')); } catch (eF) {}
     }
 
-    var baselineHist = doc.activeHistoryState.index;
-    var result = __mcp_tryGenerativeAction(
-      ['removeTool', 'generativeFill', 'spotHealingBrush'],
-      function(actionId) {
-        var desc = new ActionDescriptor();
-        if (actionId === 'generativeFill') {
-          try { desc.putString(sTID('prompt'), 'remove'); } catch (eP) {}
-        }
-        return desc;
-      }
-    );
-
-    if (!result.ok) {
-      return { ok: false, code: 'generative_unavailable', message: String(result.error || '') };
+    var baselineHist = __mcp_historyIndex(doc);
+    var actionId = '';
+    try {
+      actionId = __mcp_syntheticFill(doc, 'remove the selected object');
+    } catch (eGen) {
+      var msg = String(eGen.message || eGen);
+      var code = /credit|quota|sign in|subscription/i.test(msg)
+        ? 'generative_credits_exhausted'
+        : 'generative_unavailable';
+      return { ok: false, code: code, message: msg };
     }
 
     var wait = __mcp_waitGenerativeComplete(doc, baselineHist, 90000);
@@ -3029,8 +3986,8 @@ export const ExtendScriptSnippets = {
 
     return {
       ok: true,
-      summary: 'Generative remove invoked via ' + result.action_id,
-      details: { action_id: result.action_id, feather_px: ${featherPx}, wait },
+      summary: 'Generative remove invoked via ' + actionId,
+      details: { action_id: actionId, feather_px: ${featherPx}, wait: wait },
       next_suggested_tool: 'photoshop_get_preview'
     };
   `,
@@ -3066,7 +4023,7 @@ export const ExtendScriptSnippets = {
       return {
         ok: true,
         summary: 'Generative expand invoked via ' + result.action_id,
-        details: { action_id: result.action_id, direction: ${dir}, prompt: ${escaped}, wait },
+        details: { action_id: result.action_id, direction: ${dir}, prompt: ${escaped}, wait: wait },
         next_suggested_tool: 'photoshop_get_preview'
       };
     `;
@@ -3099,7 +4056,7 @@ export const ExtendScriptSnippets = {
     return {
       ok: true,
       summary: 'Generative upscale invoked via ' + result.action_id,
-      details: { action_id: result.action_id, target_scale: ${targetScale}, wait },
+      details: { action_id: result.action_id, target_scale: ${targetScale}, wait: wait },
       next_suggested_tool: 'photoshop_get_preview'
     };
   `,
@@ -3137,7 +4094,7 @@ export const ExtendScriptSnippets = {
       return {
         ok: true,
         summary: 'Sky replacement invoked via ' + result.action_id,
-        details: { action_id: result.action_id, sky_image_path: ${escaped}, wait },
+        details: { action_id: result.action_id, sky_image_path: ${escaped}, wait: wait },
         next_suggested_tool: 'photoshop_get_preview'
       };
     `;
@@ -3165,27 +4122,29 @@ export const ExtendScriptSnippets = {
         doc = app.activeDocument;
       }
 
-      var baselineHist = doc.activeHistoryState.index;
-      var result = __mcp_tryGenerativeAction(
-        ['textToImage', 'generateImage', 'fireflyTextToImage', 'generativeFill'],
-        function(actionId) {
-          var desc = new ActionDescriptor();
-          try { desc.putString(sTID('prompt'), ${escaped}); } catch (eP) {}
-          try { desc.putString(sTID('text'), ${escaped}); } catch (eT) {}
-          return desc;
+      var baselineHist = __mcp_historyIndex(doc);
+      var actionId = '';
+      try {
+        actionId = __mcp_syntheticFill(doc, ${escaped}, 'text_to_image');
+      } catch (eT2i) {
+        try {
+          doc.selection.selectAll();
+          actionId = __mcp_syntheticFill(doc, ${escaped}, 'in_painting');
+        } catch (eGen) {
+          var msg = String(eGen.message || eGen);
+          var code = /credit|quota|sign in|subscription/i.test(msg)
+            ? 'generative_credits_exhausted'
+            : 'generative_unavailable';
+          return { ok: false, code: code, message: msg };
         }
-      );
-
-      if (!result.ok) {
-        return { ok: false, code: 'generative_unavailable', message: String(result.error || '') };
       }
 
       var wait = __mcp_waitGenerativeComplete(doc, baselineHist, 120000);
 
       return {
         ok: true,
-        summary: 'Generate image invoked via ' + result.action_id,
-        details: { action_id: result.action_id, prompt: ${escaped}, width: ${width}, height: ${height}, wait },
+        summary: 'Generate image invoked via ' + actionId,
+        details: { action_id: actionId, prompt: ${escaped}, width: ${width}, height: ${height}, wait: wait },
         next_suggested_tool: 'photoshop_get_preview'
       };
     `;
@@ -3859,68 +4818,261 @@ export const ExtendScriptSnippets = {
 
   /**
    * Export a copy of the active document as PNG/JPEG (Save for Web) or WebP/AVIF (native, PS 23.2+).
+   * Optional artboardId crops a duplicate to that artboard first (AM artboardRect).
    */
-  exportAs: (filePath: string, format: 'PNG' | 'JPEG' | 'WEBP' | 'AVIF', quality: number) => {
+  exportAs: (
+    filePath: string,
+    format: 'PNG' | 'JPEG' | 'WEBP' | 'AVIF',
+    quality: number,
+    artboardId?: number
+  ) => {
     const escaped = jsString(filePath);
     const q = Math.max(0, Math.min(100, Math.round(quality)));
+    const abId =
+      typeof artboardId === 'number' && Number.isFinite(artboardId) ? Math.trunc(artboardId) : null;
     return `
     ${helperFunctions}
+    ${artboardHelpers}
 
     if (app.documents.length === 0) {
       throw new Error('No active document');
     }
     var doc = app.activeDocument;
+    var openedDup = false;
     app.displayDialogs = DialogModes.NO;
-    var outFile = new File("${escaped}");
 
-    if ('${format}' === 'PNG' || '${format}' === 'JPEG') {
-      var opts = new ExportOptionsSaveForWeb();
-      if ('${format}' === 'PNG') {
-        opts.format = SaveDocumentType.PNG;
-        opts.PNG8 = false;
-      } else {
-        opts.format = SaveDocumentType.JPEG;
-        opts.quality = ${q};
-      }
-      doc.exportDocument(outFile, ExportType.SAVEFORWEB, opts);
-      return {
-        exported: true,
-        path: "${escaped}",
-        format: '${format}',
-        method: 'save_for_web'
-      };
-    }
-
-    // WebP / AVIF: native Save a Copy (PS 23.2+); options classes may not exist
-    // on older DOMs, so cascade candidates and report cleanly when unsupported.
-    var saveCandidates = ${format === 'WEBP' ? `['WebPSaveOptions']` : `['AVIFSaveOptions', 'AvifSaveOptions']`};
-    var saved = false;
-    var lastError = '';
-    for (var c = 0; c < saveCandidates.length; c++) {
-      try {
-        var ctor = saveCandidates[c];
-        var opts2 = eval('new ' + ctor + '()');
-        try { opts2.quality = ${q}; } catch (eQ) {}
-        doc.saveAs(outFile, opts2, true, Extension.LOWERCASE);
-        saved = true;
-        break;
-      } catch (eSave) {
-        lastError = eSave.message || String(eSave);
-      }
-    }
-    if (!saved) {
+    ${
+      abId !== null
+        ? `
+    var ab = __mcp_findArtboard(${abId}, null);
+    if (!ab || ab.ambiguous) {
       return {
         ok: false,
-        code: 'version_unsupported',
-        message: '${format} export not available in this Photoshop build: ' + lastError,
-        suggested_next_tool: 'photoshop_save_document'
+        code: 'artboard_not_found',
+        message: 'No artboard with id ${abId}',
+        suggested_next_tool: 'photoshop_list_artboards'
       };
+    }
+    doc = __mcp_duplicateCropToArtboard(ab);
+    openedDup = true;
+    `
+        : ''
+    }
+
+    var outFile = new File("${escaped}");
+    var exported = __mcp_exportDoc(doc, outFile, '${format}', ${q});
+    if (openedDup) {
+      try { doc.close(SaveOptions.DONOTSAVECHANGES); } catch (eClose) {}
+    }
+    if (exported.ok === false) {
+      return exported;
     }
     return {
       exported: true,
+      ok: true,
       path: "${escaped}",
       format: '${format}',
-      method: 'native_save_as'
+      method: exported.method${abId !== null ? `,
+      artboard_id: ${abId}` : ''}
+    };
+  `;
+  },
+
+  listArtboards: () => `
+    ${helperFunctions}
+    ${artboardHelpers}
+    ${getContextInfo}
+
+    if (app.documents.length === 0) {
+      throw new Error('No active document');
+    }
+    var abs = __mcp_listArtboards();
+    return {
+      ok: true,
+      count: abs.length,
+      artboards: abs,
+      context: getContextInfo()
+    };
+  `,
+
+  createArtboard: (name: string, width: number, height: number, left?: number, top?: number) => {
+    const w = Math.max(1, Math.round(width));
+    const h = Math.max(1, Math.round(height));
+    const hasOrigin = typeof left === 'number' && typeof top === 'number';
+    return `
+    ${helperFunctions}
+    ${artboardHelpers}
+    ${getContextInfo}
+
+    if (app.documents.length === 0) {
+      throw new Error('No active document');
+    }
+
+    var origin = ${
+      hasOrigin ? `{ left: ${left}, top: ${top} }` : `__mcp_nextArtboardOrigin()`
+    };
+    var leftPos = origin.left;
+    var topPos = origin.top;
+    var right = leftPos + ${w};
+    var bottom = topPos + ${h};
+    var requestedName = "${jsString(name)}";
+    try { __mcp_unlockBackgroundIfNeeded(); } catch (eBg) {}
+    try {
+      __mcp_makeArtboard(leftPos, topPos, right, bottom, requestedName);
+    } catch (eMake) {
+      return {
+        ok: false,
+        code: 'version_unsupported',
+        message: 'Could not create artboard: ' + (eMake.message || String(eMake)),
+        suggested_next_tool: 'photoshop_get_capabilities'
+      };
+    }
+    var layer = app.activeDocument.activeLayer;
+    if (requestedName) {
+      try { layer.name = requestedName; } catch (eName) {}
+    }
+    var abs = __mcp_listArtboards();
+    var created = null;
+    try { created = __mcp_findArtboard(layer.id, null); } catch (eFind) {}
+    return {
+      ok: true,
+      artboard: created || {
+        id: layer.id,
+        name: layer.name,
+        left: leftPos,
+        top: topPos,
+        right: right,
+        bottom: bottom,
+        width: ${w},
+        height: ${h},
+        is_active: true
+      },
+      artboards: abs,
+      count: abs.length,
+      context: getContextInfo()
+    };
+  `;
+  },
+
+  setActiveArtboard: (artboardId?: number, artboardName?: string) => {
+    const idPart =
+      typeof artboardId === 'number' && Number.isFinite(artboardId)
+        ? String(Math.trunc(artboardId))
+        : 'null';
+    const namePart = artboardName ? `"${jsString(artboardName)}"` : 'null';
+    return `
+    ${helperFunctions}
+    ${artboardHelpers}
+    ${getContextInfo}
+
+    if (app.documents.length === 0) {
+      throw new Error('No active document');
+    }
+    var found = __mcp_findArtboard(${idPart}, ${namePart});
+    if (!found) {
+      return {
+        ok: false,
+        code: 'artboard_not_found',
+        message: 'Artboard not found',
+        suggested_next_tool: 'photoshop_list_artboards'
+      };
+    }
+    if (found.ambiguous) {
+      return {
+        ok: false,
+        code: 'ambiguous_name',
+        message: 'Multiple artboards named "' + found.name + '" — use artboard_id',
+        suggested_next_tool: 'photoshop_list_artboards'
+      };
+    }
+    __mcp_selectLayerById(found.id);
+    var abs = __mcp_listArtboards();
+    var current = __mcp_findArtboard(found.id, null);
+    return {
+      ok: true,
+      artboard: current || found,
+      artboards: abs,
+      context: getContextInfo()
+    };
+  `;
+  },
+
+  exportArtboards: (
+    folderPath: string,
+    format: 'PNG' | 'JPEG' | 'WEBP' | 'AVIF',
+    quality: number
+  ) => {
+    const escaped = jsString(folderPath);
+    const q = Math.max(0, Math.min(100, Math.round(quality)));
+    const ext = format === 'JPEG' ? 'jpg' : format.toLowerCase();
+    return `
+    ${helperFunctions}
+    ${artboardHelpers}
+    ${getContextInfo}
+
+    if (app.documents.length === 0) {
+      throw new Error('No active document');
+    }
+    var abs = __mcp_listArtboards();
+    if (abs.length === 0) {
+      return {
+        ok: false,
+        code: 'artboard_not_found',
+        message: 'Document has no artboards',
+        suggested_next_tool: 'photoshop_create_artboard'
+      };
+    }
+    var folder = new Folder("${escaped}");
+    if (!folder.exists) {
+      folder.create();
+    }
+    var ext = '${ext}';
+    var used = {};
+    var exported = [];
+    var failed = [];
+    for (var i = 0; i < abs.length; i++) {
+      var ab = abs[i];
+      var base = __mcp_safeFileName(ab.name || ('Artboard_' + ab.id));
+      if (used[base]) {
+        base = base + '_' + ab.id;
+      }
+      used[base] = true;
+      var outPath = folder.fsName + '/' + base + '.' + ext;
+      var dup = null;
+      try {
+        dup = __mcp_duplicateCropToArtboard(ab);
+        var outFile = new File(outPath);
+        var result = __mcp_exportDoc(dup, outFile, '${format}', ${q});
+        dup.close(SaveOptions.DONOTSAVECHANGES);
+        dup = null;
+        if (result.ok === false) {
+          failed.push({ id: ab.id, name: ab.name, error: result.message || 'export failed' });
+        } else {
+          exported.push({ id: ab.id, name: ab.name, path: outFile.fsName, method: result.method });
+        }
+      } catch (eExp) {
+        if (dup) {
+          try { dup.close(SaveOptions.DONOTSAVECHANGES); } catch (eClose) {}
+        }
+        failed.push({ id: ab.id, name: ab.name, error: eExp.message || String(eExp) });
+      }
+    }
+    if (exported.length === 0) {
+      return {
+        ok: false,
+        code: 'version_unsupported',
+        message: 'No artboards exported. First error: ' + (failed.length ? failed[0].error : 'unknown'),
+        suggested_next_tool: 'photoshop_export_as'
+      };
+    }
+    return {
+      ok: true,
+      count: exported.length,
+      exported: exported,
+      failed: failed,
+      folder: folder.fsName,
+      format: '${format}',
+      context: getContextInfo()
     };
   `;
   },

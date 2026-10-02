@@ -9,13 +9,13 @@
 | -------- | ---- |
 | Cursor | Install the `photoshop-mcp` plugin (Customize → Plugins / Marketplace) so the Photoshop logo appears in the MCP list. Fallback: `mcpServers` → `npx -y @alisaitteke/photoshop-mcp` (stdio, generic icon) |
 | Claude Desktop / VS Code | Configure `mcpServers` → `npx -y @alisaitteke/photoshop-mcp` (stdio) |
-| Claude Code | `claude mcp add photoshop -- npx -y @alisaitteke/photoshop-mcp` |
-| Standalone chat UI (no IDE) | `npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui` |
+| Claude Code | Install this repo as a plugin (skills + MCP). Tools only: `claude mcp add photoshop -- npx -y @alisaitteke/photoshop-mcp` |
+| Standalone chat UI (no IDE) | `npx -p @alisaitteke/photoshop-mcp ui` |
 | Local development | `npm install && npm run build && node dist/index.js` — see [docs/development.md](docs/development.md) |
 
 **Prerequisites:** Photoshop running on Windows or macOS, Node.js 18+. This is unofficial and not affiliated with Adobe.
 
-**Tool surface:** 116 MCP tools — 100 atomic `photoshop_*` + 16 recipe `photoshop_recipe_*`; 23 MCP prompt templates (`ps.*`).
+**Tool surface:** 127 MCP tools — 111 atomic `photoshop_*` + 16 recipe `photoshop_recipe_*`; 23 MCP prompt templates (`ps.*`).
 
 ## Architecture (agent view)
 
@@ -35,7 +35,7 @@ Deep dive: [docs/architecture.md](docs/architecture.md).
 
 ## Recommended workflow
 
-Follow the server `instructions` advertised on MCP `initialize` ([src/prompts/instructions.ts](src/prompts/instructions.ts)):
+Follow the server `instructions` advertised on MCP `initialize` ([src/prompts/instructions.ts](src/prompts/instructions.ts)). Plugin installs also load [skills/photoshop-remove-background](skills/photoshop-remove-background/SKILL.md) and [skills/photoshop-recipes](skills/photoshop-recipes/SKILL.md) when the request matches; those hold the phrase-to-tool glossary. The initialize text stays the session contract.
 
 ```
 1. DISCOVER: tools/list + prompts/list (or get_capabilities once per session)
@@ -54,6 +54,8 @@ Follow the server `instructions` advertised on MCP `initialize` ([src/prompts/in
 | Generative AI (Fill, Remove, Expand) | `photoshop_generative_*` — requires Adobe account + credits |
 | Neural Filters (skin smooth, colorize, …) | `photoshop_neural_filter` — requires UXP bridge loaded |
 | Version / feature check | `photoshop_get_capabilities` |
+| Tracking, leading, paragraph box | `photoshop_set_text_style` (or those fields on `photoshop_create_text_layer`) |
+| Mixed fonts/colors in one text layer | `photoshop_set_text_ranges` |
 
 Full catalog: [docs/available-tools.md](docs/available-tools.md). Prompt layer: [docs/prompt-layer.md](docs/prompt-layer.md).
 
@@ -81,14 +83,19 @@ Examples: [examples/cursor-config.json](examples/cursor-config.json), [examples/
 | -------- | ------- |
 | `LOG_LEVEL` | `0`=DEBUG, `1`=INFO, `2`=WARN, `3`=ERROR |
 | `PHOTOSHOP_PATH` | Optional custom Photoshop install path |
+| `PHOTOSHOP_SCRIPT_TIMEOUT` | Default ExtendScript timeout in ms (default `30000`, max `600000`) |
 | `PSMCP_UI_TOKEN` | Pin standalone UI API token (see README) |
+| `PSMCP_FEEDBACK` | Set `0` to disable the product-feedback ping question (on by default) |
+| `PSMCP_UPDATE_CHECK` | Set `0` to disable the daily npm version check and the `UPDATE_AVAILABLE` ping notice (on by default; also off with `NO_UPDATE_NOTIFIER` or `CI`) |
 
 ## Troubleshooting (common agent blockers)
 
 | Symptom | Fix |
 | ------- | --- |
 | Photoshop not found | Start Photoshop; set `PHOTOSHOP_PATH` if non-standard install |
-| Tool times out | Large operations may need retries; check `get_state` for partial progress |
+| Tool times out | Retry `photoshop_ping` until it succeeds. Ping runs a short script and returns `extendscript_timeout` while Photoshop is still busy; only then call `get_state`. Pass `timeout_ms` on `photoshop_execute_script` (max 600s), or set `PHOTOSHOP_SCRIPT_TIMEOUT`; batch recipes already use 600s. |
+| Scratch disk full | `scratch_disk_full` means Photoshop froze or refused the command because the scratch disk is full. Free at least 100 GB on the OS drive (the default scratch disk), then restart Photoshop. Ping again only after that restart. |
+| Font not in the list | `font_not_found`. Photoshop only lists fonts installed for this user. `photoshop_install_font` copies a `.ttf`/`.otf`/`.ttc` the user already has into the current-user font folder and calls `app.refreshFonts()` so an open Photoshop sees it. Use the returned `postScriptName`. |
 | `generative_unavailable` / `version_unsupported` | Call `get_capabilities`; feature may need newer Photoshop or Adobe login |
 | Neural filter fails | **Add Plugin** → `uxp-plugin/manifest.json` → **Load** in UXP Developer Tools — see [docs/development.md](docs/development.md#uxp-bridge-plugin-neural-filters) |
 | No active document | Ask user to open/create a document, then `get_state` |
@@ -116,6 +123,8 @@ More: [docs/troubleshooting.md](docs/troubleshooting.md).
 | [src/prompts/](src/prompts/) | MCP prompt templates |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | PR and release workflow |
 | [`.cursor-plugin/plugin.json`](.cursor-plugin/plugin.json) | Cursor Plugin manifest (MCP list logo) |
+| [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) | Claude Code plugin manifest (same `skills/`) |
+| [`skills/`](skills/) | Plugin skills: remove-background hard rule detail and recipe routing |
 | [`mcp.json`](mcp.json) | Cursor Plugin stdio server config |
 
 ## Contributing (agents editing this repo)

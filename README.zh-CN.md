@@ -38,7 +38,7 @@ Photoshop MCP 添加了**状态感知**（`get_state`、`get_preview`、`get_cap
 ![独立 UI 截图](./images/frame_generic_light.png)
 
 ```bash
-npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
+npx -p @alisaitteke/photoshop-mcp ui
 ```
 
 就这样。本地服务器在 `127.0.0.1`（随机空闲端口）上启动，您的默认浏览器会自动打开聊天 UI。
@@ -593,7 +593,10 @@ npx @alisaitteke/photoshop-mcp
 ### 环境变量
 
 - `PHOTOSHOP_PATH`：（可选）指定自定义 Photoshop 安装路径
+- `PHOTOSHOP_SCRIPT_TIMEOUT`：ExtendScript 默认超时（毫秒，默认 `30000`，最大 `600000`）
 - `LOG_LEVEL`：日志级别（0=DEBUG，1=INFO，2=WARN，3=ERROR）
+- `PSMCP_FEEDBACK`：设为 `0` / `false` / `no` 可关闭 ping 产品反馈提问（默认开启）
+- `PSMCP_UPDATE_CHECK`：设为 `0` / `false` / `no` 可关闭每日 npm 版本检查及 ping 更新提示（默认开启）
 - `ANALYTICS_DISABLED`：设置为 `1` 或 `true` 可完全禁用匿名使用分析
 - `POSTHOG_DISABLED`：`ANALYTICS_DISABLED` 的旧版别名
 - `RYBBIT_API_KEY`：（可选）Rybbit 采集 API 密钥 — 跳过服务端事件的机器人检测

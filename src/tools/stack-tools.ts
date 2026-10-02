@@ -7,6 +7,7 @@ import {
   parseSnippetResult,
   runSnippet,
 } from './atomic-shared.js';
+import { BATCH_SCRIPT_TIMEOUT_MS } from '../platform/script-timeout.js';
 
 const STACK_MODES = {
   mean: 'stackModeMean',
@@ -70,7 +71,8 @@ async function imageStack(
   try {
     const raw = await runSnippet(
       connection,
-      ExtendScriptSnippets.imageStackMode(files, STACK_MODES[mode])
+      ExtendScriptSnippets.imageStackMode(files, STACK_MODES[mode]),
+      BATCH_SCRIPT_TIMEOUT_MS
     );
     const parsed = parseSnippetResult(raw);
     if (!parsed) {

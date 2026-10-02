@@ -18,17 +18,23 @@ jobs:
   publish-registry:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           ref: ${{ inputs.tag }}
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: '20'
           package-manager-cache: false
 
+      # Tags created before package-lock.json was committed have no lockfile.
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: |
+          if [[ -f package-lock.json ]]; then
+            npm ci --no-audit --no-fund
+          else
+            npm install --no-audit --no-fund
+          fi
 
       - name: Sync server.json with package.json
         run: npm run sync:server-version
@@ -44,10 +50,14 @@ jobs:
           fi
 
       - name: Install MCP Publisher
+        env:
+          MCP_PUBLISHER_VERSION: v1.8.1
+          MCP_PUBLISHER_SHA256: a06c9096dcb9727c13555b6be26c7effa707b01f06a4c561ba7a3635443cf2cc
         run: |
-          curl -fsSL \
-            "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" \
-            | tar xz mcp-publisher
+          curl -fsSL -o mcp-publisher.tar.gz \
+            "https://github.com/modelcontextprotocol/registry/releases/download/${MCP_PUBLISHER_VERSION}/mcp-publisher_linux_amd64.tar.gz"
+          echo "${MCP_PUBLISHER_SHA256}  mcp-publisher.tar.gz" | sha256sum -c -
+          tar xzf mcp-publisher.tar.gz mcp-publisher
 
       - name: Publish to MCP Registry
         run: |

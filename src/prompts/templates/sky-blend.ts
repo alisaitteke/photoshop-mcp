@@ -59,7 +59,7 @@ export const skyBlendTemplate: PhotoshopPromptTemplate = {
         : `   - The recipe places the sky file, names the layer "Sky Blend", adds a mask if needed, and applies a top-to-bottom gradient fade around the horizon.`,
       `3. Call \`photoshop_get_preview\` once.`,
       `4. If placement is off, undo and rerun with adjusted x/y or ask the user to nudge manually.`,
-      `5. For a manual multi-step composite (place + mask + blend mode), use \`prompts/get\` on \`ps.composite_blend\` instead.`,
+      `5. For a manual multi-step composite, call \`photoshop_place_image\`, \`photoshop_create_layer_mask\`, and \`photoshop_set_layer_blend_mode\`.`,
       ``,
       `End state: a "Sky Blend" layer sits above the landscape with a gradient mask; one undo removes placement and mask.`,
     ].join('\n');

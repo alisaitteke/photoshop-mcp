@@ -29,29 +29,41 @@ export class Session {
 
   async initialize(): Promise<void> {
     this.logger.info('Initializing session...');
+    this.connection.setOnFreshDetect((ok) => {
+      this.isConnected = ok;
+      if (ok) {
+        this.updateActivity();
+        void this.refreshPhotoshopVersionOnPerson();
+      }
+      this.captureConnectionEvent(ok);
+    });
 
-    if (this.config.autoConnect) {
-      const connected = await this.connect();
-      this.captureConnectionEvent(connected);
+    if (!this.config.autoConnect) return;
+
+    if (this.connection.hydrateFromCache()) {
+      this.isConnected = true;
+      this.updateActivity();
+      this.logger.info('Using cached Photoshop detection');
+      void this.refreshPhotoshopVersionOnPerson();
+      return;
     }
+
+    this.logger.debug('Photoshop detection deferred until first tool');
   }
 
   async connect(): Promise<boolean> {
     try {
       this.logger.info('Connecting to Photoshop...');
       const connected = await this.connection.ping();
-      
+      this.isConnected = connected;
       if (connected) {
-        this.isConnected = true;
         this.updateActivity();
         this.logger.info('Successfully connected to Photoshop');
         void this.refreshPhotoshopVersionOnPerson();
         return true;
-      } else {
-        this.isConnected = false;
-        this.logger.warn('Failed to connect to Photoshop');
-        return false;
       }
+      this.logger.warn('Failed to connect to Photoshop');
+      return false;
     } catch (error) {
       this.logger.error('Connection error:', error);
       this.isConnected = false;

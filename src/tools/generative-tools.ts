@@ -148,8 +148,8 @@ export function createGenerativeTools(connection: PhotoshopConnection): ToolDefi
       tool: {
         name: 'photoshop_generate_image',
         description:
-          'Generate image content from a text prompt (text-to-image) on blank or active document.\n\n' +
-          'Use when: creating new imagery from a description.\n\n' +
+          'Photoshop Generate Image (Firefly ImageGen): create an image from a text prompt.\n\n' +
+          'Use when: the user asks for ImageGen, text-to-image, or a new picture from a description.\n\n' +
           'Returns: { ok, summary, details }.\n' +
           'Preconditions: generative_fill capability; Adobe generative credits.',
         inputSchema: {

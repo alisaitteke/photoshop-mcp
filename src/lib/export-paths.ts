@@ -8,6 +8,9 @@ const EXPORTS_SUBDIR = 'exports';
 /** Set by the UI chat runner so default exports land under ~/.photoshop-mcp/exports/<id>/. */
 export const PHOTOSHOP_EXPORT_CHAT_ID_ENV = 'PHOTOSHOP_EXPORT_CHAT_ID';
 
+/** Set to `ui` when the standalone UI spawns this MCP as a child (skip host-tool feedback nudge). */
+export const PHOTOSHOP_MCP_SURFACE_ENV = 'PHOTOSHOP_MCP_SURFACE';
+
 export function sanitizeExportChatSegment(raw: string | undefined | null): string | null {
   const t = (raw ?? '').trim();
   if (!t) return null;

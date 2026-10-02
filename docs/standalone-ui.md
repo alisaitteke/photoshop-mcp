@@ -8,7 +8,7 @@ API key **or**, for Anthropic and Google, reuse the OAuth session from
 ← Back to [README](../README.md)
 
 ```bash
-npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
+npx -p @alisaitteke/photoshop-mcp ui
 ```
 
 That's it. A local server starts on `127.0.0.1` (random free port) and your
@@ -60,6 +60,70 @@ agentic flow is used when Action Plan is disabled.
 
 Good for multi-step prompts such as *"remove the background and export for web"*
 where you want fewer model calls and faster end-to-end execution.
+
+## Previews and step timeline
+
+Tool calls render as a readable timeline: each step shows what it did
+(`Fill layer · rgb 50,50,50`, `Blend mode · Screen`), how long it took, and a
+thumbnail when the step returned an image. The latest `photoshop_get_preview`
+image of a turn is shown under the timeline; click any image to enlarge it.
+
+Preview images are stored next to the chat database, in
+`~/.photoshop-mcp/previews/<chat-id>/`, and are deleted with the chat. They are
+served through the same token-protected `/api/*` routes as everything else.
+
+## Jev intent routing (experimental, opt-in)
+
+With a [TypeSafe](https://typesafe.ai) API key, the UI asks Jev (a fast
+classification model, not an LLM) to route each message before any language
+model runs:
+
+| Route | When | What runs |
+|---|---|---|
+| **Instant** | One known, safe command or recipe with every required value resolved, or a chain of up to 4 of them | The tools in order, then one preview. No LLM call, no token cost. |
+| **Plan** | Several operations that are not all known, or a hard-to-undo one (merge, flatten) | Action Plan |
+| **Look & iterate** | The image has to be inspected to decide | Agent loop with previews |
+| **Ask first** | Too vague | Agent loop, told to ask one question first |
+
+While you type, the composer shows the route Jev picked; hover the chip to see
+Jev's signals (multi-step, specific, needs a look). Thresholds live in
+`src/ui/intent/router.ts`. The choices are the registered MCP tools: each
+criterion is the tool's "Use when" line (or its first sentence). Argument
+slots come from the tool schema (enum, number, boolean, enum list). A required
+path or other free-text value goes to the planner, and so does "undo all" /
+"tüm değişiklikleri geri al", which is not a step count. Flatten, merge and
+delete never run instantly.
+
+**Recipes.** A recipe is one registered tool, so Jev can pick it like any other command. Slots still come only from the schema. A value that is not stated uses the tool default; a required number (the slide count) must be stated. A required path or other free-text argument (sky blend, batch mockups, CSV cards) is not filled by Jev and goes through the planner.
+
+**Chains.** A prompt is cut at connecting words (`ve`, `sonra`, `ardından`,
+`-ıp/-ip`, `and then`, commas, sentence ends). Names such as "black and white"
+or "dodge and burn" are kept whole and filler such as "lütfen" is dropped. Jev
+labels each part in its own parallel call, and the chain runs only when Jev
+says the request is multi-step, every part is a confident known command, none is
+risky and every required value is resolved. Otherwise it goes to the planner.
+If the parts disagree with a single-command reading, nothing runs instantly, so a
+part of the request is never silently dropped. A chain stops at the first failed
+step and reports what was applied before it.
+
+**Calls.** One Jev round routes the whole prompt (plus one call per part, in
+parallel). A second round runs only when a picked command has values to fill,
+again one call per command with just its own text. If that round fails, commands
+with values go to the planner instead of running with defaults.
+
+**Ask first** only when Jev picks `other` and the request is vague. A tool it did pick is planned or run, even if the "specific" signal is low.
+
+Turn it on in **Settings → Routing**: paste a key from
+[console.typesafe.ai](https://console.typesafe.ai/) and press **Save** (the key is
+checked with one tiny request first). The same tab has **Auto route** and
+**Instant commands** switches and a **Check connection** button. The key is
+stored with your other keys in `~/.photoshop-mcp/data.db`.
+`TYPESAFE_API_KEY` still works as a fallback for headless setups; a key saved
+in Settings takes its place.
+
+When it is on, **prompts are also sent to `api.typesafe.ai`**. Without a key,
+with Auto route off, or with `PSMCP_INTENT_ROUTER=off`, nothing changes and
+nothing is sent. If Jev is slow or fails, the UI falls back to the normal flow.
 
 ## What happens on first launch
 
@@ -116,8 +180,12 @@ the server. Requests without a valid token get `401 unauthorized`.
 ## Environment variables
 
 - `PHOTOSHOP_PATH`: (Optional) Specify custom Photoshop installation path
+- `PHOTOSHOP_SCRIPT_TIMEOUT`: Default ExtendScript timeout in milliseconds (default `30000`, max `600000`)
 - `LOG_LEVEL`: Logging level (0=DEBUG, 1=INFO, 2=WARN, 3=ERROR)
 - `PSMCP_UI_TOKEN`: Pin the standalone UI session token (see above)
+- `TYPESAFE_API_KEY`: Fallback key for Jev intent routing when none is saved in Settings → Routing. Prompts are sent to api.typesafe.ai
+- `PSMCP_INTENT_ROUTER`: Set `off` to disable Jev routing even when `TYPESAFE_API_KEY` is set
+- `PSMCP_FEEDBACK`: Set `0` / `false` / `no` to disable the product-feedback ping question (on by default)
 - `ANALYTICS_DISABLED`: Set to `1` or `true` to disable anonymous usage analytics entirely
 - `POSTHOG_DISABLED`: Legacy alias for `ANALYTICS_DISABLED`
 - `RYBBIT_API_KEY`: (Optional) Rybbit ingest API key — skips bot detection for server events

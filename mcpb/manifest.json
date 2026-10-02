@@ -35,7 +35,10 @@
       ],
       "env": {
         "LOG_LEVEL": "${user_config.logLevel}",
-        "PHOTOSHOP_PATH": "${user_config.photoshopPath}"
+        "PHOTOSHOP_PATH": "${user_config.photoshopPath}",
+        "PSMCP_FEEDBACK": "${user_config.enableFeedback}",
+        "PSMCP_UPDATE_CHECK": "${user_config.enableUpdateCheck}",
+        "PSMCP_INSTALL_CHANNEL": "mcpb"
       }
     }
   },
@@ -56,6 +59,20 @@
       "type": "string",
       "title": "Photoshop install path",
       "description": "Optional. Leave empty to auto-detect the local Photoshop install.",
+      "required": false
+    },
+    "enableFeedback": {
+      "type": "boolean",
+      "title": "Product feedback prompts",
+      "description": "After ping, the assistant may ask for a problem or feature idea. On by default. Turn off to skip the question.",
+      "default": true,
+      "required": false
+    },
+    "enableUpdateCheck": {
+      "type": "boolean",
+      "title": "Update notices",
+      "description": "Checks npm once a day for a newer release. After ping, the assistant may mention it in one sentence, at most once a week. Turn off to skip the check.",
+      "default": true,
       "required": false
     }
   },

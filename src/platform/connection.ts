@@ -1,6 +1,7 @@
 import { platform } from 'os';
 import { Logger } from '../utils/logger.js';
 import { PhotoshopDetector } from './detector.js';
+import { readPhotoshopDetectCache, writePhotoshopDetectCache } from './detect-cache.js';
 import { ScriptExecutor } from './script-executor.js';
 import { WindowsExecutor } from './windows-executor.js';
 import { MacOSExecutor } from './macos-executor.js';
@@ -18,6 +19,7 @@ export class PhotoshopConnection {
   private executor: ScriptExecutor | null = null;
   private photoshopInfo: PhotoshopInfo | null = null;
   private macosExecutor?: MacOSExecutor;
+  private onFreshDetect?: (ok: boolean) => void;
 
   constructor() {
     this.logger = new Logger('PhotoshopConnection');
@@ -43,17 +45,72 @@ export class PhotoshopConnection {
     return this.executor;
   }
 
+  /** Register a listener for a real detect() — not a cache hydrate. */
+  setOnFreshDetect(callback: (ok: boolean) => void): void {
+    this.onFreshDetect = callback;
+  }
+
+  /** Load a valid on-disk detect without Spotlight/registry. */
+  hydrateFromCache(): boolean {
+    if (this.photoshopInfo) return true;
+    const cached = readPhotoshopDetectCache();
+    if (!cached) return false;
+    this.photoshopInfo = {
+      version: cached.version,
+      path: cached.path,
+      isRunning: false,
+      ...(cached.appName ? { appName: cached.appName } : {}),
+    };
+    this.logger.debug(`Using cached Photoshop detect at ${cached.path}`);
+    return true;
+  }
+
+  private notifyFreshDetect(ok: boolean): void {
+    this.onFreshDetect?.(ok);
+  }
+
+  private applyCachedInfo(cached: { version: string; path: string; appName?: string }): void {
+    this.photoshopInfo = {
+      version: cached.version,
+      path: cached.path,
+      isRunning: false,
+      ...(cached.appName ? { appName: cached.appName } : {}),
+    };
+  }
+
+  private async resolvePhotoshopInfo(): Promise<PhotoshopInfo | null> {
+    if (this.photoshopInfo) return this.photoshopInfo;
+
+    const cached = readPhotoshopDetectCache();
+    if (cached) {
+      this.applyCachedInfo(cached);
+      return this.photoshopInfo;
+    }
+
+    try {
+      this.photoshopInfo = await this.detector.detect();
+      if (this.photoshopInfo) {
+        writePhotoshopDetectCache({
+          version: this.photoshopInfo.version,
+          path: this.photoshopInfo.path,
+          appName: this.photoshopInfo.appName,
+        });
+        this.notifyFreshDetect(true);
+        return this.photoshopInfo;
+      }
+      this.notifyFreshDetect(false);
+      return null;
+    } catch (error) {
+      this.notifyFreshDetect(false);
+      throw error;
+    }
+  }
+
   async ping(): Promise<boolean> {
     try {
       this.logger.debug('Pinging Photoshop...');
-      
-      // Try to detect Photoshop if not already detected
-      if (!this.photoshopInfo) {
-        this.photoshopInfo = await this.detector.detect();
-      }
-
-      // For now, just check if Photoshop is detected
-      return this.photoshopInfo !== null;
+      const info = await this.resolvePhotoshopInfo();
+      return info !== null;
     } catch (error) {
       this.logger.error('Ping failed:', error);
       return false;
@@ -62,35 +119,37 @@ export class PhotoshopConnection {
 
   async getVersion(): Promise<string> {
     try {
-      if (!this.photoshopInfo) {
-        this.photoshopInfo = await this.detector.detect();
-      }
-
-      return this.photoshopInfo?.version || 'Unknown';
+      const info = await this.resolvePhotoshopInfo();
+      return info?.version || 'Unknown';
     } catch (error) {
       this.logger.error('Failed to get version:', error);
       throw error;
     }
   }
 
-  async executeScript(script: string, timeout?: number): Promise<unknown> {
+  async executeScript(
+    script: string,
+    timeout?: number,
+    options?: { launch?: boolean }
+  ): Promise<unknown> {
     try {
-      // Ensure Photoshop is detected
+      await this.resolvePhotoshopInfo();
       if (!this.photoshopInfo) {
-        this.photoshopInfo = await this.detector.detect();
+        throw new Error('Photoshop not found on this system');
       }
 
       const executor = this.getExecutor();
       this.applyMacOSAppName();
 
-      // Check if Photoshop is running, launch if needed
       const isRunning = await executor.isPhotoshopRunning();
       if (!isRunning) {
+        if (options?.launch === false) {
+          throw new Error('Photoshop is not running');
+        }
         this.logger.info('Photoshop not running, launching...');
         await executor.launchPhotoshop(this.photoshopInfo.path);
       }
 
-      // Execute the script
       const result = await executor.execute(script, timeout);
       return result;
     } catch (error) {
@@ -104,8 +163,9 @@ export class PhotoshopConnection {
   }
 
   async ensurePhotoshopRunning(): Promise<void> {
+    await this.resolvePhotoshopInfo();
     if (!this.photoshopInfo) {
-      this.photoshopInfo = await this.detector.detect();
+      throw new Error('Photoshop not found on this system');
     }
 
     const executor = this.getExecutor();

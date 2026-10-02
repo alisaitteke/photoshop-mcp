@@ -152,9 +152,47 @@ new_contributors() {
   echo
 }
 
+# npm_version_visible PKG VERSION → 0 when the exact version is on the public registry.
+npm_version_visible() {
+  local pkg="$1" version="$2"
+  local registry="${NPM_REGISTRY:-https://registry.npmjs.org}"
+  command -v npm >/dev/null 2>&1 \
+    && npm view "${pkg}@${version}" version --registry="${registry}" 2>/dev/null | grep -qx "${version}"
+}
+
+# wait_for_npm_version PKG VERSION [MAX_ATTEMPTS] [SLEEP_SECONDS]
+# Poll until the version is readable (npm publish-time scan can take ~5–15 minutes).
+wait_for_npm_version() {
+  local pkg="$1" version="$2"
+  local max_attempts="${3:-40}"
+  local sleep_seconds="${4:-30}"
+  local attempt
+
+  for attempt in $(seq 1 "${max_attempts}"); do
+    if npm_version_visible "$pkg" "$version"; then
+      echo "${pkg}@${version} is available on npm (attempt ${attempt}/${max_attempts})."
+      return 0
+    fi
+
+    if (( attempt % 5 == 0 )); then
+      echo "attempt ${attempt}/${max_attempts} — still waiting for ${pkg}@${version} (npm publish-time scan may be pending)…"
+    fi
+
+    if [[ "${attempt}" -lt "${max_attempts}" ]]; then
+      sleep "${sleep_seconds}"
+    fi
+  done
+
+  echo "error: ${pkg}@${version} is not available on npm after ${max_attempts} attempts (~$((max_attempts * sleep_seconds / 60)) minutes)." >&2
+  echo "npm may still be scanning the package, or it may be held for manual review." >&2
+  echo "Check npm notifications, then re-run the failed publish job or run:" >&2
+  echo "  gh workflow run publish-mcp-registry.yml -f tag=v${version}" >&2
+  return 1
+}
+
 # npm_status_note PKG VERSION → single-line status for release callout.
-# Set NPM_PUBLISHED=1 after a successful publish so we skip the registry race.
-# Otherwise retry npm view — metadata often lags the upload by a few seconds.
+# Set NPM_PUBLISHED=1 after CI confirms npm availability.
+# Set NPM_WAIT_FOR_VERSION=1 to poll up to ~20 minutes (manual refresh workflow).
 npm_status_note() {
   local pkg="$1" version="$2"
   case "${NPM_PUBLISHED:-}" in
@@ -164,16 +202,28 @@ npm_status_note() {
       ;;
   esac
 
-  local attempt
-  if command -v npm >/dev/null 2>&1; then
-    for attempt in 1 2 3 4 5 6; do
-      if npm view "${pkg}@${version}" version 2>/dev/null | grep -qx "${version}"; then
+  if npm_version_visible "$pkg" "$version"; then
+    echo "✅ Published on npm."
+    return 0
+  fi
+
+  case "${NPM_WAIT_FOR_VERSION:-}" in
+    1 | true | TRUE | True)
+      if wait_for_npm_version "$pkg" "$version" "${NPM_WAIT_MAX_ATTEMPTS:-40}" "${NPM_WAIT_SLEEP_SECONDS:-30}"; then
         echo "✅ Published on npm."
         return 0
       fi
-      [[ "$attempt" -lt 6 ]] && sleep 5
-    done
-  fi
+      ;;
+  esac
+
+  local attempt
+  for attempt in 1 2 3 4 5 6; do
+    if npm_version_visible "$pkg" "$version"; then
+      echo "✅ Published on npm."
+      return 0
+    fi
+    [[ "$attempt" -lt 6 ]] && sleep 5
+  done
 
   echo "⏳ Not on npm yet — \`npm publish\` usually follows shortly after this GitHub release."
 }

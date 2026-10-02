@@ -8,7 +8,11 @@ export interface PhotoshopAPI {
   /**
    * Execute a script using the appropriate API
    */
-  executeScript(script: string, timeoutMs?: number): Promise<unknown>;
+  executeScript(
+    script: string,
+    timeoutMs?: number,
+    options?: { launch?: boolean }
+  ): Promise<unknown>;
 
   /**
    * Get the API type being used
@@ -66,10 +70,14 @@ class UXPPhotoshopAPI implements PhotoshopAPI {
     this.connection = connection;
   }
 
-  async executeScript(script: string, timeoutMs?: number): Promise<unknown> {
+  async executeScript(
+    script: string,
+    timeoutMs?: number,
+    options?: { launch?: boolean }
+  ): Promise<unknown> {
     // UXP cannot be executed externally via AppleScript/COM
     // Fall back to ExtendScript
-    return await this.connection.executeScript(script, timeoutMs);
+    return await this.connection.executeScript(script, timeoutMs, options);
   }
 
   getAPIType(): APIType {
@@ -87,10 +95,14 @@ class ExtendScriptPhotoshopAPI implements PhotoshopAPI {
     this.connection = connection;
   }
 
-  async executeScript(script: string, timeoutMs?: number): Promise<unknown> {
+  async executeScript(
+    script: string,
+    timeoutMs?: number,
+    options?: { launch?: boolean }
+  ): Promise<unknown> {
     // Wrap script in error handling
     const wrappedScript = this.wrapInErrorHandling(script);
-    return await this.connection.executeScript(wrappedScript, timeoutMs);
+    return await this.connection.executeScript(wrappedScript, timeoutMs, options);
   }
 
   private wrapInErrorHandling(script: string): string {
@@ -148,7 +160,17 @@ class ExtendScriptPhotoshopAPI implements PhotoshopAPI {
     }
     return String(result);
   } catch (error) {
-    return 'ERROR: ' + (error.message || String(error));
+    var errorMessage = '';
+    var errorNumber = '';
+    try { errorMessage = error.message; } catch (e) {}
+    try { errorNumber = String(error.number); } catch (e2) {}
+    if (!errorMessage) {
+      try { errorMessage = String(error); } catch (e3) { errorMessage = 'unknown'; }
+    }
+    if (errorNumber && errorNumber !== 'undefined' && errorNumber !== 'NaN') {
+      return 'ERROR: ' + errorMessage + ' (number: ' + errorNumber + ')';
+    }
+    return 'ERROR: ' + errorMessage;
   } finally {
     try { if (__originalRulerUnits !== null) app.preferences.rulerUnits = __originalRulerUnits; } catch (e) {}
     try { if (__originalTypeUnits !== null) app.preferences.typeUnits = __originalTypeUnits; } catch (e) {}

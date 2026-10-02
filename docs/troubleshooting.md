@@ -25,9 +25,37 @@ Common issues when connecting to or scripting Photoshop through the MCP server.
 
 ### "Script execution timeout"
 
-- Some operations may take longer on large documents
-- The default timeout is 30 seconds
-- For complex operations, consider breaking them into smaller steps
+- Default budget is 30 seconds (`extendscript_timeout`)
+- Pass `timeout_ms` on `photoshop_execute_script` (max 600000)
+- Or set env `PHOTOSHOP_SCRIPT_TIMEOUT` (milliseconds) as the new default
+- Batch recipes (watermark, CSV cards, mockup replace, social variants, datasets, image stack, carousel split, artboard export) already use 600s
+- Generative tools use 120s
+- MCP abort does **not** stop JSX already running in Photoshop. After a timeout, ping until it succeeds before firing more tools — immediately retrying `get_state` just waits another 30s on a busy app.
+- If the OS drive (Photoshop's default scratch disk) has under 10 GB free, the same timeout is `scratch_disk_full`. Free space and restart Photoshop. Ping keeps timing out while the scratch-disk dialog is up.
+
+```javascript
+photoshop_execute_script({
+  code: "/* long loop */ return { ok: true };",
+  timeout_ms: 180000
+})
+```
+
+### Scratch disk full
+
+Photoshop shows "Could not initialize Photoshop because the scratch disks are full", "Could not complete your request because the scratch disks are full", or "Scratch Disk Low", then freezes or refuses to launch. A script that does run reports ExtendScript error `-25010`. The MCP envelope code is `scratch_disk_full`.
+
+1. Free at least 100 GB on the primary scratch disk. By default that is the OS drive: Macintosh HD on macOS, `C:` on Windows (delete files whose names begin with `Photoshop Temp`).
+2. Restart Photoshop.
+3. To use another drive, open **Photoshop > Settings > Scratch Disks** (macOS) or **Edit > Preferences > Scratch Disks** (Windows), or hold Cmd+Option (macOS) / Ctrl+Alt (Windows) while launching.
+
+### Font is not in the list
+
+Photoshop's `app.fonts` list is the fonts installed for the current user. Copying a file into the user font folder does not update an already-open session. `Application.refreshFonts()` does, without quitting.
+
+1. Install the font file with `photoshop_install_font` (absolute path to a `.ttf`, `.otf`, `.ttc`, or `.otc`). On macOS this copies it to `~/Library/Fonts`. On Windows it installs for the current user only. When Photoshop is open, the tool calls `app.refreshFonts()`.
+2. `photoshop_list_fonts`, then set the `postScriptName` from the install result.
+
+Fredoka Bold is the named instance `Fredoka-Bold` inside the variable font `Fredoka[wdth,wght].ttf` (SIL Open Font License). Google Fonts does not ship a separate Bold file for the current Fredoka release.
 
 ### `photoshop_execute_script` returns `Result: undefined`
 

@@ -38,7 +38,7 @@ Claude DesktopやCursorに組み込みたくない場合でも大丈夫です。
 ![スタンドアロンUIスクリーンショット](./images/frame_generic_light.png)
 
 ```bash
-npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
+npx -p @alisaitteke/photoshop-mcp ui
 ```
 
 これだけです。`127.0.0.1`（ランダムな空きポート）でローカルサーバーが起動し、デフォルトブラウザにチャットUIが自動で開きます。
@@ -598,7 +598,10 @@ Claude Desktopの設定に追加してください（macOSは`~/Library/Applicat
 ### 環境変数
 
 - `PHOTOSHOP_PATH`：（オプション）Photoshopのカスタムインストールパスを指定
+- `PHOTOSHOP_SCRIPT_TIMEOUT`：ExtendScript のデフォルトタイムアウト（ミリ秒、既定 `30000`、最大 `600000`）
 - `LOG_LEVEL`：ログレベル（0=DEBUG、1=INFO、2=WARN、3=ERROR）
+- `PSMCP_FEEDBACK`：製品フィードバック ping の質問を無効にするには `0` / `false` / `no`（既定はオン）
+- `PSMCP_UPDATE_CHECK`：1 日 1 回の npm バージョン確認と ping の更新通知を無効にするには `0` / `false` / `no`（既定はオン）
 - `ANALYTICS_DISABLED`：`1`または`true`に設定して匿名使用状況の解析を完全に無効化
 - `POSTHOG_DISABLED`：`ANALYTICS_DISABLED`の旧エイリアス
 - `RYBBIT_API_KEY`：（オプション）Rybbit ingest APIキー — サーバーイベントのボット検出をスキップ

@@ -2,17 +2,17 @@
 
 import {
   capture,
-  captureMcpPageview,
   endMcpAnalyticsSession,
   ensureAnalyticsIdentity,
   getAppVersion,
   identifyAnalyticsPerson,
   onMcpClientDisconnected,
   shutdownAnalytics,
-  startMcpAnalyticsSession,
+  startLogicalMcpAnalyticsSession,
 } from './analytics/index.js';
 import type { McpShutdownReason } from './analytics/mcp-session.js';
 import { PhotoshopMCPServer } from './core/server.js';
+import { refreshUpdateCheck } from './update/check.js';
 import { Logger } from './utils/logger.js';
 
 const logger = new Logger('Main');
@@ -26,6 +26,9 @@ async function main() {
 
     ensureAnalyticsIdentity();
 
+    // Background npm lookup (cached 24h, 3s timeout). photoshop_ping reads the cache only.
+    void refreshUpdateCheck();
+
     mcpServer = new PhotoshopMCPServer({ serverVersion: getAppVersion() });
     await mcpServer.start();
 
@@ -36,12 +39,9 @@ async function main() {
       ...(photoshopVersion ? { photoshop_version: photoshopVersion } : {}),
     });
 
-    startMcpAnalyticsSession();
-    captureMcpPageview();
-    capture('mcp_session_started', {
+    startLogicalMcpAnalyticsSession({
       photoshop_detected: mcpServer.isPhotoshopConnected(),
       tools_registered_count: mcpServer.getToolCount(),
-      event_source: 'mcp',
     });
 
     logger.info('Photoshop MCP Server is running');

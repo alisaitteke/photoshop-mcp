@@ -1,13 +1,14 @@
 import { hasAnalyticsKey } from './config.js';
 import { buildRuntimeProperties } from './events.js';
 import { isAnalyticsEnabled } from './identity.js';
+import { beginLogicalSession, noteLogicalSessionActivity } from './logical-session.js';
 import { getActiveMcpClient } from './mcp-client-state.js';
 import { captureAnalyticsMilestoneOnce } from './milestones.js';
 import { flushAnalyticsClient, getAnalytics } from './provider.js';
 
 const MCP_VIRTUAL_URL = 'photoshop-mcp://mcp';
 
-export type McpShutdownReason = 'sigint' | 'sigterm' | 'error' | 'stdio_closed';
+export type McpShutdownReason = 'sigint' | 'sigterm' | 'error' | 'stdio_closed' | 'idle_timeout';
 export type McpToolBatchFlushReason = 'debounce' | 'max_hold' | 'shutdown' | 'client_disconnect';
 
 /** Flush after the last tool in a burst — fits IDE agent turns (LLM pauses between bursts). */
@@ -23,10 +24,56 @@ interface ToolBatchEntry {
   durationMs: number;
 }
 
-let startedAt: number | null = null;
 let toolBatch = new Map<string, ToolBatchEntry>();
 let debounceFlushTimer: ReturnType<typeof setTimeout> | null = null;
 let maxHoldFlushTimer: ReturnType<typeof setTimeout> | null = null;
+
+let promptBatch = new Map<string, number>();
+let promptCatalogSize = 0;
+let promptDebounceFlushTimer: ReturnType<typeof setTimeout> | null = null;
+let promptMaxHoldFlushTimer: ReturnType<typeof setTimeout> | null = null;
+
+export interface PromptBatchSummary {
+  prompts_requested_count: number;
+  unique_prompts_count: number;
+  prompt_usage_summary: string;
+  prompts_used: string[];
+  full_catalog: boolean;
+  catalog_size: number;
+  repeat: number;
+}
+
+/** Pure burst math for mcp_prompt_batch. catalogSize is the registry count at record time. */
+export function summarizePromptBatch(
+  counts: ReadonlyMap<string, number>,
+  catalogSize: number
+): PromptBatchSummary {
+  let promptsRequestedCount = 0;
+  for (const count of counts.values()) {
+    promptsRequestedCount += count;
+  }
+
+  const uniquePromptsCount = counts.size;
+  const promptsUsed = [...counts.keys()].sort();
+  const parts = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([name, count]) => `${name}:${count}`);
+
+  let promptUsageSummary = parts.join(',');
+  if (promptUsageSummary.length > MAX_SUMMARY_LENGTH) {
+    promptUsageSummary = `${promptUsageSummary.slice(0, MAX_SUMMARY_LENGTH)}…`;
+  }
+
+  return {
+    prompts_requested_count: promptsRequestedCount,
+    unique_prompts_count: uniquePromptsCount,
+    prompt_usage_summary: promptUsageSummary,
+    prompts_used: promptsUsed,
+    full_catalog: catalogSize > 0 && uniquePromptsCount === catalogSize,
+    catalog_size: catalogSize,
+    repeat: uniquePromptsCount > 0 ? promptsRequestedCount / uniquePromptsCount : 0,
+  };
+}
 
 function captureMcpEvent(name: string, properties: Record<string, unknown>): void {
   if (!isAnalyticsEnabled() || !hasAnalyticsKey()) return;
@@ -161,6 +208,72 @@ export function flushMcpToolBatch(reason: McpToolBatchFlushReason): void {
   clearFlushTimers();
 }
 
+function clearPromptDebounceFlushTimer(): void {
+  if (!promptDebounceFlushTimer) return;
+  clearTimeout(promptDebounceFlushTimer);
+  promptDebounceFlushTimer = null;
+}
+
+function clearPromptMaxHoldFlushTimer(): void {
+  if (!promptMaxHoldFlushTimer) return;
+  clearTimeout(promptMaxHoldFlushTimer);
+  promptMaxHoldFlushTimer = null;
+}
+
+function clearPromptFlushTimers(): void {
+  clearPromptDebounceFlushTimer();
+  clearPromptMaxHoldFlushTimer();
+}
+
+export function flushMcpPromptBatch(reason: McpToolBatchFlushReason): void {
+  if (promptBatch.size === 0) return;
+
+  const summary = summarizePromptBatch(promptBatch, promptCatalogSize);
+  captureMcpEvent('mcp_prompt_batch', {
+    ...summary,
+    batch_flush_reason: reason,
+    event_source: 'mcp',
+  });
+
+  void flushAnalyticsClient().catch(() => {});
+
+  promptBatch = new Map();
+  promptCatalogSize = 0;
+  clearPromptFlushTimers();
+}
+
+function schedulePromptBatchFlush(): void {
+  clearPromptDebounceFlushTimer();
+  promptDebounceFlushTimer = setTimeout(() => {
+    promptDebounceFlushTimer = null;
+    flushMcpPromptBatch('debounce');
+  }, DEBOUNCE_FLUSH_MS);
+  promptDebounceFlushTimer.unref?.();
+
+  if (!promptMaxHoldFlushTimer) {
+    promptMaxHoldFlushTimer = setTimeout(() => {
+      promptMaxHoldFlushTimer = null;
+      flushMcpPromptBatch('max_hold');
+    }, MAX_BATCH_HOLD_MS);
+    promptMaxHoldFlushTimer.unref?.();
+  }
+}
+
+export function recordMcpPromptRequest(name: string, catalogSize: number): void {
+  promptCatalogSize = catalogSize;
+  promptBatch.set(name, (promptBatch.get(name) ?? 0) + 1);
+  noteLogicalSessionActivity();
+  captureMcpEvent('mcp_prompt_requested', {
+    prompt_name: name,
+    event_source: 'mcp',
+  });
+  schedulePromptBatchFlush();
+}
+
+export function flushMcpPromptBatchOnClientDisconnect(): void {
+  flushMcpPromptBatch('client_disconnect');
+}
+
 function scheduleBatchFlush(): void {
   clearDebounceFlushTimer();
   debounceFlushTimer = setTimeout(() => {
@@ -179,7 +292,32 @@ function scheduleBatchFlush(): void {
 }
 
 export function startMcpAnalyticsSession(): void {
-  startedAt = Date.now();
+  beginLogicalSession();
+}
+
+/** Process start: emit session/pageview only when the 30m logical window is new. */
+export function startLogicalMcpAnalyticsSession(properties: {
+  photoshop_detected: boolean;
+  tools_registered_count: number;
+}): void {
+  const result = beginLogicalSession();
+  if (result.closedPrevious) {
+    captureMcpPageleave(result.closedPrevious.durationMs, result.closedPrevious.shutdownReason);
+    captureMcpEvent('mcp_session_ended', {
+      duration_ms: result.closedPrevious.durationMs,
+      shutdown_reason: result.closedPrevious.shutdownReason,
+      event_source: 'mcp',
+    });
+  }
+
+  if (!result.isNew) return;
+
+  captureMcpPageview();
+  captureMcpEvent('mcp_session_started', {
+    photoshop_detected: properties.photoshop_detected,
+    tools_registered_count: properties.tools_registered_count,
+    event_source: 'mcp',
+  });
 }
 
 export function recordMcpToolCall(params: {
@@ -205,6 +343,7 @@ export function recordMcpToolCall(params: {
   }
   existing.durationMs += params.durationMs;
   toolBatch.set(params.toolName, existing);
+  noteLogicalSessionActivity();
 
   if (params.ok) {
     captureAnalyticsMilestoneOnce('mcp_first_tool_success', {
@@ -220,18 +359,13 @@ export function flushMcpToolBatchOnClientDisconnect(): void {
   flushMcpToolBatch('client_disconnect');
 }
 
-export function endMcpAnalyticsSession(reason: McpShutdownReason): void {
+export function endMcpAnalyticsSession(_reason: McpShutdownReason): void {
   flushMcpToolBatch('shutdown');
-
-  const durationMs = startedAt !== null ? Date.now() - startedAt : 0;
-  captureMcpPageleave(durationMs, reason);
-  captureMcpEvent('mcp_session_ended', {
-    duration_ms: durationMs,
-    shutdown_reason: reason,
-    event_source: 'mcp',
-  });
-
-  startedAt = null;
+  flushMcpPromptBatch('shutdown');
+  noteLogicalSessionActivity();
   toolBatch.clear();
   clearFlushTimers();
+  promptBatch = new Map();
+  promptCatalogSize = 0;
+  clearPromptFlushTimers();
 }

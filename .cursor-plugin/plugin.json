@@ -1,8 +1,8 @@
 {
   "name": "photoshop-mcp",
   "displayName": "Photoshop MCP",
-  "version": "1.7.15",
-  "description": "Control Adobe Photoshop from Cursor — 116 tools, recipes, generative AI.",
+  "version": "1.7.32",
+  "description": "Control Adobe Photoshop from Cursor — 127 tools, recipes, generative AI.",
   "author": {
     "name": "Ali Sait Teke"
   },

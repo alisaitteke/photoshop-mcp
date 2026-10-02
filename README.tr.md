@@ -38,7 +38,7 @@ Bunu Claude Desktop veya Cursor'a bağlamak istemiyorsanız? Aynı paket, bir ya
 ![Bağımsız UI Ekran Görüntüsü](./images/frame_generic_light.png)
 
 ```bash
-npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
+npx -p @alisaitteke/photoshop-mcp ui
 ```
 
 Hepsi bu. `127.0.0.1` üzerinde yerel bir sunucu başlar (rastgele boş port) ve varsayılan tarayıcınız sohbet UI'ını otomatik olarak açar.
@@ -683,7 +683,10 @@ const q = query({
 ### Ortam Değişkenleri
 
 - `PHOTOSHOP_PATH`: (İsteğe bağlı) Özel Photoshop kurulum yolunu belirtin
+- `PHOTOSHOP_SCRIPT_TIMEOUT`: Varsayılan ExtendScript zaman aşımı (ms; varsayılan `30000`, en fazla `600000`)
 - `LOG_LEVEL`: Günlük kaydı düzeyi (0=DEBUG, 1=INFO, 2=WARN, 3=ERROR)
+- `PSMCP_FEEDBACK`: Ürün-geri bildirim ping sorusunu kapatmak için `0` / `false` / `no` (varsayılan açık)
+- `PSMCP_UPDATE_CHECK`: Günlük npm sürüm kontrolünü ve ping'deki yeni sürüm bildirimini kapatmak için `0` / `false` / `no` (varsayılan açık)
 - `ANALYTICS_DISABLED`: Anonim kullanım analizlerini tamamen devre dışı bırakmak için `1` veya `true`
   olarak ayarlayın
 - `POSTHOG_DISABLED`: `ANALYTICS_DISABLED` için eski takma ad

@@ -46,7 +46,8 @@ function printHelp(): void {
     [
       'photoshop-mcp-ui — Browser UI for the Photoshop MCP server',
       '',
-      'Usage: photoshop-mcp-ui [options]',
+      'Usage: ui [options]',
+      '       photoshop-mcp-ui [options]',
       '',
       'Options:',
       '  -p, --port <number>   Port to listen on (default: random free port)',

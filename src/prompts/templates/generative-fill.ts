@@ -20,7 +20,7 @@ export const generativeFillTemplate: PhotoshopPromptTemplate = {
       `1. Call \`photoshop_get_capabilities\` once if not done this session; verify \`generative_fill\`.`,
       `2. Call \`photoshop_get_state\` — ensure a pixel selection exists.`,
       `3. If no selection: \`photoshop_select_subject\` or \`photoshop_select_rectangle\`, then retry.`,
-      `4. Call \`photoshop_generative_fill\` with { prompt: "${prompt.replace(/"/g, '\\"')}" }.`,
+      `4. Call \`photoshop_generative_fill\` with { prompt: ${JSON.stringify(prompt)} }.`,
       `5. Call \`photoshop_get_preview\` to verify the result.`,
       ``,
       `End state: selection filled with generative content; one undo per generative layer.`,

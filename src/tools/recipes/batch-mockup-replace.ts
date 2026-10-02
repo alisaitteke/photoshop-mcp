@@ -4,6 +4,7 @@ import { ToolDefinition, ToolResult } from '../../core/tool-registry.js';
 import { resolveExportPath } from '../../lib/export-paths.js';
 import { PhotoshopConnection } from '../../platform/connection.js';
 import {
+  BATCH_SCRIPT_TIMEOUT_MS,
   clampInt,
   executeRecipe,
   jsString,
@@ -201,7 +202,7 @@ async function runBatchMockupReplace(
     };
   `;
 
-  return executeRecipe(connection, 'Batch Mockup Replace', body);
+  return executeRecipe(connection, 'Batch Mockup Replace', body, BATCH_SCRIPT_TIMEOUT_MS);
 }
 
 function baseNameWithoutExt(p: string): string {

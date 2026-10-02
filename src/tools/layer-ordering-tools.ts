@@ -8,7 +8,14 @@ export function createLayerOrderingTools(connection: PhotoshopConnection): ToolD
     {
       tool: {
         name: 'photoshop_move_layer_to_position',
-        description: 'Move the active layer relative to another layer',
+        description:
+          'Reorder the active layer relative to a named layer. `position` is ABOVE, BELOW, TOP, or BOTTOM of `targetLayerName`. This changes stacking order, not canvas pixels.\n\n' +
+          'Use when: the active layer must sit above or below a specific other layer.\n' +
+          'Do NOT use when: it should go to the top or bottom of the whole stack — use photoshop_move_layer_to_top or photoshop_move_layer_to_bottom.\n' +
+          'Do NOT use when: it should move one step — use photoshop_move_layer_up or photoshop_move_layer_down.\n' +
+          'Do NOT use when: you mean a pixel offset on the canvas — use photoshop_move_layer.\n\n' +
+          'Returns: text confirmation of the new stack position.\n' +
+          'Preconditions: active document, an active layer, and an existing targetLayerName. Side effects: stacking order only. Reversible with photoshop_undo.',
         inputSchema: {
           type: 'object',
           properties: {

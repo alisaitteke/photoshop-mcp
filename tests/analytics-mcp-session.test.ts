@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { captureMcpPageleave, captureMcpPageview } from '../src/analytics/mcp-session.js';
+import {
+  captureMcpPageleave,
+  captureMcpPageview,
+  startLogicalMcpAnalyticsSession,
+} from '../src/analytics/mcp-session.js';
 
 describe('MCP session virtual page events', () => {
   it('exports pageview helpers from mcp-session (no standalone pageview module)', () => {
     expect(typeof captureMcpPageview).toBe('function');
     expect(typeof captureMcpPageleave).toBe('function');
+    expect(typeof startLogicalMcpAnalyticsSession).toBe('function');
   });
 
   it('is a no-op when analytics are disabled', () => {

@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { MessageSquarePlus, FlaskConical } from 'lucide-vue-next';
+import { computed, provide, ref, watch } from 'vue';
+import { MessageSquarePlus, FlaskConical, Zap } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import StatusBar from './StatusBar.vue';
 import MessageList from './MessageList.vue';
 import Composer from './Composer.vue';
 import ModelSelector from './ModelSelector.vue';
 import { syncAnalyticsContext } from '@/lib/analytics';
+import { PREVIEW_CHAT_ID } from '@/lib/preview-context';
 import {
   apiSetActionPlanBeta,
   apiUpdateChatModel,
@@ -20,11 +21,13 @@ const props = defineProps<{
   store: ReturnType<typeof useChatStore>;
   settingsOpen: boolean;
   actionPlanBeta: boolean;
+  intentRouter?: boolean;
 }>();
 
-const emit = defineEmits<{ 
+const emit = defineEmits<{
   'new-chat': [];
   'open-settings': [];
+  'active-changed': [value: { provider: ProviderId; model: string }];
 }>();
 
 const planBeta = ref(props.actionPlanBeta);
@@ -46,6 +49,11 @@ async function toggleActionPlanBeta(): Promise<void> {
   }
 }
 
+provide(
+  PREVIEW_CHAT_ID,
+  computed(() => props.store.activeChatId.value)
+);
+
 const activeChat = computed(() => {
   const id = props.store.activeChatId.value;
   if (!id) return null;
@@ -62,18 +70,12 @@ const subscriptionMode = computed(
   () => activeProviderInfo.value?.authMethod === 'cli_account'
 );
 
-async function onProviderChange(providerId: ProviderId): Promise<void> {
+async function onSelect(selection: { provider: ProviderId; model: string }): Promise<void> {
   const chat = activeChat.value;
   if (!chat) return;
-  await apiUpdateChatModel(chat.id, { provider: providerId });
+  await apiUpdateChatModel(chat.id, selection);
   await props.store.loadChats();
-}
-
-async function onModelChange(modelId: string): Promise<void> {
-  const chat = activeChat.value;
-  if (!chat) return;
-  await apiUpdateChatModel(chat.id, { model: modelId });
-  await props.store.loadChats();
+  emit('active-changed', selection);
 }
 </script>
 
@@ -112,6 +114,7 @@ async function onModelChange(modelId: string): Promise<void> {
           <Composer
             class="pointer-events-auto"
             :busy="props.store.sending.value"
+            :intent-router="props.intentRouter"
             @send="(p) => props.store.send(p)"
             @abort="props.store.abort"
           >
@@ -122,11 +125,20 @@ async function onModelChange(modelId: string): Promise<void> {
                   :current-provider="activeChat.provider"
                   :current-model="activeChat.model"
                   :disabled="props.store.sending.value"
-                  @update:provider="onProviderChange"
-                  @update:model="onModelChange"
+                  @select="onSelect"
                   @open-settings="emit('open-settings')"
                 />
+                <span
+                  v-if="props.intentRouter"
+                  class="flex h-7 items-center gap-1.5 rounded-md px-2 text-xs text-foreground"
+                  title="Jev picks the route for each message: run instantly, plan, look and iterate, or ask first. Action Plan is used when Jev chooses Plan."
+                >
+                  <Zap class="size-3.5 text-amber-500" />
+                  Auto route
+                  <span class="rounded bg-amber-500/15 px-1 text-[9px] font-semibold uppercase text-amber-600">Jev</span>
+                </span>
                 <Button
+                  v-else
                   variant="ghost"
                   size="sm"
                   :disabled="props.store.sending.value"

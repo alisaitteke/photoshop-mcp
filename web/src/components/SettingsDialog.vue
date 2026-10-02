@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTheme, type Theme } from '@/composables/useTheme';
 import ProviderIcon from './ProviderIcon.vue';
+import RoutingSettings from './RoutingSettings.vue';
 import {
   apiDeleteCustomProvider,
   apiDeleteKey,
@@ -330,9 +331,10 @@ watch(
       </div>
 
       <Tabs default-value="general">
-        <TabsList class="mb-4 grid w-full grid-cols-2">
+        <TabsList class="mb-4 grid w-full grid-cols-3">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="providers">Providers</TabsTrigger>
+          <TabsTrigger value="routing">Routing</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" class="space-y-6">
@@ -667,6 +669,9 @@ watch(
               </div>
             </div>
           </template>
+        </TabsContent>
+        <TabsContent value="routing">
+          <RoutingSettings @saved="emit('saved')" />
         </TabsContent>
       </Tabs>
 

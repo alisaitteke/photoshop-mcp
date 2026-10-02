@@ -7,6 +7,7 @@ import {
   parseSnippetResult,
   runSnippet,
 } from './atomic-shared.js';
+import { BATCH_SCRIPT_TIMEOUT_MS } from '../platform/script-timeout.js';
 
 const EXPORT_FORMATS = ['JPEG', 'PNG', 'PSD'] as const;
 type DatasetExportFormat = (typeof EXPORT_FORMATS)[number];
@@ -137,7 +138,8 @@ async function generateFromDataSets(
   try {
     const raw = await runSnippet(
       connection,
-      ExtendScriptSnippets.applyDataSetsExport(outputDir, format, names)
+      ExtendScriptSnippets.applyDataSetsExport(outputDir, format, names),
+      BATCH_SCRIPT_TIMEOUT_MS
     );
     const parsed = parseSnippetResult(raw);
     if (!parsed) {

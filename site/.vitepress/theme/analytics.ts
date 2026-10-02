@@ -95,7 +95,7 @@ function outboundDestination(host: string): string | null {
 }
 
 function classifyCopiedCommand(text: string): 'mcp' | 'ui' | 'other' {
-  if (text.includes('photoshop-mcp-ui')) return 'ui';
+  if (text.includes('photoshop-mcp-ui') || /photoshop-mcp(?:@\S+)?\s+ui\b/.test(text)) return 'ui';
   if (text.includes('@alisaitteke/photoshop-mcp')) return 'mcp';
   return 'other';
 }

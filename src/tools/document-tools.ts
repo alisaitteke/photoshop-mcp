@@ -26,13 +26,15 @@ export function createDocumentTools(connection: PhotoshopConnection): ToolDefini
           properties: {
             width: {
               type: 'number',
-              description: 'Document width in pixels',
+              description: 'Document width in pixels. Default 1920 when the request names no size.',
               minimum: 1,
+              default: 1920,
             },
             height: {
               type: 'number',
-              description: 'Document height in pixels',
+              description: 'Document height in pixels. Default 1080 when the request names no size.',
               minimum: 1,
+              default: 1080,
             },
             resolution: {
               type: 'number',
@@ -46,7 +48,7 @@ export function createDocumentTools(connection: PhotoshopConnection): ToolDefini
               default: 'RGB',
             },
           },
-          required: ['width', 'height'],
+          required: [],
         },
       },
       handler: async (args) => createDocument(connection, args),
@@ -54,7 +56,13 @@ export function createDocumentTools(connection: PhotoshopConnection): ToolDefini
     {
       tool: {
         name: 'photoshop_get_document_info',
-        description: 'Get information about the active Photoshop document',
+        description:
+          'Read the active document id, name, size, resolution, and color mode. Does not change pixels or which tab is active.\n\n' +
+          'Use when: you need dimensions or color mode of the front document only.\n' +
+          'Do NOT use when: several documents are open and you need every tab — use photoshop_list_documents.\n' +
+          'Do NOT use when: you also need the active layer and selection — use photoshop_get_state.\n\n' +
+          'Returns: document context JSON.\n' +
+          'Preconditions: an open document. Side effects: none.',
         inputSchema: {
           type: 'object',
           properties: {},
@@ -66,11 +74,11 @@ export function createDocumentTools(connection: PhotoshopConnection): ToolDefini
       tool: {
         name: 'photoshop_list_documents',
         description:
-          'List every open Photoshop document with id, dimensions, and which tab is active (read-only).\n\n' +
-          'Use when: multiple documents are open and you need document_id before switching tabs or closing a specific file.\n' +
+          'List every open Photoshop document with id, dimensions, saved flag, artboard_count, and which tab is active.\n\n' +
+          'Use when: multiple documents are open and you need document_id before switching tabs, previewing, or closing a specific file.\n' +
           'Do NOT use when: you only need the active document — use photoshop_get_document_info or photoshop_get_state.\n\n' +
-          'Returns: JSON { ok, summary, details: { count, documents[], active_document_id, context } }.\n' +
-          'Preconditions: none (safe when zero documents open). Side effects: none.',
+          'Returns: JSON { ok, summary, details: { count, documents[] (id, name, width, height, saved, artboard_count, is_active), active_document_id, context } }.\n' +
+          'Preconditions: none (safe when zero documents open). Side effects: briefly activates each tab to read artboard_count, then restores the original active document.',
         inputSchema: {
           type: 'object',
           properties: {},
@@ -147,7 +155,12 @@ export function createDocumentTools(connection: PhotoshopConnection): ToolDefini
     {
       tool: {
         name: 'photoshop_close_document',
-        description: 'Close the active Photoshop document',
+        description:
+          'Close a Photoshop document tab. Defaults to the active document; pass document_id to close a specific open file.\n\n' +
+          'Use when: the user is done with a file, or when cleaning up extra open tabs after photoshop_list_documents.\n' +
+          'Do NOT use when: you only need to switch tabs — use photoshop_set_active_document.\n\n' +
+          'Returns: confirmation that the document closed.\n' +
+          'Preconditions: target document is open. Side effects: closes that tab; save=true writes unsaved changes first.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -168,8 +181,8 @@ async function createDocument(
   connection: PhotoshopConnection,
   args: Record<string, unknown>
 ): Promise<ToolResult> {
-  const width = args.width as number;
-  const height = args.height as number;
+  const width = typeof args.width === 'number' && args.width > 0 ? args.width : 1920;
+  const height = typeof args.height === 'number' && args.height > 0 ? args.height : 1080;
   const resolution = (args.resolution as number) || 72;
   const colorMode = (args.colorMode as string) || 'RGB';
 
@@ -190,13 +203,32 @@ async function createDocument(
       colorModeMap[colorMode] || 'NewDocumentMode.RGB'
     );
 
-    await api.executeScript(script);
+    const raw = await api.executeScript(script);
+    const parsed = parseSnippetResult(raw);
+    const id = typeof parsed?.id === 'number' ? parsed.id : undefined;
+    const name = typeof parsed?.name === 'string' ? parsed.name : 'New Document';
 
     return {
       content: [
         {
           type: 'text' as const,
-          text: `Document created: ${width}x${height}px at ${resolution}dpi (${colorMode})`,
+          text: JSON.stringify(
+            {
+              ok: true,
+              summary: `Document created: ${width}x${height}px at ${resolution}dpi (${colorMode})`,
+              document: {
+                ...(id !== undefined ? { id } : {}),
+                name,
+                width,
+                height,
+                resolution,
+                colorMode,
+              },
+              next_suggested_tool: 'photoshop_get_state',
+            },
+            null,
+            2
+          ),
         },
       ],
     };

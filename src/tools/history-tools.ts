@@ -8,7 +8,14 @@ export function createHistoryTools(connection: PhotoshopConnection): ToolDefinit
     {
       tool: {
         name: 'photoshop_undo',
-        description: 'Undo the last operation(s) - equivalent to Ctrl/Cmd+Z',
+        description:
+          'Step the active document back through history (Ctrl/Cmd+Z). Each call moves the active history state earlier by `steps` (default 1).\n\n' +
+          'Users often say: undo, geri al, ctrl z, cmd z, son değişikliği geri al.\n' +
+          'Use when: reverting the last edit or a short run of edits.\n' +
+          'Do NOT use when: you need to reapply an undone edit — use photoshop_redo.\n' +
+          'Do NOT use when: you only need to inspect the stack — use photoshop_get_history.\n\n' +
+          'Returns: text confirmation with the step count.\n' +
+          'Preconditions: active document with history. Side effects: restores an earlier state and drops the current one onto the redo stack. Not idempotent — a second call undoes further. Reversible with photoshop_redo while those states remain.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -26,7 +33,13 @@ export function createHistoryTools(connection: PhotoshopConnection): ToolDefinit
     {
       tool: {
         name: 'photoshop_redo',
-        description: 'Redo the previously undone operation(s) - equivalent to Ctrl/Cmd+Shift+Z',
+        description:
+          'Redo the previously undone operation(s), equivalent to Ctrl/Cmd+Shift+Z.\n\n' +
+          'Users often say: redo, yinele, geri alınanı uygula.\n' +
+          'Use when: reapplying the change that was just undone.\n' +
+          'Do NOT use when: stepping back through history — use photoshop_undo.\n\n' +
+          'Returns: text confirmation with the step count.\n' +
+          'Preconditions: active document with something on the redo stack. Side effects: moves the history state forward.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -44,7 +57,12 @@ export function createHistoryTools(connection: PhotoshopConnection): ToolDefinit
     {
       tool: {
         name: 'photoshop_get_history',
-        description: 'Get the history states of the active document',
+        description:
+          'Read the history stack of the active document, including which state is current. Does not change pixels.\n\n' +
+          'Use when: deciding how many steps photoshop_undo or photoshop_redo should take.\n' +
+          'Do NOT use when: you want to change the document — use photoshop_undo or photoshop_redo.\n\n' +
+          'Returns: the history state list as text.\n' +
+          'Preconditions: active document. Side effects: none.',
         inputSchema: {
           type: 'object',
           properties: {},

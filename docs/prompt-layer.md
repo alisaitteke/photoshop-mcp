@@ -1,7 +1,7 @@
 # AI / Prompt Layer for Photoshop
 
-The photoshop-mcp server exposes 100 atomic `photoshop_*` tools plus 16 recipe
-`photoshop_recipe_*` tools (116 total), along with a thin
+The photoshop-mcp server exposes 111 atomic `photoshop_*` tools plus 16 recipe
+`photoshop_recipe_*` tools (127 total), along with a thin
 AI/prompt layer ported from TTT: server-level instructions, MCP prompt templates,
 recipe tools, state/preview tools, version-aware capabilities, and structured
 error envelopes.
@@ -10,9 +10,21 @@ error envelopes.
 
 Source: [`src/prompts/instructions.ts`](../src/prompts/instructions.ts)
 
-Advertised on MCP `initialize`. Covers session bootstrap, recipe-over-atomic
-selection, user intent glossary, degrade paths, disambiguation, guide vs recipe
-prompt discovery, `~/.photoshop-mcp/exports` conventions, and error recovery contract.
+Advertised on MCP `initialize` for every host, including plain `mcp.json` installs.
+Covers session bootstrap, the remove-background hard rule, recipe-over-atomic
+selection, `~/.photoshop-mcp/exports` conventions, and the error recovery contract.
+
+The phrase-to-tool glossary, degrade paths, disambiguation, and guide-prompt
+names live in plugin skills so they load only when the request matches:
+
+| Skill | Path |
+|-------|------|
+| `photoshop-remove-background` | [`skills/photoshop-remove-background/SKILL.md`](../skills/photoshop-remove-background/SKILL.md) |
+| `photoshop-recipes` | [`skills/photoshop-recipes/SKILL.md`](../skills/photoshop-recipes/SKILL.md) |
+
+Cursor discovers `skills/` next to [`.cursor-plugin/plugin.json`](../.cursor-plugin/plugin.json).
+Claude Code discovers the same directory next to [`.claude-plugin/plugin.json`](../.claude-plugin/plugin.json).
+An `npx` stdio install does not ship those files; the short hard rule stays in `instructions`.
 
 ## 2. MCP `prompts` primitive
 
@@ -70,8 +82,10 @@ when the standalone UI passes `PHOTOSHOP_EXPORT_CHAT_ID` to the MCP child).
 | Tool | File |
 |------|------|
 | `photoshop_get_state` | [`src/tools/state-tools.ts`](../src/tools/state-tools.ts) |
-| `photoshop_get_preview` | same |
+| `photoshop_get_preview` | same. JPEG plus document size, color mode, and up to 40 top-level layer names. Declares MCP App `ui://photoshop/preview`. |
 | `photoshop_get_capabilities` | same |
+
+The preview app reads a previous frame from `photoshop://preview/previous/{documentId}` (process memory). That JPEG is not copied into the tool text the model sees. Long-edge buttons call `photoshop_recipe_prepare_for_web`.
 
 ## 5. Verification
 

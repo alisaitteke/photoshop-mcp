@@ -5,14 +5,23 @@ import {
   CallToolRequestSchema,
   ListPromptsRequestSchema,
   GetPromptRequestSchema,
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+import { listPreviewResources, readPreviewResource } from '../apps/preview-resources.js';
 import { Logger } from '../utils/logger.js';
-import { capture, onMcpClientConnected, onMcpClientDisconnected, recordMcpToolCall } from '../analytics/index.js';
+import {
+  onMcpClientConnected,
+  onMcpClientDisconnected,
+  recordMcpPromptRequest,
+  recordMcpToolCall,
+} from '../analytics/index.js';
 import { ToolRegistry, ToolDefinition } from './tool-registry.js';
 import { PromptRegistry } from './prompt-registry.js';
 import { Session } from './session.js';
 import { wrapToolHandler } from '../errors/envelope.js';
 import { withOptionalDocumentId, wrapDocumentIdHandler } from './document-target.js';
+import { withToolAnnotations } from './tool-annotations.js';
 import { buildPhotoshopInstructions } from '../prompts/instructions.js';
 import { registerPhotoshopPrompts } from '../prompts/registry.js';
 import { createDocumentTools } from '../tools/document-tools.js';
@@ -39,7 +48,12 @@ import { createColorAdjustmentTools } from '../tools/color-adjustment-tools.js';
 import { createDataTools } from '../tools/data-tools.js';
 import { createStackTools } from '../tools/stack-tools.js';
 import { createExportTools } from '../tools/export-tools.js';
+import { createArtboardTools } from '../tools/artboard-tools.js';
+import { createSessionTools } from '../tools/session-tools.js';
 import { ensureUxpBridgeServer } from '../platform/uxp-bridge-server.js';
+import { submitFeedbackFromArgs } from '../feedback/nudge.js';
+import { probePhotoshopEngine } from './ping-engine.js';
+import { refreshUpdateCheck } from '../update/check.js';
 
 export interface PhotoshopMCPServerOptions {
   serverVersion: string;
@@ -67,6 +81,7 @@ export class PhotoshopMCPServer {
         capabilities: {
           tools: {},
           prompts: {},
+          resources: {},
         },
         instructions: buildPhotoshopInstructions(),
       }
@@ -78,7 +93,7 @@ export class PhotoshopMCPServer {
   }
 
   private registerToolDefinition(definition: ToolDefinition): void {
-    const tool = withOptionalDocumentId(definition.tool);
+    const tool = withToolAnnotations(withOptionalDocumentId(definition.tool));
     this.toolRegistry.register(tool.name, {
       tool,
       handler: wrapToolHandler(tool.name, wrapDocumentIdHandler(definition.handler)),
@@ -90,33 +105,13 @@ export class PhotoshopMCPServer {
   }
 
   private registerTools() {
-    this.registerToolDefinition({
-      tool: {
-        name: 'photoshop_ping',
-        description:
-          'Verify Photoshop is installed and reachable on this machine.\n\n' +
-          'Use when: once at session start if connection status is unknown.\n' +
-          'Do NOT use when: on every tool call — call once, then use photoshop_get_state.\n\n' +
-          'Returns: connection success or failure message.\n' +
-          'Preconditions: none. Side effects: may trigger Photoshop detection.',
-        inputSchema: { type: 'object', properties: {} },
-      },
-      handler: async () => this.pingPhotoshop(),
-    });
-
-    this.registerToolDefinition({
-      tool: {
-        name: 'photoshop_get_version',
-        description:
-          'Return the detected Photoshop version string.\n\n' +
-          'Use when: user asks about compatibility or before version-gated features.\n' +
-          'Do NOT use when: you need feature flags — prefer photoshop_get_capabilities.\n\n' +
-          'Returns: version string.\n' +
-          'Preconditions: none. Side effects: none.',
-        inputSchema: { type: 'object', properties: {} },
-      },
-      handler: async () => this.getVersion(),
-    });
+    this.registerToolDefinitions(
+      createSessionTools({
+        ping: async () => this.pingPhotoshop(),
+        feedback: async (args) => submitFeedbackFromArgs(args),
+        version: async () => this.getVersion(),
+      })
+    );
 
     const connection = this.session.getConnection();
 
@@ -147,6 +142,7 @@ export class PhotoshopMCPServer {
     this.registerToolDefinitions(createDataTools(connection));
     this.registerToolDefinitions(createStackTools(connection));
     this.registerToolDefinitions(createExportTools(connection));
+    this.registerToolDefinitions(createArtboardTools(connection));
     this.registerToolDefinitions(createRecipeTools(connection));
 
     this.logger.info(
@@ -165,14 +161,19 @@ export class PhotoshopMCPServer {
       return { prompts: this.promptRegistry.list() };
     });
 
+    this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
+      return listPreviewResources();
+    });
+
+    this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+      return readPreviewResource(request.params.uri);
+    });
+
     this.server.setRequestHandler(GetPromptRequestSchema, async (request) => {
       const name = request.params.name;
       const args = (request.params.arguments as Record<string, string>) || {};
       this.logger.debug(`Prompt requested: ${name}`);
-      capture('mcp_prompt_requested', {
-        prompt_name: name,
-        event_source: 'mcp',
-      });
+      recordMcpPromptRequest(name, this.promptRegistry.count());
       return await this.promptRegistry.get(name, args);
     });
 
@@ -201,18 +202,10 @@ export class PhotoshopMCPServer {
   }
 
   private async pingPhotoshop() {
-    const connection = this.session.getConnection();
-    const isConnected = await connection.ping();
-    return {
-      content: [
-        {
-          type: 'text' as const,
-          text: isConnected
-            ? 'Successfully connected to Photoshop'
-            : 'Failed to connect to Photoshop',
-        },
-      ],
-    };
+    // Long-lived hosts (Claude Desktop) keep one server across chats; refresh the cached
+    // release here too (at most once per 24h), racing the probe so this ping can use it.
+    void refreshUpdateCheck();
+    return probePhotoshopEngine(this.session.getConnection());
   }
 
   private async getVersion() {

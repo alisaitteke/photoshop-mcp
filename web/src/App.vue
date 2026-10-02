@@ -12,6 +12,7 @@ import {
   apiGetAnalyticsConfig,
   apiListProviders,
   apiStatus,
+  type ProviderId,
   type ProviderInfo,
   type Status,
 } from './lib/api';
@@ -92,6 +93,15 @@ function handleBetaAnswered(): void {
   betaPromptPending.value = false;
 }
 
+function handleActiveChanged(selection: { provider: ProviderId; model: string }): void {
+  if (!status.value) return;
+  status.value = {
+    ...status.value,
+    activeProvider: selection.provider,
+    activeModel: selection.model,
+  };
+}
+
 async function handleNewChat(): Promise<void> {
   if (!status.value) return;
   const created = await chat.newChat({
@@ -159,8 +169,10 @@ onMounted(refresh);
       :store="chat"
       :settings-open="settingsOpen"
       :action-plan-beta="status?.actionPlanBeta ?? true"
+      :intent-router="status?.intentRouter?.enabled ?? false"
       @new-chat="handleNewChat"
       @open-settings="settingsOpen = true"
+      @active-changed="handleActiveChanged"
     />
     <SettingsDialog
       v-if="settingsOpen"

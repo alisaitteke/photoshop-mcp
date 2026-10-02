@@ -13,11 +13,12 @@ export interface AtomicSuccess {
 
 export async function runSnippet(
   connection: PhotoshopConnection,
-  script: string
+  script: string,
+  timeoutMs?: number
 ): Promise<unknown> {
   const apiFactory = new PhotoshopAPIFactory(connection);
   const api = await apiFactory.createAPI();
-  return api.executeScript(script);
+  return api.executeScript(script, timeoutMs);
 }
 
 export function parseSnippetResult(raw: unknown): Record<string, unknown> | null {

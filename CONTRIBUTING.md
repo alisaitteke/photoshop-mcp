@@ -35,9 +35,12 @@ Issues and review comments may be written in any language, but English is prefer
 ```bash
 git clone https://github.com/alisaitteke/photoshop-mcp.git
 cd photoshop-mcp
-npm install
+npm ci
 npm run build
 ```
+
+npm is the canonical package manager. `package-lock.json` (root and `web/`) is
+committed — if you change dependencies, commit the updated lockfile too.
 
 ### UI development
 
@@ -84,17 +87,35 @@ and refreshes release notes once npm is live.
    git push origin vX.Y.Z
    ```
 
-5. Wait for the [Release workflow](.github/workflows/release.yml) to finish, then
-   verify the new release on the repo **Releases** page. The workflow publishes to
-   npm and the MCP Registry, then refreshes release notes with **✅ Published on
-   npm.** Each release includes install commands, npm registry link,
-   [CHANGELOG.md](CHANGELOG.md) anchor, categorized commits, PR links (when `#123`
-   appears in messages), and **New Contributors** when applicable (see
-   [`scripts/build-release-notes.sh`](scripts/build-release-notes.sh)).
+   Only repository admins can create, move or delete `v*` tags (enforced by the
+   "Release tags (v*)" ruleset).
 
-   If publish failed but the GitHub Release exists, fix the issue and re-run the
-   failed **publish** job from Actions, or run [Refresh Release Notes](.github/workflows/refresh-release-notes.yml)
-   after a manual `npm publish` + `./mcp-publisher publish`.
+5. The **publish** job runs in the `release` environment and waits for approval.
+   Approve it from the workflow run page (**Review deployments → Approve and deploy**).
+
+6. Wait for the [Release workflow](.github/workflows/release.yml) to finish, then
+   verify the new release on the repo **Releases** page. The workflow publishes to
+   npm, waits for the version to become installable (npm publish-time malware scan
+   can take ~5–15 minutes), refreshes release notes with **✅ Published on npm.**,
+   then publishes metadata to the MCP Registry. Each release includes install
+   commands, npm registry link, [CHANGELOG.md](CHANGELOG.md) anchor, categorized
+   commits, PR links (when `#123` appears in messages), and **New Contributors**
+   when applicable (see [`scripts/build-release-notes.sh`](scripts/build-release-notes.sh)).
+
+   **npm scan delay:** `npm publish` can succeed before the version is visible on
+   the registry. The publish job polls with
+   [`scripts/wait-for-npm-version.sh`](scripts/wait-for-npm-version.sh) (up to ~20
+   minutes) before MCP Registry publish and release-note refresh.
+
+   If publish failed but the GitHub Release exists:
+
+   - Re-run the failed **publish** job from Actions (safe when the version is
+     already on npm).
+   - Or run [Refresh Release Notes](.github/workflows/refresh-release-notes.yml)
+     and [Publish MCP Registry](.github/workflows/publish-mcp-registry.yml) with
+     the tag after a manual `npm publish`.
+   - If npm never shows the version, check npm account notifications for a blocked
+     or held package before bumping the version again.
 
 Always tag the **release commit on `master`**, not a feature branch. Re-pushing an
 existing tag is safe — the workflow updates the GitHub Release for that tag.
@@ -177,6 +198,7 @@ lives at the repo root:
 | ---- | ------- |
 | [`.cursor-plugin/plugin.json`](.cursor-plugin/plugin.json) | Plugin manifest (`logo`, name, version) |
 | [`mcp.json`](mcp.json) | Stdio server (`npx -y @alisaitteke/photoshop-mcp`) |
+| [`skills/`](skills/) | Plugin skills loaded with the local plugin copy |
 | [`assets/logo.svg`](assets/logo.svg) | Icon referenced by `logo` |
 
 `npm run sync:server-version` keeps the plugin `version` aligned with
@@ -193,6 +215,8 @@ mkdir -p "$PLUGIN/.cursor-plugin" "$PLUGIN/assets"
 cp .cursor-plugin/plugin.json "$PLUGIN/.cursor-plugin/"
 cp mcp.json "$PLUGIN/"
 cp assets/logo.svg "$PLUGIN/assets/"
+rm -rf "$PLUGIN/skills"
+cp -R skills "$PLUGIN/skills"
 ```
 
 Then **Developer: Reload Window**. Confirm **Customize → Plugins** shows
@@ -237,14 +261,14 @@ one-liner.
 
 | Directory | Listing / submit | Notes |
 | --------- | ---------------- | ----- |
-| AIBase | [mcp.aibase.com/zh/server/1639703110358409836](https://mcp.aibase.com/zh/server/1639703110358409836) — update via [mcp.aibase.cn/submit](https://mcp.aibase.cn/submit) | Existing card; Chinese copy has gone stale (still said “50+ tools” in 2026). Re-submit with 116 tools, recipes, UI, Windows/macOS, and `npx -y @alisaitteke/photoshop-mcp`. |
+| AIBase | [mcp.aibase.com/zh/server/1639703110358409836](https://mcp.aibase.com/zh/server/1639703110358409836) — update via [mcp.aibase.cn/submit](https://mcp.aibase.cn/submit) | Existing card; Chinese copy has gone stale (still said “50+ tools” in 2026). Re-submit with 127 tools, recipes, UI, Windows/macOS, and `npx -y @alisaitteke/photoshop-mcp`. |
 | mcp.so | skip | [mcp.so/submit](https://mcp.so/submit) is a **$39** paid featured listing. Do not pay. They may still scrape GitHub/registry on their own. |
 | MCP Hub CN | [mcp-cn.com](https://mcp-cn.com/) | Optional. Use the same CN one-liner if they expose a submit/收录 flow. |
 | ModelScope MCP 广场 | [modelscope.cn/mcp](https://modelscope.cn/mcp) | Optional. Catalog-only / local stdio if they allow it — this server cannot be hosted in their cloud (needs a local Photoshop). Skip hosted-deploy prompts. |
 
 CN one-liner for forms:
 
-> 跨平台（Windows / macOS）Photoshop MCP 服务器：116 个工具（含配方工作流与生成式 AI）、独立 Web UI。通过 Cursor / Claude 用自然语言控制 Photoshop。非 Adobe 官方。https://photoshop-mcp.com/
+> 跨平台（Windows / macOS）Photoshop MCP 服务器：127 个工具（含配方工作流与生成式 AI）、独立 Web UI。通过 Cursor / Claude 用自然语言控制 Photoshop。非 Adobe 官方。https://photoshop-mcp.com/
 
 ## Website
 
@@ -265,9 +289,14 @@ See [`docs/architecture.md`](docs/architecture.md) for a detailed breakdown.
 
 ## Making changes
 
-1. Branch from `master`.
+1. Branch from `master` (direct pushes to `master` are blocked; every change goes through a PR).
 2. Keep diffs focused — avoid unrelated refactors in the same PR.
-3. Follow existing patterns:
+3. Use a [Conventional Commits](https://www.conventionalcommits.org/) PR title, e.g.
+   `feat(ui): add Requesty provider` or `fix(macos): …`. Allowed types: `feat`, `fix`,
+   `docs`, `refactor`, `chore`, `perf`, `test`, `ci`, `build`, `revert`. PRs are
+   squash-merged, so the PR title becomes the commit on `master` and drives the
+   release-note categories.
+4. Follow existing patterns:
    - Provider adapters in `src/ui/providers/`
    - MCP tools in `src/tools/`
    - Recipe tools in `src/tools/recipes/`
@@ -294,7 +323,8 @@ npm run verify:photoshop-prompts
 npm run verify:pack
 ```
 
-Run these before every PR.
+Run these before every PR. The [CI workflow](.github/workflows/ci.yml) runs the same
+checks (plus `npm run test:unit`) on every pull request, and they must pass before merging.
 
 ### Recommended (Photoshop must be running)
 
@@ -309,6 +339,7 @@ Integration tests communicate with a live Photoshop instance over stdio — the 
 ## Pull request checklist
 
 - [ ] PR title, description, and commit messages are in **English**
+- [ ] PR title follows Conventional Commits (`feat: …`, `fix: …`, `docs: …`)
 - [ ] Code comments and user-facing strings are in **English**
 - [ ] `npm run lint` passes
 - [ ] `npm run build:server` passes

@@ -8,6 +8,7 @@ Assets and copy for sharing this project on LinkedIn, GitHub, and other channels
 | ----- | ---- | ---- |
 | Social preview | [`images/og-social.png`](../images/og-social.png) | 1200×630 (LinkedIn / GitHub recommended) |
 | README hero | [`images/readme-hero-v2.png`](../images/readme-hero-v2.png) | 1600×800 (GitHub README banner) |
+| Jev hero | [`images/readme-hero-jev.png`](../images/readme-hero-jev.png) | 1600×800 (README “New: instant edits with Jev”; source `images/readme-hero-jev.svg`, render with `npx tsx scripts/generate-jev-hero-image.ts`) |
 
 Branding matches [alisait.com](https://alisait.com): cyan logo gradient (`#06b6d4` → `#67e8f9`), Photoshop icon (`#001E36` / `#31A8FF`), and **Ali** + *said* footer text.
 
@@ -39,7 +40,7 @@ When LLMs call Photoshop one command at a time, they burn tokens, guess layer ty
 
 **What I built (open source)**
 
-- **Photoshop MCP** — 116 tools incl. 16 recipe workflows (single-undo outcomes)
+- **Photoshop MCP** — 127 tools incl. 16 recipe workflows (single-undo outcomes)
 
 > `images/og-social.png` is generated: `npx playwright install chromium` once, then
 > `npx tsx scripts/generate-og-image.ts`. It reads the tool counts from
@@ -55,7 +56,7 @@ External automation can't invoke UXP plugins — only ExtendScript via AppleScri
 **Links**
 
 - GitHub: https://github.com/alisaitteke/photoshop-mcp
-- `npx @alisaitteke/photoshop-mcp` (MCP) · `npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui` (UI)
+- `npx @alisaitteke/photoshop-mcp` (MCP) · `npx -p @alisaitteke/photoshop-mcp ui` (UI)
 - Architecture write-up: https://github.com/alisaitteke/photoshop-mcp/blob/main/docs/architecture.md
 
 Feedback and contributors welcome. If your team builds agent tooling or creative automation, happy to connect.
@@ -66,6 +67,6 @@ Feedback and contributors welcome. If your team builds agent tooling or creative
 
 Set in repository **About** sidebar:
 
-- **Description:** `MCP server + local UI for AI-driven Photoshop automation. 116 tools, recipe workflows, cross-platform.`
+- **Description:** `MCP server + local UI for AI-driven Photoshop automation. 127 tools, recipe workflows, cross-platform.`
 - **Website:** `https://alisait.com`
 - **Topics:** `mcp`, `model-context-protocol`, `typescript`, `ai-agents`, `photoshop`, `automation`, `vue`, `hono`, `developer-tools`, `cursor`, `claude`, `extendscript`

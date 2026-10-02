@@ -1,15 +1,33 @@
 import type { ModelMessage } from 'ai';
 import type { ModelPricing, UsageCost } from '../providers/registry.js';
+import { persistToolImages, type ToolImageRef } from '../store/previews.js';
 
-export type { UsageCost };
+export type { UsageCost, ToolImageRef };
 import type { LanguageModelUsage } from 'ai';
+
+export interface ToolResultPersist {
+  ok: boolean;
+  content: string;
+  /** Images the tool returned (e.g. photoshop_get_preview), stored on disk. */
+  images?: ToolImageRef[];
+}
 
 export interface ToolCallPersist {
   id: string;
   name: string;
   input: unknown;
-  result?: { ok: boolean; content: string };
+  result?: ToolResultPersist;
   status: 'pending' | 'success' | 'error';
+  /** Plan step this call belongs to. Repairs replace steps; the timeline matches on this id. */
+  stepId?: string;
+  /** Epoch ms when the call started; used to show per-step timing. */
+  startedAt?: number;
+  durationMs?: number;
+}
+
+export interface ToolResultEventPayload extends ToolResultPersist {
+  id: string;
+  durationMs?: number;
 }
 
 export type PlanStepStatus = 'pending' | 'running' | 'done' | 'error';
@@ -53,7 +71,8 @@ export interface RunChatStreamEvent {
     | 'plan'
     | 'plan-partial'
     | 'plan-step'
-    | 'plan-repair';
+    | 'plan-repair'
+    | 'route';
   payload: unknown;
 }
 
@@ -79,6 +98,14 @@ export function stringifyToolOutput(output: unknown): string {
   } catch {
     return String(output);
   }
+}
+
+/**
+ * JSON object a later plan step can read with `$steps.<id>.<path>`.
+ * MCP tool calls wrap that JSON in `{ content: [{ type: 'text', text }] }`.
+ */
+export function toolResultData(output: unknown): unknown {
+  return parseToolEnvelope(output) ?? output;
 }
 
 /** Parse structured tool envelopes from raw MCP / SDK output. */
@@ -139,6 +166,30 @@ export function toolFailureMessage(output: unknown, fallback: string): string {
     return envelope.message;
   }
   return fallback;
+}
+
+/**
+ * Record a finished tool call on the buffer and return the `tool-result` event payload.
+ * Pass `output` for a normal result; pass `error` when the call threw.
+ */
+export function finishToolCall(
+  buffer: AssistantBuffer,
+  toolCallId: string,
+  result: { output?: unknown; error?: string; chatId?: string; content?: string; ok?: boolean }
+): ToolResultEventPayload {
+  const failed = result.error !== undefined;
+  const content = failed ? result.error! : (result.content ?? stringifyToolOutput(result.output));
+  const ok = failed ? false : (result.ok ?? isToolOutputOk(result.output));
+  const images = failed ? [] : persistToolImages(result.chatId, toolCallId, result.output);
+  const tc = buffer.toolCalls.find((c) => c.id === toolCallId);
+  const durationMs = tc?.startedAt ? Math.max(0, Date.now() - tc.startedAt) : undefined;
+  const persisted: ToolResultPersist = { ok, content, ...(images.length ? { images } : {}) };
+  if (tc) {
+    tc.result = persisted;
+    tc.status = ok ? 'success' : 'error';
+    if (durationMs !== undefined) tc.durationMs = durationMs;
+  }
+  return { id: toolCallId, ...persisted, ...(durationMs !== undefined ? { durationMs } : {}) };
 }
 
 export function computeCost(usage: LanguageModelUsage, pricing: ModelPricing): UsageCost {

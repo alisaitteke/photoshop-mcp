@@ -391,6 +391,102 @@ async function main(): Promise<void> {
   await t.run('photoshop_set_active_document', {}, { expectError: true });
   await t.run('photoshop_set_active_document', { document_id: 999999999 }, { expectError: true });
 
+  console.log('\n=== Phase 4c: Artboards ===');
+  await t.run('photoshop_create_document', { width: 1400, height: 900 }, { required: true });
+  await t.run('photoshop_list_artboards', {}, { required: true });
+  await t.run(
+    'photoshop_create_artboard',
+    { name: 'MCP_Phone', width: 390, height: 844 },
+    { required: true }
+  );
+  await t.run(
+    'photoshop_create_artboard',
+    { name: 'MCP_Tablet', width: 768, height: 1024 },
+    { required: true }
+  );
+  let phoneArtboardId: number | undefined;
+  {
+    const listResult = await client.callTool({ name: 'photoshop_list_artboards', arguments: {} });
+    const listBody = textFrom(listResult);
+    if (listResult.isError) {
+      t.recordPrompt('assert:list_artboards', 'fail', short(listBody), 0);
+      console.log(`  FAIL assert:list_artboards — ${short(listBody)}`);
+    } else {
+      try {
+        const payload = parseJsonFromToolText(listBody) as {
+          ok?: boolean;
+          details?: {
+            count?: number;
+            artboards?: Array<{ id?: number; name?: string; width?: number; height?: number }>;
+          };
+        };
+        const boards = payload.details?.artboards ?? [];
+        const phone = boards.find((b) => b.name === 'MCP_Phone');
+        const tablet = boards.find((b) => b.name === 'MCP_Tablet');
+        phoneArtboardId = phone?.id;
+        const ok =
+          payload.ok === true &&
+          (payload.details?.count ?? 0) >= 2 &&
+          phone?.width === 390 &&
+          tablet?.width === 768;
+        t.recordPrompt(
+          'assert:list_artboards',
+          ok ? 'pass' : 'fail',
+          ok ? `count=${payload.details?.count}` : JSON.stringify(payload.details),
+          0
+        );
+        console.log(
+          `  ${ok ? 'OK' : 'FAIL'}  assert:list_artboards — ${ok ? `count=${payload.details?.count}` : short(JSON.stringify(payload.details))}`
+        );
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        t.recordPrompt('assert:list_artboards', 'fail', msg, 0);
+        console.log(`  FAIL assert:list_artboards — ${msg}`);
+      }
+    }
+  }
+  {
+    const stateResult = await client.callTool({ name: 'photoshop_get_state', arguments: {} });
+    const stateBody = textFrom(stateResult);
+    try {
+      const payload = parseJsonFromToolText(stateBody) as {
+        document?: { artboardCount?: number; artboards?: unknown[] };
+      };
+      const ok = (payload.document?.artboardCount ?? 0) >= 2;
+      t.recordPrompt(
+        'assert:get_state_artboards',
+        ok ? 'pass' : 'fail',
+        `artboardCount=${payload.document?.artboardCount}`,
+        0
+      );
+      console.log(
+        `  ${ok ? 'OK' : 'FAIL'}  assert:get_state_artboards — artboardCount=${payload.document?.artboardCount}`
+      );
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      t.recordPrompt('assert:get_state_artboards', 'fail', msg, 0);
+      console.log(`  FAIL assert:get_state_artboards — ${msg}`);
+    }
+  }
+  await t.run('photoshop_set_active_artboard', { name: 'MCP_Phone' }, { required: true });
+  await t.run('photoshop_set_active_artboard', { name: '__missing_artboard__' }, { expectError: true });
+  if (phoneArtboardId !== undefined) {
+    await t.run('photoshop_export_as', {
+      path: join(EXPORT_DIR, 'mcp-artboard-phone.png'),
+      format: 'PNG',
+      artboard_id: phoneArtboardId,
+    });
+  } else {
+    t.recordPrompt('photoshop_export_as', 'fail', 'no phone artboard id', 0);
+    console.log('  FAIL photoshop_export_as — no phone artboard id');
+  }
+  await t.run('photoshop_export_artboards', {
+    folder: join(EXPORT_DIR, 'artboards'),
+    format: 'PNG',
+  });
+  await t.run('photoshop_close_document', { save: false });
+  await t.run('photoshop_set_active_document', { index: 0 });
+
   console.log('\n=== Phase 5: Layer ordering ===');
   await t.run('photoshop_move_layer_up');
   await t.run('photoshop_move_layer_down');
@@ -672,6 +768,24 @@ async function main(): Promise<void> {
   await t.run('photoshop_set_text_color', { red: 10, green: 10, blue: 200 });
   await t.run('photoshop_set_text_alignment', { alignment: 'CENTER' });
   await t.run('photoshop_update_text_content', { text: 'MCP Updated' });
+  await t.run('photoshop_set_text_style', {
+    tracking: 80,
+    leading: 36,
+    alignment: 'CENTER',
+  });
+  await t.run('photoshop_create_text_layer', {
+    text: 'Hello World',
+    x: 200,
+    y: 280,
+    fontSize: 28,
+    fontName: 'Arial',
+  });
+  await t.run('photoshop_set_text_ranges', {
+    ranges: [
+      { from: 0, to: 5, red: 220, green: 40, blue: 40 },
+      { from: 6, to: 11, red: 30, green: 90, blue: 210 },
+    ],
+  });
 
   console.log('\n=== Phase 10: Image placement (absolute top-left x/y) ===');
   await t.run('photoshop_place_image', { filePath: testPng, x: 400, y: 200 });
@@ -750,6 +864,7 @@ async function main(): Promise<void> {
   console.log('\n=== Phase 13: Actions ===');
   await t.run('photoshop_execute_script', {
     code: 'return { documents: app.documents.length, active: app.activeDocument.name };',
+    timeout_ms: 15000,
   });
   await t.run('photoshop_play_action', undefined, {
     skip: 'requires a real Actions palette entry — environment-specific',

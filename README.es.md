@@ -38,7 +38,7 @@ Análisis técnico detallado: [`docs/architecture.md`](docs/architecture.md).
 ![Captura de pantalla de la UI independiente](./images/frame_generic_light.png)
 
 ```bash
-npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
+npx -p @alisaitteke/photoshop-mcp ui
 ```
 
 Eso es todo. Se inicia un servidor local en `127.0.0.1` (puerto libre aleatorio) y el navegador predeterminado abre la UI de chat automáticamente.
@@ -596,7 +596,10 @@ Añada a su configuración de Claude Desktop (`~/Library/Application Support/Cla
 ### Variables de entorno
 
 - `PHOTOSHOP_PATH`: (Opcional) Especifique una ruta de instalación de Photoshop personalizada
+- `PHOTOSHOP_SCRIPT_TIMEOUT`: Timeout ExtendScript por defecto en milisegundos (por defecto `30000`, máx. `600000`)
 - `LOG_LEVEL`: Nivel de registro (0=DEBUG, 1=INFO, 2=WARN, 3=ERROR)
+- `PSMCP_FEEDBACK`: Establezca `0` / `false` / `no` para desactivar la pregunta de feedback en ping (activada por defecto)
+- `PSMCP_UPDATE_CHECK`: Establezca `0` / `false` / `no` para desactivar la comprobación diaria de versión en npm y el aviso de actualización en ping (activada por defecto)
 - `ANALYTICS_DISABLED`: Establezca en `1` o `true` para deshabilitar completamente el análisis de uso anónimo
 - `POSTHOG_DISABLED`: Alias heredado de `ANALYTICS_DISABLED`
 - `RYBBIT_API_KEY`: (Opcional) Clave de ingesta de Rybbit — omite la detección de bots en eventos del servidor

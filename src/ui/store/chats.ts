@@ -19,14 +19,28 @@ export interface MessageContent {
     id: string;
     name: string;
     input: unknown;
-    result?: { ok: boolean; content: string };
+    result?: { ok: boolean; content: string; images?: Array<{ file: string; mimeType: string }> };
     status: 'pending' | 'success' | 'error';
+    startedAt?: number;
+    durationMs?: number;
   }>;
   usage?: LanguageModelUsage;
   cost?: UsageCost;
   provider?: string;
   model?: string;
   reasoning?: string;
+  /** Jev routing decision for this turn, when the intent router is on. */
+  route?: {
+    route: 'instant' | 'plan' | 'agent' | 'clarify';
+    label: string;
+    intent: string;
+    confidence: number;
+    latencyMs: number;
+    model: string;
+    reason: string;
+    signals?: { multiStep: number; needsVisual: number; actionable: number };
+    steps?: number;
+  };
   /** Present only for Action Plan (beta) runs. */
   plan?: {
     summary: string;

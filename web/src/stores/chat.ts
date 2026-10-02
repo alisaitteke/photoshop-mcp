@@ -10,8 +10,10 @@ import {
   type ChatSummary,
   type PersistedToolCall,
   type PlanStepStatus,
+  type ToolImageRef,
   type PlanView,
   type ProviderId,
+  type RouteView,
   type UsageCost,
   type UsageDetails,
 } from '@/lib/api';
@@ -33,6 +35,7 @@ export interface ChatMessage {
   toolCalls: ToolCall[];
   plan?: PlanView;
   planPartial?: boolean;
+  route?: RouteView;
   activity?: StreamActivity;
   isStreaming?: boolean;
   usage?: UsageDetails;
@@ -51,6 +54,8 @@ export interface ChatStreamEventPayload {
   input?: unknown;
   ok?: boolean;
   content?: string;
+  images?: ToolImageRef[];
+  durationMs?: number;
   finishReason?: string;
   usage?: UsageDetails;
   cost?: UsageCost;
@@ -147,6 +152,7 @@ export function useChatStore() {
         reasoning: m.content.reasoning,
         toolCalls: m.content.toolCalls ?? [],
         plan: m.content.plan,
+        route: m.content.route,
         usage: m.content.usage,
         cost: m.content.cost,
         provider: m.content.provider,
@@ -188,6 +194,23 @@ export function useChatStore() {
     await apiRenameChat(id, title);
     const idx = chats.value.findIndex((c) => c.id === id);
     if (idx !== -1) chats.value[idx] = { ...chats.value[idx], title };
+  }
+
+  function pruneSupersededToolCalls(m: ChatMessage): void {
+    const live = new Map(
+      (m.plan?.steps ?? []).filter((step) => step.id && step.tool).map((step) => [step.id, step.tool])
+    );
+    if (live.size === 0 || !m.toolCalls.some((tc) => tc.stepId)) return;
+    const lastIndex = new Map<string, number>();
+    m.toolCalls.forEach((tc, index) => {
+      if (!tc.stepId || live.get(tc.stepId) !== tc.name) return;
+      lastIndex.set(tc.stepId, index);
+    });
+    const next = m.toolCalls.filter((tc, index) => {
+      if (!tc.stepId) return true;
+      return lastIndex.get(tc.stepId) === index;
+    });
+    if (next.length !== m.toolCalls.length) m.toolCalls.splice(0, m.toolCalls.length, ...next);
   }
 
   function ensureAssistantMessage(): ChatMessage {
@@ -283,26 +306,40 @@ export function useChatStore() {
         id: data.id,
         name: data.name,
         input: data.input,
+        ...(data.stepId ? { stepId: data.stepId } : {}),
         status: 'pending',
+        startedAt: Date.now(),
       });
     } else if (event === 'tool-result' && data.id) {
       flushDeltaBatch();
       const tc = findToolCall(data.id);
       if (tc) {
-        tc.result = { ok: Boolean(data.ok), content: data.content ?? '' };
+        tc.result = {
+          ok: Boolean(data.ok),
+          content: data.content ?? '',
+          ...(data.images?.length ? { images: data.images } : {}),
+        };
         tc.status = data.ok ? 'success' : 'error';
+        tc.durationMs =
+          data.durationMs ?? (tc.startedAt ? Math.max(0, Date.now() - tc.startedAt) : undefined);
       }
+    } else if (event === 'route') {
+      const m = ensureAssistantMessage();
+      streamingMessage = m;
+      m.route = data as unknown as RouteView;
     } else if (event === 'plan-partial') {
       const m = ensureAssistantMessage();
       streamingMessage = m;
       m.plan = { summary: data.summary ?? '', steps: data.steps ?? [] };
       m.planPartial = true;
+      pruneSupersededToolCalls(m);
     } else if (event === 'plan') {
       flushDeltaBatch();
       const m = ensureAssistantMessage();
       streamingMessage = m;
       m.plan = { summary: data.summary ?? '', steps: data.steps ?? [] };
       m.planPartial = false;
+      pruneSupersededToolCalls(m);
     } else if (event === 'plan-step' && data.id && data.status) {
       flushDeltaBatch();
       const m = ensureAssistantMessage();

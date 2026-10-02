@@ -4,6 +4,13 @@ import type { PlanStepStatus, PlanView } from './shared.js';
 
 export const MAX_PLAN_STEPS = 20;
 
+const rationaleField = z
+  .string()
+  .describe('One short sentence on why this step. Use "" if none.');
+const dependsOnField = z
+  .array(z.string())
+  .describe('Step ids this step depends on. Use [] if none.');
+
 export const planStepSchema = z.object({
   id: z.string().describe('Unique short id for this step, e.g. "s1".'),
   tool: z.string().describe('Exact tool name from the catalog.'),
@@ -14,13 +21,32 @@ export const planStepSchema = z.object({
         'A value may reference a prior step result with the placeholder ' +
         '"$steps.<stepId>.<dot.path>" (e.g. "$steps.s1.document.id").'
     ),
-  rationale: z.string().optional().describe('One short sentence on why this step.'),
-  dependsOn: z.array(z.string()).optional().describe('Step ids this step depends on.'),
+  rationale: rationaleField,
+  dependsOn: dependsOnField,
 });
 
 export const planSchema = z.object({
   summary: z.string().describe('One short sentence summarizing the overall plan.'),
   steps: z.array(planStepSchema).max(MAX_PLAN_STEPS),
+});
+
+/** Accepts omitted or null step fields from tool-call plans. Not sent to the model. */
+const planParseSchema = z.object({
+  summary: z.string(),
+  steps: z
+    .array(
+      planStepSchema.extend({
+        rationale: rationaleField
+          .nullable()
+          .optional()
+          .transform((value) => value ?? ''),
+        dependsOn: dependsOnField
+          .nullable()
+          .optional()
+          .transform((value) => value ?? []),
+      })
+    )
+    .max(MAX_PLAN_STEPS),
 });
 
 export type PlanStep = z.infer<typeof planStepSchema>;
@@ -32,11 +58,16 @@ export interface CatalogTool {
 }
 
 export function parsePlan(input: unknown): Plan {
-  return planSchema.parse(input);
+  return planParseSchema.parse(input);
 }
 
 export function toStepView(step: PlanStep, status: PlanStepStatus) {
-  return { id: step.id, tool: step.tool, rationale: step.rationale, status };
+  return {
+    id: step.id,
+    tool: step.tool,
+    rationale: step.rationale ? step.rationale : undefined,
+    status,
+  };
 }
 
 export function toPartialPlanView(partial: Partial<Plan>): PlanView {
@@ -47,7 +78,7 @@ export function toPartialPlanView(partial: Partial<Plan>): PlanView {
     steps.push({
       id: s.id ?? '',
       tool: s.tool ?? '',
-      rationale: s.rationale,
+      rationale: s.rationale ? s.rationale : undefined,
       status: 'pending',
     });
   }
@@ -85,13 +116,18 @@ export function buildPlannerPrompt(
     '- Use ONLY tools from the catalog below; copy tool names exactly.',
     "- Each step's argsJson must be a valid JSON object string matching the tool params.",
     '- When a step needs a value produced by an earlier step, reference it with',
-    '  "$steps.<stepId>.<dot.path>" inside argsJson instead of guessing.',
+    '  "$steps.<stepId>.<dot.path>" as a JSON string inside argsJson, quotes included,',
+    '  e.g. {"document_id":"$steps.s1.document.id"}. Never leave $steps unquoted.',
     '- The plan must accomplish the full request end-to-end. Do not stop at partial progress.',
     '- After meaningful visual edits, include photoshop_get_preview when the user expects to see the result.',
     '- Prefer photoshop_recipe_* tools over composing many atomic calls when the request matches a recipe.',
     '- Read each tool description: if a recipe already performs a sub-task, do not duplicate with atomic tools.',
     '- Include photoshop_get_state when document/layer state is uncertain before dependent tools.',
     '- Include export/save steps when the user asks to export or save a file.',
+    '- A newly created layer has no pixels. Call photoshop_fill_layer or photoshop_fill_gradient before photoshop_scale_layer. Scaling an empty layer fails because its bounding rectangle is empty.',
+    '- After photoshop_create_document, take document_id from that step\'s document.id or from a photoshop_get_state that runs after the create. An id from an earlier get_state is a different open file.',
+    '- Obey explicit limits. If the user says not to create a document, not to add a layer, not to paint, or not to preview, omit those tools even if a default workflow would include them.',
+    '- For a two-color gradient painted on layer pixels, use photoshop_fill_gradient. Do not use photoshop_execute_script: Document.gradients does not exist and throws "undefined is not an object".',
     '',
     'Tool catalog:',
     catalog,
@@ -125,6 +161,11 @@ export function buildRepairPrompt(
     '',
     'Return a corrected, ordered plan for the remaining work only. Reuse prior results',
     'via "$steps.<stepId>.<dot.path>" placeholders. Use ONLY tools from the catalog.',
+    'Do not repeat the failed tool with the same arguments.',
+    'If the failure is an empty bounding rectangle, fill the layer before scaling it.',
+    'If the failure is from photoshop_execute_script, do not retry that script. Use photoshop_fill_gradient for a two-color pixel gradient.',
+    'If Fill is not available on a smart object, call photoshop_rasterize_layer on that layer and then photoshop_fill_layer. Do not create an extra layer.',
+    'Keep the user\'s explicit limits: do not add a document, layer, fill, or preview they asked you not to.',
     '',
     'Tool catalog:',
     catalog,

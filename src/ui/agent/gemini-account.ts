@@ -8,6 +8,7 @@ import { resolveCliBinary } from '../providers/cli-utils.js';
 import { buildMcpServerConfig } from './mcp-transport.js';
 import {
   buildPromptWithHistory,
+  finishToolCall,
   isToolOutputOk,
   type AssistantBuffer,
   type RunChatFinishInfo,
@@ -87,7 +88,7 @@ export async function* runChatViaGeminiAccount(
   opts.abortSignal.addEventListener('abort', onAbort);
 
   try {
-    const geminiState = { sawMessage: false };
+    const geminiState = { sawMessage: false, chatId: opts.chatId };
     const events = readJsonLines(child.stdout!);
     for await (const raw of events) {
       if (opts.abortSignal.aborted) break;
@@ -145,7 +146,7 @@ async function createGeminiWorkspace(chatId?: string): Promise<string> {
 function mapGeminiEvent(
   event: GeminiStreamEvent,
   buffer: AssistantBuffer,
-  state: { sawMessage: boolean }
+  state: { sawMessage: boolean; chatId?: string }
 ): { events: RunChatStreamEvent[]; finish?: RunChatFinishInfo } {
   const events: RunChatStreamEvent[] = [];
   let finish: RunChatFinishInfo | undefined;
@@ -170,6 +171,7 @@ function mapGeminiEvent(
         name: event.name ?? 'tool',
         input: event.input,
         status: 'pending' as const,
+        startedAt: Date.now(),
       };
       buffer.toolCalls.push(tc);
       events.push({
@@ -189,12 +191,10 @@ function mapGeminiEvent(
           ? event.output
           : JSON.stringify(event.output ?? '');
       const ok = isToolOutputOk(event.output) && event.ok !== false;
-      const tc = buffer.toolCalls.find((c) => c.id === id);
-      if (tc) {
-        tc.result = { ok, content };
-        tc.status = ok ? 'success' : 'error';
-      }
-      events.push({ type: 'tool-result', payload: { id, ok, content } });
+      events.push({
+        type: 'tool-result',
+        payload: finishToolCall(buffer, id, { output: event.output, content, ok, chatId: state.chatId }),
+      });
       events.push({ type: 'activity', payload: { phase: 'thinking' } });
       break;
     }

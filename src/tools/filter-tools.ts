@@ -38,7 +38,13 @@ export function createFilterTools(connection: PhotoshopConnection): ToolDefiniti
     {
       tool: {
         name: 'photoshop_apply_sharpen',
-        description: 'Apply Unsharp Mask (sharpen) filter to the active layer',
+        description:
+          'Apply Unsharp Mask to the active raster layer (amount, radius, threshold). This is a pixel filter on one layer, not a web-export sharpen pass.\n\n' +
+          'Use when: sharpening one layer in the open document.\n' +
+          'Do NOT use when: preparing a file for the web — use photoshop_recipe_prepare_for_web.\n' +
+          'Do NOT use when: you want edge extraction for an overlay sharpen — use photoshop_apply_high_pass.\n\n' +
+          'Returns: the amount, radius, and threshold applied.\n' +
+          'Preconditions: active document and a normal raster layer. Text and Smart Objects are rasterized first, which drops live type and smart-object edits. Side effects: changes pixels in one history step. Reversible with photoshop_undo.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -70,7 +76,12 @@ export function createFilterTools(connection: PhotoshopConnection): ToolDefiniti
     {
       tool: {
         name: 'photoshop_apply_noise',
-        description: 'Apply Add Noise filter to the active layer',
+        description:
+          'Apply Add Noise to the active raster layer (amount percent, UNIFORM or GAUSSIAN, optional monochromatic).\n\n' +
+          'Use when: grain or noise on one raster layer.\n' +
+          'Do NOT use when: the goal is blur or sharpen — use photoshop_apply_gaussian_blur or photoshop_apply_sharpen.\n\n' +
+          'Returns: the amount, distribution, and monochromatic flag applied.\n' +
+          'Preconditions: active document and a normal raster layer. Text and Smart Objects are rasterized first. Side effects: destructive pixels, one history step. A second call adds more noise. Reversible with photoshop_undo.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -100,7 +111,13 @@ export function createFilterTools(connection: PhotoshopConnection): ToolDefiniti
     {
       tool: {
         name: 'photoshop_apply_motion_blur',
-        description: 'Apply Motion Blur filter to the active layer',
+        description:
+          'Apply Motion Blur to the active raster layer (angle in degrees, distance in pixels).\n\n' +
+          'Use when: directional streak blur on one layer.\n' +
+          'Do NOT use when: a round blur is enough — use photoshop_apply_gaussian_blur.\n' +
+          'Do NOT use when: blur should keep edges — use photoshop_apply_smart_blur.\n\n' +
+          'Returns: the angle and radius applied.\n' +
+          'Preconditions: active document and a normal raster layer. Text and Smart Objects are rasterized first. Side effects: destructive pixels, one history step. Reversible with photoshop_undo.',
         inputSchema: {
           type: 'object',
           properties: {

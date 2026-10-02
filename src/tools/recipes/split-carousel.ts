@@ -1,7 +1,7 @@
 import { ToolDefinition, ToolResult } from '../../core/tool-registry.js';
 import { resolveExportPath } from '../../lib/export-paths.js';
 import { PhotoshopConnection } from '../../platform/connection.js';
-import { clampInt, executeRecipe, jsString, toolFailure } from './_shared.js';
+import { clampInt, executeRecipe, jsString, toolFailure, BATCH_SCRIPT_TIMEOUT_MS } from './_shared.js';
 
 const TOOL_NAME = 'photoshop_recipe_split_carousel';
 
@@ -180,5 +180,5 @@ async function runSplitCarousel(
     };
   `;
 
-  return executeRecipe(connection, 'Split Carousel', body);
+  return executeRecipe(connection, 'Split Carousel', body, BATCH_SCRIPT_TIMEOUT_MS);
 }

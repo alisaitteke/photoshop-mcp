@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ToolDefinition, ToolResult } from '../../core/tool-registry.js';
 import { PhotoshopConnection } from '../../platform/connection.js';
-import { executeStandaloneRecipe, jsString } from './_shared.js';
+import { executeStandaloneRecipe, jsString, BATCH_SCRIPT_TIMEOUT_MS } from './_shared.js';
 import { readFileSync } from 'node:fs';
 
 const TOOL_NAME = 'photoshop_recipe_csv_to_cards';
@@ -267,5 +267,5 @@ async function runCsvToCards(
     };
   `;
 
-  return executeStandaloneRecipe(connection, body);
+  return executeStandaloneRecipe(connection, body, BATCH_SCRIPT_TIMEOUT_MS);
 }

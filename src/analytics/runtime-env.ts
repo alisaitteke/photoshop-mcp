@@ -1,6 +1,10 @@
-import { cpus, release, totalmem, type } from 'node:os';
+import { cpus, release, totalmem, type, uptime } from 'node:os';
 import { getAppVersion } from './app-version.js';
 import { getSystemLocale, resolveLocaleLanguage, resolveLocaleRegion } from './locale.js';
+
+const MACHINE_MAX_CHARS = 80;
+
+let knownPhotoshopVersion: string | undefined;
 
 function bucketMemoryGb(totalBytes: number): number {
   const gb = totalBytes / 1024 ** 3;
@@ -41,12 +45,44 @@ function envFlag(name: string): boolean {
   return Boolean(process.env[name]?.trim());
 }
 
+/** CPU model only — no hostname, username, or serial. */
+export function getMachineModel(): string | undefined {
+  const raw = cpus()[0]?.model?.replace(/\s+/g, ' ').trim();
+  if (!raw) return undefined;
+  if (raw.length <= MACHINE_MAX_CHARS) return raw;
+  return `${raw.slice(0, MACHINE_MAX_CHARS - 1)}…`;
+}
+
+/** Whole hours the OS has been up, or undefined when the OS refuses the read. */
+export function getUptimeHours(): number | undefined {
+  try {
+    const seconds = uptime();
+    if (!Number.isFinite(seconds) || seconds < 0) return undefined;
+    return Math.round(seconds / 3600);
+  } catch {
+    return undefined;
+  }
+}
+
+/** Remember a detected Photoshop version so later session events can carry it. */
+export function rememberPhotoshopVersion(version: string): void {
+  const trimmed = version.trim();
+  if (!trimmed || trimmed === 'Unknown') return;
+  knownPhotoshopVersion = trimmed;
+}
+
+export function getKnownPhotoshopVersion(): string | undefined {
+  return knownPhotoshopVersion;
+}
+
 /** Anonymous machine/runtime signals safe to attach to every server-side event. */
 export function buildAnonymousRuntimeEnv(): Record<string, string | number | boolean> {
   const systemLocale = getSystemLocale();
   const systemLocaleRegion = resolveLocaleRegion(systemLocale);
   const systemLocaleLanguage = resolveLocaleLanguage(systemLocale);
   const nodeMajor = getNodeMajorVersion();
+  const machine = getMachineModel();
+  const uptimeHours = getUptimeHours();
 
   return {
     app_version: getAppVersion(),
@@ -57,6 +93,8 @@ export function buildAnonymousRuntimeEnv(): Record<string, string | number | boo
     node_version: process.version,
     ...(nodeMajor !== undefined ? { node_major: nodeMajor } : {}),
     cpu_count: cpus().length,
+    ...(machine ? { machine } : {}),
+    ...(uptimeHours !== undefined ? { uptime_hours: uptimeHours } : {}),
     system_locale: systemLocale,
     system_timezone: getSystemTimezone(),
     ...(systemLocaleRegion ? { system_locale_region: systemLocaleRegion } : {}),

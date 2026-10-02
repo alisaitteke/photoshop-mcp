@@ -2,6 +2,8 @@ import { ToolDefinition, ToolResult } from '../core/tool-registry.js';
 import { PhotoshopConnection } from '../platform/connection.js';
 import { PhotoshopAPIFactory } from '../api/photoshop-api.js';
 import { ExtendScriptSnippets } from '../api/extendscript.js';
+import { atomicFailure, atomicFailureFromError, atomicSuccess, parseSnippetResult } from './atomic-shared.js';
+import { emitTextStyleLiteral, hasTextStyle, parseTextStyleArgs } from './text-style-options.js';
 
 export function createLayerTools(connection: PhotoshopConnection): ToolDefinition[] {
   return [
@@ -29,7 +31,14 @@ export function createLayerTools(connection: PhotoshopConnection): ToolDefinitio
     {
       tool: {
         name: 'photoshop_delete_layer',
-        description: 'Delete the active layer',
+        description:
+          'Delete the active layer, including its pixels, mask, and effects.\n\n' +
+          'Use when: the user wants that layer removed from the stack.\n' +
+          'Do NOT use when: it should only be hidden — use photoshop_set_layer_visibility.\n' +
+          'Do NOT use when: only the mask should go — use photoshop_delete_layer_mask.\n' +
+          'Do NOT use when: the whole stack should collapse — use photoshop_flatten_image.\n\n' +
+          'Returns: confirmation that the layer was deleted.\n' +
+          'Preconditions: active document and a deletable active layer. Side effects: destroys the layer. Reversible with photoshop_undo while history holds it.',
         inputSchema: {
           type: 'object',
           properties: {},
@@ -41,11 +50,13 @@ export function createLayerTools(connection: PhotoshopConnection): ToolDefinitio
       tool: {
         name: 'photoshop_create_text_layer',
         description:
-          'Create a text layer with content, position, font size, and optional font.\n\n' +
+          'Create a text layer with content, position, font, and optional typography (tracking, leading, paragraph box, alignment, color).\n\n' +
+          'Users often say: add title, letter spacing, line height, text box, 字间距, 行高, 排版.\n\n' +
           'Use when: adding labels, titles, or typography to the design.\n' +
-          'Do NOT use when: editing existing text — use photoshop_update_text_content.\n\n' +
-          'Returns: layer name, text, position, fontSize, font (when fontName set), context.\n' +
-          'Use photoshop_list_fonts to discover font names; photoshop_set_text_font to change font later.\n' +
+          'Do NOT use when: editing existing text — use photoshop_update_text_content / photoshop_set_text_style.\n' +
+          'Do NOT use execute_script for tracking/leading/box — pass those fields here.\n\n' +
+          'Returns: JSON { ok, summary, details: { layerName, text, style, context } }.\n' +
+          'Use photoshop_list_fonts to discover font names; photoshop_set_text_font / photoshop_set_text_style to change later.\n' +
           'Preconditions: active document. Side effects: adds text layer.',
         inputSchema: {
           type: 'object',
@@ -74,6 +85,50 @@ export function createLayerTools(connection: PhotoshopConnection): ToolDefinitio
               description:
                 'Optional font display or PostScript name (resolved via app.fonts; see photoshop_list_fonts)',
             },
+            tracking: {
+              type: 'number',
+              description: 'Character spacing in 1/1000 em (−1000 to 10000). Photoshop tracking.',
+            },
+            leading: {
+              type: 'number',
+              description: 'Line height in points. Sets auto_leading false.',
+              minimum: 0.1,
+            },
+            auto_leading: {
+              type: 'boolean',
+              description: 'Use Photoshop auto leading (ignores leading when true)',
+            },
+            kind: {
+              type: 'string',
+              enum: ['point', 'paragraph'],
+              description: 'point = single-line; paragraph = wrapped text box (default point unless box_width/height set)',
+            },
+            box_width: {
+              type: 'number',
+              description: 'Paragraph text box width in pixels (implies kind=paragraph)',
+              minimum: 1,
+            },
+            box_height: {
+              type: 'number',
+              description: 'Paragraph text box height in pixels (implies kind=paragraph)',
+              minimum: 1,
+            },
+            alignment: {
+              type: 'string',
+              enum: [
+                'LEFT',
+                'CENTER',
+                'RIGHT',
+                'LEFTJUSTIFIED',
+                'CENTERJUSTIFIED',
+                'RIGHTJUSTIFIED',
+                'FULLYJUSTIFIED',
+              ],
+              description: 'Paragraph/point justification',
+            },
+            red: { type: 'number', description: 'Text color red 0–255', minimum: 0, maximum: 255 },
+            green: { type: 'number', description: 'Text color green 0–255', minimum: 0, maximum: 255 },
+            blue: { type: 'number', description: 'Text color blue 0–255', minimum: 0, maximum: 255 },
           },
           required: ['text'],
         },
@@ -83,7 +138,16 @@ export function createLayerTools(connection: PhotoshopConnection): ToolDefinitio
     {
       tool: {
         name: 'photoshop_fill_layer',
-        description: 'Fill the active layer with a color',
+        description:
+          'Fill the active layer with a solid RGB color. If a selection exists, only that region is filled and the selection stays; otherwise the whole layer is filled and the selection is cleared.\n\n' +
+          'Use when: a flat color fill on the active layer or on the current selection.\n' +
+          'Do NOT use when: a new empty layer is needed first — use photoshop_create_layer, then this.\n' +
+          'Do NOT use when: the fill should be a two-color gradient — use photoshop_fill_gradient.\n' +
+          'Do NOT use when: the selection should be filled with surrounding content — use photoshop_content_aware_fill.\n' +
+          'Do NOT use when: the active layer is text — rasterize with photoshop_rasterize_layer first, or recolor type with photoshop_set_text_color.\n' +
+          'A smart object is rasterized in place and then filled. No extra layer is created.\n\n' +
+          'Returns: the RGB color applied.\n' +
+          'Preconditions: active document and an unlocked non-text layer. Side effects: overwrites those pixels. The same color on the same pixels is idempotent. Reversible with photoshop_undo.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -113,12 +177,43 @@ export function createLayerTools(connection: PhotoshopConnection): ToolDefinitio
     },
     {
       tool: {
+        name: 'photoshop_fill_gradient',
+        description:
+          'Paint a two-color linear gradient on the active layer pixels.\n\n' +
+          'Use when: the user asks for a color gradient, blend, or "mavi yeşil" style ramp on a layer.\n' +
+          'Do NOT use when: a flat color is enough — use photoshop_fill_layer.\n' +
+          'Do NOT use when: the gradient should fade the layer into the background — use photoshop_recipe_gradient_fade.\n' +
+          'Do NOT use when: you would write ExtendScript. Document.gradients does not exist.\n\n' +
+          'Returns: the two colors and direction applied.\n' +
+          'Preconditions: active document and an unlocked non-text layer. Side effects: overwrites those pixels, one history step. The same colors on the same pixels are idempotent. Reversible with photoshop_undo.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            fromRed: { type: 'number', description: 'Start red (0-255)', minimum: 0, maximum: 255 },
+            fromGreen: { type: 'number', description: 'Start green (0-255)', minimum: 0, maximum: 255 },
+            fromBlue: { type: 'number', description: 'Start blue (0-255)', minimum: 0, maximum: 255 },
+            toRed: { type: 'number', description: 'End red (0-255)', minimum: 0, maximum: 255 },
+            toGreen: { type: 'number', description: 'End green (0-255)', minimum: 0, maximum: 255 },
+            toBlue: { type: 'number', description: 'End blue (0-255)', minimum: 0, maximum: 255 },
+            direction: {
+              type: 'string',
+              description: 'Gradient axis. Default left_to_right.',
+              enum: ['left_to_right', 'right_to_left', 'top_to_bottom', 'bottom_to_top'],
+            },
+          },
+          required: ['fromRed', 'fromGreen', 'fromBlue', 'toRed', 'toGreen', 'toBlue'],
+        },
+      },
+      handler: async (args) => fillGradient(connection, args),
+    },
+    {
+      tool: {
         name: 'photoshop_get_layers',
         description:
           'List all layers in the active document with kind, visibility, and opacity.\n\n' +
           'Use when: choosing a layer to edit, debugging structure, or after organize_layers.\n' +
           'Do NOT use when: only session summary is needed — use photoshop_get_state (lighter).\n\n' +
-          'Returns: layerCount, layers array, context.\n' +
+          'Returns: layerCount, layers array (LayerSets include is_artboard), context.\n' +
           'Preconditions: active document. Side effects: none.',
         inputSchema: {
           type: 'object',
@@ -221,36 +316,36 @@ async function createTextLayer(
   args: Record<string, unknown>
 ): Promise<ToolResult> {
   const text = args.text as string;
-  const x = (args.x as number) || 100;
-  const y = (args.y as number) || 100;
-  const fontSize = (args.fontSize as number) || 24;
-  const fontName = args.fontName as string | undefined;
+  if (typeof text !== 'string' || text.length === 0) {
+    return atomicFailure({
+      ok: false,
+      code: 'invalid_arguments',
+      message: 'text is required',
+    });
+  }
+  const x = typeof args.x === 'number' && Number.isFinite(args.x) ? args.x : 100;
+  const y = typeof args.y === 'number' && Number.isFinite(args.y) ? args.y : 100;
+  const fontSize = typeof args.fontSize === 'number' && Number.isFinite(args.fontSize) ? args.fontSize : 24;
+  const fontName = typeof args.fontName === 'string' && args.fontName.trim() ? args.fontName.trim() : undefined;
+  const parsed = parseTextStyleArgs(args, { requireSome: false });
+  if (parsed.error) return atomicFailure(parsed.error);
 
   try {
     const apiFactory = new PhotoshopAPIFactory(connection);
     const api = await apiFactory.createAPI();
 
-    const script = ExtendScriptSnippets.createTextLayer(text, x, y, fontSize, fontName);
-    await api.executeScript(script);
-
-    return {
-      content: [
-        {
-          type: 'text' as const,
-          text: `Text layer created: "${text}" at (${x}, ${y})${fontName ? ` with font ${fontName}` : ''}`,
-        },
-      ],
-    };
+    const styleLiteral = hasTextStyle(parsed.style) ? emitTextStyleLiteral(parsed.style) : '{}';
+    const raw = await api.executeScript(
+      ExtendScriptSnippets.createTextLayer(text, x, y, fontSize, fontName, styleLiteral)
+    );
+    const details = parseSnippetResult(raw) ?? { text, position: { x, y }, fontSize, font: fontName };
+    return atomicSuccess(
+      `Text layer created: "${text}" at (${x}, ${y})${fontName ? ` with font ${fontName}` : ''}`,
+      details,
+      'photoshop_get_preview'
+    );
   } catch (error) {
-    return {
-      content: [
-        {
-          type: 'text' as const,
-          text: `Error creating text layer: ${error instanceof Error ? error.message : String(error)}`,
-        },
-      ],
-      isError: true,
-    };
+    return atomicFailureFromError(error);
   }
 }
 
@@ -283,6 +378,82 @@ async function fillLayer(
         {
           type: 'text' as const,
           text: `Error filling layer: ${error instanceof Error ? error.message : String(error)}`,
+        },
+      ],
+      isError: true,
+    };
+  }
+}
+
+function colorByte(value: unknown, label: string): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new Error(`${label} must be a number from 0 to 255`);
+  }
+  return Math.max(0, Math.min(255, Math.round(value)));
+}
+
+async function fillGradient(
+  connection: PhotoshopConnection,
+  args: Record<string, unknown>
+): Promise<ToolResult> {
+  let fromRed: number;
+  let fromGreen: number;
+  let fromBlue: number;
+  let toRed: number;
+  let toGreen: number;
+  let toBlue: number;
+  try {
+    fromRed = colorByte(args.fromRed, 'fromRed');
+    fromGreen = colorByte(args.fromGreen, 'fromGreen');
+    fromBlue = colorByte(args.fromBlue, 'fromBlue');
+    toRed = colorByte(args.toRed, 'toRed');
+    toGreen = colorByte(args.toGreen, 'toGreen');
+    toBlue = colorByte(args.toBlue, 'toBlue');
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: `Error filling gradient: ${error instanceof Error ? error.message : String(error)}`,
+        },
+      ],
+      isError: true,
+    };
+  }
+  const direction =
+    args.direction === 'right_to_left' ||
+    args.direction === 'top_to_bottom' ||
+    args.direction === 'bottom_to_top'
+      ? args.direction
+      : 'left_to_right';
+
+  try {
+    const apiFactory = new PhotoshopAPIFactory(connection);
+    const api = await apiFactory.createAPI();
+    const script = ExtendScriptSnippets.fillLinearGradient(
+      fromRed,
+      fromGreen,
+      fromBlue,
+      toRed,
+      toGreen,
+      toBlue,
+      direction
+    );
+    await api.executeScript(script);
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: `Layer filled with gradient RGB(${fromRed}, ${fromGreen}, ${fromBlue}) to RGB(${toRed}, ${toGreen}, ${toBlue}) ${direction}`,
+        },
+      ],
+    };
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: `Error filling gradient: ${error instanceof Error ? error.message : String(error)}`,
         },
       ],
       isError: true,

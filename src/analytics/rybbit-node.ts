@@ -3,6 +3,7 @@ import { getAppVersion } from './app-version.js';
 import { resolveRybbitAnalyticsHost, resolveRybbitApiKey, resolveRybbitSiteId } from './config.js';
 import { buildPersonIdentifyProperties, sanitizePersonOnceProperties } from './events.js';
 import { getOrCreateDistinctId } from './identity.js';
+import { getSystemLocale } from './locale.js';
 import type { AnalyticsEvent, AnalyticsProvider, AnalyticsPropertyValue } from './types.js';
 
 const PROPERTIES_MAX_CHARS = 2048;
@@ -12,19 +13,18 @@ const FLUSH_AT = 10;
 const FLUSH_INTERVAL_MS = 5000;
 
 const DROP_WHEN_OVER_BUDGET = [
-  'os_release',
-  'system_timezone',
-  'system_locale',
-  'system_locale_language',
-  'system_locale_region',
-  'node_major',
   'is_electron',
   'photoshop_path_configured',
   'custom_data_dir_configured',
-  'cpu_count',
-  'arch',
+  'node_major',
   'os_type',
+  'arch',
+  'cpu_count',
+  'os_release',
+  'system_locale_region',
 ];
+
+const PROTECTED_PROPERTY_KEYS = new Set(['feedback_choice', 'suggestion']);
 
 type TrackKind = 'pageview' | 'custom_event';
 
@@ -101,6 +101,10 @@ export class RybbitNodeProvider implements AnalyticsProvider {
       pathname,
       user_id: this.distinctId,
     };
+    const pageTitle = resolvePageTitle(props);
+    if (pageTitle) body.page_title = pageTitle;
+    const language = sessionLanguage();
+    if (language) body.language = language;
     if (eventName) body.event_name = eventName;
     const encoded = encodeProperties(props);
     if (encoded) body.properties = encoded;
@@ -146,11 +150,20 @@ export class RybbitNodeProvider implements AnalyticsProvider {
       if (this.apiKey) {
         headers.authorization = `Bearer ${this.apiKey}`;
       }
-      await fetch(request.url, {
+      const response = await fetch(request.url, {
         method: 'POST',
         headers,
         body: JSON.stringify(request.body),
       });
+      if (!response.ok && request.url.includes('/track')) {
+        const eventName =
+          typeof request.body.event_name === 'string'
+            ? request.body.event_name
+            : typeof request.body.type === 'string'
+              ? request.body.type
+              : 'unknown';
+        this.logger.warn(`Analytics /track returned ${response.status} for ${eventName}`);
+      }
     } catch (err) {
       this.logger.debug('Failed to send analytics request', err);
     }
@@ -170,6 +183,22 @@ function resolvePathname(properties: Record<string, AnalyticsPropertyValue>): st
   if (source === 'mcp' || surface === 'mcp') return '/mcp';
   if (source === 'ui' || surface === 'ui' || surface === 'web') return '/ui';
   return '/ui-server';
+}
+
+/** Rybbit stores this on the session `language` column (max 35). */
+function sessionLanguage(): string | undefined {
+  const locale = getSystemLocale().trim();
+  if (!locale || locale === 'unknown') return undefined;
+  return locale.slice(0, 35);
+}
+
+function resolvePageTitle(
+  properties: Record<string, AnalyticsPropertyValue>
+): string | undefined {
+  const explicit = properties.$page_title;
+  if (typeof explicit !== 'string') return undefined;
+  const trimmed = explicit.trim();
+  return trimmed || undefined;
 }
 
 function encodeProperties(properties: Record<string, AnalyticsPropertyValue>): string | undefined {
@@ -204,24 +233,47 @@ function compactRecord(
   if (encoded.length <= PROPERTIES_MAX_CHARS) return next;
 
   for (const key of DROP_WHEN_OVER_BUDGET) {
-    if (!(key in next)) continue;
+    if (!(key in next) || PROTECTED_PROPERTY_KEYS.has(key)) continue;
     delete next[key];
     encoded = JSON.stringify(next);
     if (encoded.length <= PROPERTIES_MAX_CHARS) return next;
   }
 
   for (const [key, value] of Object.entries(next)) {
+    if (PROTECTED_PROPERTY_KEYS.has(key)) continue;
     if (typeof value !== 'string' || value.length < 40) continue;
     next[key] = `${value.slice(0, 80)}…`;
     encoded = JSON.stringify(next);
     if (encoded.length <= PROPERTIES_MAX_CHARS) return next;
   }
 
-  while (encoded.length > PROPERTIES_MAX_CHARS && Object.keys(next).length > 1) {
-    const keys = Object.keys(next);
-    delete next[keys[keys.length - 1]!];
+  const suggestion = next.suggestion;
+  if (
+    encoded.length > PROPERTIES_MAX_CHARS &&
+    typeof suggestion === 'string' &&
+    suggestion.length >= 40
+  ) {
+    next.suggestion = `${suggestion.slice(0, 80)}…`;
+    encoded = JSON.stringify(next);
+    if (encoded.length <= PROPERTIES_MAX_CHARS) return next;
+  }
+
+  while (encoded.length > PROPERTIES_MAX_CHARS) {
+    const droppable = Object.keys(next).filter((key) => !PROTECTED_PROPERTY_KEYS.has(key));
+    if (droppable.length === 0) break;
+    delete next[droppable[droppable.length - 1]!];
     encoded = JSON.stringify(next);
   }
+
+  if (encoded.length > PROPERTIES_MAX_CHARS && typeof next.suggestion === 'string') {
+    let keep = next.suggestion.length;
+    while (encoded.length > PROPERTIES_MAX_CHARS && keep > 1) {
+      keep = Math.max(1, Math.floor(keep / 2));
+      next.suggestion = `${next.suggestion.slice(0, keep)}…`;
+      encoded = JSON.stringify(next);
+    }
+  }
+
   return next;
 }
 

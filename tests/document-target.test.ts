@@ -16,10 +16,24 @@ function fakeTool(name: string, properties: Record<string, unknown> = {}): Tool 
 }
 
 describe('withOptionalDocumentId', () => {
-  it('injects document_id on mutating tools', () => {
-    const next = withOptionalDocumentId(fakeTool('photoshop_delete_layer'));
-    const schema = next.inputSchema as { properties: Record<string, { type: string }> };
-    expect(schema.properties.document_id.type).toBe('number');
+  it('injects a nullable required document_id on mutating tools', () => {
+    const next = withOptionalDocumentId(fakeTool('photoshop_get_state'));
+    const schema = next.inputSchema as {
+      properties: Record<string, { type: string | string[] }>;
+      required?: string[];
+      additionalProperties?: boolean;
+    };
+    expect(schema.properties.document_id.type).toEqual(['number', 'null']);
+    expect(schema.required).toEqual(['document_id']);
+    expect(schema.additionalProperties).toBe(false);
+  });
+
+  it('appends document_id to an existing required list', () => {
+    const tool = fakeTool('photoshop_fill_layer');
+    (tool.inputSchema as { required?: string[] }).required = ['color'];
+    const next = withOptionalDocumentId(tool);
+    const schema = next.inputSchema as { required?: string[] };
+    expect(schema.required).toEqual(['color', 'document_id']);
   });
 
   it('does not inject on excluded tools', () => {
@@ -48,6 +62,7 @@ describe('parseDocumentIdArg', () => {
 
   it('rejects non-numbers', () => {
     expect(parseDocumentIdArg({})).toBeUndefined();
+    expect(parseDocumentIdArg({ document_id: null })).toBeUndefined();
     expect(parseDocumentIdArg({ document_id: '1' })).toBeUndefined();
   });
 });

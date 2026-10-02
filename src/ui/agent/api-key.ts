@@ -4,12 +4,10 @@ import { stepCountIs, streamText } from 'ai';
 import type { ProviderAdapter } from '../providers/registry.js';
 import type { AuthMethod } from '../providers/types.js';
 import type { ModelMessage } from 'ai';
-import { buildSpawnArgs, sanitizedEnv } from './mcp-transport.js';
-import { PHOTOSHOP_EXPORT_CHAT_ID_ENV } from '../../lib/export-paths.js';
+import { buildSpawnArgs, buildUiMcpChildEnv } from './mcp-transport.js';
 import {
   computeCost,
-  isToolOutputOk,
-  stringifyToolOutput,
+  finishToolCall,
   type AssistantBuffer,
   type RunChatFinishInfo,
   type RunChatStreamEvent,
@@ -41,11 +39,7 @@ export async function* runChatViaApiKey(
       transport: new Experimental_StdioMCPTransport({
         command: process.execPath,
         args: buildSpawnArgs(),
-        env: {
-          ...sanitizedEnv(),
-          LOG_LEVEL: process.env.LOG_LEVEL ?? '2',
-          ...(opts.chatId ? { [PHOTOSHOP_EXPORT_CHAT_ID_ENV]: opts.chatId } : {}),
-        },
+        env: buildUiMcpChildEnv(opts.chatId),
       }),
     });
 
@@ -88,6 +82,7 @@ export async function* runChatViaApiKey(
             name: part.toolName,
             input: part.input,
             status: 'pending' as const,
+            startedAt: Date.now(),
           };
           buffer.toolCalls.push(tc);
           yield {
@@ -102,31 +97,22 @@ export async function* runChatViaApiKey(
           break;
         }
         case 'tool-result': {
-          const tc = buffer.toolCalls.find((c) => c.id === part.toolCallId);
-          const text = stringifyToolOutput(part.output);
-          const ok = isToolOutputOk(part.output);
-          if (tc) {
-            tc.result = { ok, content: text };
-            tc.status = ok ? 'success' : 'error';
-          }
           yield {
             type: 'tool-result',
-            payload: { id: part.toolCallId, ok, content: text },
+            payload: finishToolCall(buffer, part.toolCallId, {
+              output: part.output,
+              chatId: opts.chatId,
+            }),
           };
           yield { type: 'activity', payload: { phase: 'thinking' } };
           opts.onAssistantBuffer?.(buffer);
           break;
         }
         case 'tool-error': {
-          const tc = buffer.toolCalls.find((c) => c.id === part.toolCallId);
           const text = (part.error as Error)?.message ?? String(part.error);
-          if (tc) {
-            tc.result = { ok: false, content: text };
-            tc.status = 'error';
-          }
           yield {
             type: 'tool-result',
-            payload: { id: part.toolCallId, ok: false, content: text },
+            payload: finishToolCall(buffer, part.toolCallId, { error: text }),
           };
           yield { type: 'activity', payload: { phase: 'thinking' } };
           opts.onAssistantBuffer?.(buffer);
@@ -148,7 +134,7 @@ export async function* runChatViaApiKey(
             type: 'error',
             payload: { message: (part.error as Error)?.message ?? String(part.error) },
           };
-          break;
+          return;
         }
         default:
           break;

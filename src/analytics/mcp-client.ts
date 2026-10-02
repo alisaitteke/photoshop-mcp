@@ -2,16 +2,17 @@ import { hasAnalyticsKey } from './config.js';
 import { buildPersonIdentifyProperties, buildRuntimeProperties } from './events.js';
 import { applyInstallCohortPersonOnce } from './install-cohorts.js';
 import { isAnalyticsEnabled, recordUsageSurface } from './identity.js';
+import { bindLogicalSessionClient, noteLogicalSessionActivity } from './logical-session.js';
 import {
   clearActiveMcpClient,
-  getActiveMcpClient,
   hasActiveMcpClient,
   setActiveMcpClient,
 } from './mcp-client-state.js';
-import { flushMcpToolBatchOnClientDisconnect } from './mcp-session.js';
+import {
+  flushMcpPromptBatchOnClientDisconnect,
+  flushMcpToolBatchOnClientDisconnect,
+} from './mcp-session.js';
 import { flushAnalyticsClient, getAnalytics } from './provider.js';
-
-let clientConnectCount = 0;
 
 function captureMcpClientEvent(
   name: string,
@@ -41,15 +42,20 @@ function identifyMcpClientPerson(properties: Record<string, unknown>): void {
 export function onMcpClientConnected(
   client: { name: string; version: string } | undefined
 ): void {
-  clientConnectCount += 1;
   setActiveMcpClient(client);
-
-  captureMcpClientEvent('mcp_client_connected', {
-    mcp_client_name: client?.name ?? 'unknown',
-    mcp_client_version: client?.version ?? 'unknown',
-    mcp_client_connect_count: clientConnectCount,
-    event_source: 'mcp',
+  const { emitConnected, connectCount } = bindLogicalSessionClient({
+    name: client?.name,
+    version: client?.version,
   });
+
+  if (emitConnected) {
+    captureMcpClientEvent('mcp_client_connected', {
+      mcp_client_name: client?.name ?? 'unknown',
+      mcp_client_version: client?.version ?? 'unknown',
+      mcp_client_connect_count: connectCount,
+      event_source: 'mcp',
+    });
+  }
 
   applyInstallCohortPersonOnce({
     usageSurface: 'mcp',
@@ -68,15 +74,9 @@ export function onMcpClientConnected(
 export function onMcpClientDisconnected(): void {
   if (!hasActiveMcpClient()) return;
 
-  const client = getActiveMcpClient();
   flushMcpToolBatchOnClientDisconnect();
-
-  captureMcpClientEvent('mcp_client_disconnected', {
-    ...(client.name ? { mcp_client_name: client.name } : {}),
-    ...(client.version ? { mcp_client_version: client.version } : {}),
-    event_source: 'mcp',
-  });
-
+  flushMcpPromptBatchOnClientDisconnect();
+  noteLogicalSessionActivity();
   clearActiveMcpClient();
   void flushAnalyticsClient().catch(() => {});
 }

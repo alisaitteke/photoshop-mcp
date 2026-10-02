@@ -1,6 +1,11 @@
 import { getServerAnalyticsContext } from './context.js';
 import { getLaunchMethod } from './launch-method.js';
-import { buildAnonymousRuntimeEnv, getMemoryGbBucket, getTotalRamGb } from './runtime-env.js';
+import {
+  buildAnonymousRuntimeEnv,
+  getKnownPhotoshopVersion,
+  getMemoryGbBucket,
+  getTotalRamGb,
+} from './runtime-env.js';
 
 const BLOCKED_PROPERTY_KEYS = new Set([
   'api_key',
@@ -57,6 +62,8 @@ const ALLOWED_PROPERTY_KEYS = new Set([
   'os_type',
   'os_release',
   'cpu_count',
+  'machine',
+  'uptime_hours',
   'memory_gb',
   'total_ram_gb',
   'photoshop_version',
@@ -70,6 +77,13 @@ const ALLOWED_PROPERTY_KEYS = new Set([
   'shutdown_reason',
   'tools_registered_count',
   'prompt_name',
+  'prompts_requested_count',
+  'unique_prompts_count',
+  'prompt_usage_summary',
+  'prompts_used',
+  'full_catalog',
+  'catalog_size',
+  'repeat',
   'tools_called_count',
   'tools_error_count',
   'unique_tools_count',
@@ -87,11 +101,19 @@ const ALLOWED_PROPERTY_KEYS = new Set([
   'active_model',
   'model',
   'last_active_at',
+  'feedback_choice',
+  'has_suggestion',
+  'suggestion',
 ]);
 
-const ANALYTICS_RESERVED_PROPERTY_KEYS = new Set(['$current_url', '$pathname', '$screen_name']);
+const ANALYTICS_RESERVED_PROPERTY_KEYS = new Set([
+  '$current_url',
+  '$pathname',
+  '$page_title',
+  '$screen_name',
+]);
 
-const ARRAY_PROPERTY_KEYS = new Set(['tools_used', 'error_codes']);
+const ARRAY_PROPERTY_KEYS = new Set(['tools_used', 'error_codes', 'prompts_used']);
 
 /** Install-cohort fields written via identify traits only when not already set. */
 const PERSON_ONCE_PROPERTY_KEYS = new Set([
@@ -154,10 +176,12 @@ export function sanitizePersonOnceProperties(
 export function buildRuntimeProperties(
   properties: Record<string, unknown> | undefined
 ): Record<string, string | number | boolean | string[]> {
+  const photoshopVersion = getKnownPhotoshopVersion();
   return {
     ...buildAnonymousRuntimeEnv(),
     launch_method: getLaunchMethod(),
     ...getServerAnalyticsContext(),
+    ...(photoshopVersion ? { photoshop_version: photoshopVersion } : {}),
     ...sanitizeAnalyticsProperties(properties),
   };
 }

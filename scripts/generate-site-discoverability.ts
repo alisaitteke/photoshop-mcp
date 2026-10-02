@@ -41,7 +41,7 @@ Important notes:
 - Prefer \`photoshop_recipe_*\` for multi-step outcomes (single Photoshop undo step); use atomic \`photoshop_*\` tools for precise edits.
 - Agent workflow: \`get_capabilities\` → \`get_state\` → act → \`get_preview\` to verify.
 - Prerequisites: Adobe Photoshop running on Windows or macOS, Node.js 18+.
-- MCP stdio: \`npx -y @alisaitteke/photoshop-mcp\` · Standalone UI: \`npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui\`
+- MCP stdio: \`npx -y @alisaitteke/photoshop-mcp\` · Standalone UI: \`npx -p @alisaitteke/photoshop-mcp ui\`
 
 ## Docs
 
@@ -131,7 +131,7 @@ function rootLlmsTxt(): string {
 npx -y @alisaitteke/photoshop-mcp
 
 # Standalone web UI (local chat + Photoshop, no IDE required)
-npx -p @alisaitteke/photoshop-mcp photoshop-mcp-ui
+npx -p @alisaitteke/photoshop-mcp ui
 \`\`\`
 
 **Prerequisites:** Adobe Photoshop (Windows or macOS), Node.js 18+. Photoshop must be running. Optional UXP bridge plugin in \`uxp-plugin/\` for Neural Filters.

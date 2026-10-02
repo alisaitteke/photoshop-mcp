@@ -2,6 +2,7 @@ import { captureBetaChatTurn } from './beta-telemetry.js';
 import { getAppVersion } from './app-version.js';
 import { hasAnalyticsKey, resolveRybbitAnalyticsHost, resolveRybbitSiteId } from './config.js';
 import { buildPersonIdentifyProperties, buildRuntimeProperties } from './events.js';
+import { rememberPhotoshopVersion } from './runtime-env.js';
 import { applyInstallCohortPersonOnce } from './install-cohorts.js';
 import {
   getBetaTelemetryState,
@@ -15,7 +16,9 @@ import {
   captureMcpPageleave,
   captureMcpPageview,
   endMcpAnalyticsSession,
+  recordMcpPromptRequest,
   recordMcpToolCall,
+  startLogicalMcpAnalyticsSession,
   startMcpAnalyticsSession,
 } from './mcp-session.js';
 import { getAnalytics, resetAnalyticsProvider, shutdownAnalyticsClient } from './provider.js';
@@ -51,6 +54,9 @@ export function capture(
 export function identifyAnalyticsPerson(properties?: Record<string, unknown>): void {
   if (!isAnalyticsEnabled() || !hasAnalyticsKey()) return;
   const props = { ...(properties ?? {}) };
+  if (typeof props.photoshop_version === 'string') {
+    rememberPhotoshopVersion(props.photoshop_version);
+  }
   const usageSurface = typeof props.usage_surface === 'string' ? props.usage_surface : undefined;
   if (usageSurface) {
     props.usage_surfaces = recordUsageSurface(usageSurface);
@@ -113,9 +119,11 @@ export {
   getBetaTelemetryState,
   onMcpClientConnected,
   onMcpClientDisconnected,
+  recordMcpPromptRequest,
   recordMcpToolCall,
   resetAnalyticsProvider,
   setBetaTelemetryChoice,
+  startLogicalMcpAnalyticsSession,
   startMcpAnalyticsSession,
 };
 export type {

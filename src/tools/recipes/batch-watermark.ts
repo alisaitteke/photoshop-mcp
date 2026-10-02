@@ -3,7 +3,7 @@ import { extname, isAbsolute, join } from 'node:path';
 import { ToolDefinition, ToolResult } from '../../core/tool-registry.js';
 import { resolveExportPath } from '../../lib/export-paths.js';
 import { PhotoshopConnection } from '../../platform/connection.js';
-import { clampInt, executeStandaloneRecipe, jsString, toolFailure } from './_shared.js';
+import { clampInt, executeStandaloneRecipe, jsString, toolFailure, BATCH_SCRIPT_TIMEOUT_MS } from './_shared.js';
 
 const TOOL_NAME = 'photoshop_recipe_batch_watermark';
 
@@ -298,7 +298,7 @@ async function runBatchWatermark(
     };
   `;
 
-  return executeStandaloneRecipe(connection, body);
+  return executeStandaloneRecipe(connection, body, BATCH_SCRIPT_TIMEOUT_MS);
 }
 
 function baseNameWithoutExt(p: string): string {
