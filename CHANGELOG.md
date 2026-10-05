@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.33] - 2026-10-05
+
+[v1.7.32...v1.7.33](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.32...v1.7.33)
+
+### Fixed
+
+- `photoshop_create_document` and `photoshop_open_image` no longer require an existing `document_id`. `0` and `null` mean the active document. When nothing is open, a stale id does not block the call.
+
 ## [1.7.32] - 2026-10-01
 
 [v1.7.31...v1.7.32](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.31...v1.7.32)
