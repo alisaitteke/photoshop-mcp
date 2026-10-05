@@ -14,11 +14,27 @@ export const DOCUMENT_ID_SCHEMA_EXCLUDES = new Set([
   'photoshop_submit_feedback',
 ]);
 
+/**
+ * These tools create a new document. A passed id must not be resolved first:
+ * with nothing open, that check rejects 0 and invented ids before the file exists.
+ */
+export const DOCUMENT_ID_GUARD_EXCLUDES = new Set([
+  'photoshop_create_document',
+  'photoshop_open_image',
+]);
+
 export const DOCUMENT_ID_PROPERTY = {
   type: ['number', 'null'],
   description:
     'Photoshop document id from photoshop_get_state / photoshop_list_documents. ' +
-    'Send null to use the active document. A number activates that document before the tool runs.',
+    'Send null or 0 to use the active document. A positive number activates that document before the tool runs. ' +
+    'When no document is open, a stale id does not block the call.',
+} as const;
+
+const DOCUMENT_ID_IGNORED_PROPERTY = {
+  type: ['number', 'null'],
+  description:
+    'Ignored. photoshop_create_document and photoshop_open_image do not target an existing tab. Omit this, or send null or 0.',
 } as const;
 
 export function runWithDocumentId<T>(documentId: number | undefined, fn: () => T): T {
@@ -32,12 +48,16 @@ export function getTargetDocumentId(): number | undefined {
 export function parseDocumentIdArg(args: Record<string, unknown> | undefined): number | undefined {
   const raw = args?.document_id;
   if (typeof raw !== 'number' || !Number.isFinite(raw)) return undefined;
-  return Math.trunc(raw);
+  const id = Math.trunc(raw);
+  if (id === 0) return undefined;
+  return id;
 }
 
-export function wrapDocumentIdHandler(handler: ToolHandler): ToolHandler {
+export function wrapDocumentIdHandler(toolName: string, handler: ToolHandler): ToolHandler {
   return async (args) => {
-    const documentId = parseDocumentIdArg(args);
+    const documentId = DOCUMENT_ID_GUARD_EXCLUDES.has(toolName)
+      ? undefined
+      : parseDocumentIdArg(args);
     return runWithDocumentId(documentId, () => handler(args));
   };
 }
@@ -56,8 +76,9 @@ export function withOptionalDocumentId(tool: Tool): Tool {
   if (!schema || schema.type !== 'object') return tool;
   const properties = schema.properties ?? {};
   if (properties.document_id) return tool;
+  const ignoresTarget = DOCUMENT_ID_GUARD_EXCLUDES.has(tool.name);
   const required = Array.isArray(schema.required) ? [...schema.required] : [];
-  if (!required.includes('document_id')) required.push('document_id');
+  if (!ignoresTarget && !required.includes('document_id')) required.push('document_id');
   return {
     ...tool,
     inputSchema: {
@@ -67,7 +88,9 @@ export function withOptionalDocumentId(tool: Tool): Tool {
       required,
       properties: {
         ...properties,
-        document_id: { ...DOCUMENT_ID_PROPERTY },
+        document_id: ignoresTarget
+          ? { ...DOCUMENT_ID_IGNORED_PROPERTY }
+          : { ...DOCUMENT_ID_PROPERTY },
       },
     },
   };
@@ -79,6 +102,7 @@ export function documentGuardScript(documentId: number): string {
   return `
     (function() {
       var __mcp_targetDocId = ${id};
+      if (app.documents.length === 0) return;
       var __mcp_found = false;
       for (var __mcp_di = 0; __mcp_di < app.documents.length; __mcp_di++) {
         if (app.documents[__mcp_di].id === __mcp_targetDocId) {

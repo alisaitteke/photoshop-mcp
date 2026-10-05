@@ -80,6 +80,9 @@ Error recovery contract
 - Common codes you should be ready to handle without asking the user:
   - \`document_not_found\` — the \`document_id\` you passed is not open;
     call \`photoshop_list_documents\` and retry with a current id.
+    \`photoshop_create_document\` and \`photoshop_open_image\` ignore \`document_id\`.
+    \`0\` and \`null\` mean the active document. When nothing is open, a stale id
+    does not block the call.
   - \`no_active_document\` — call \`photoshop_open_image\` or
     \`photoshop_create_document\` first.
   - \`no_active_layer\` / \`layer_not_found\` — list layers with

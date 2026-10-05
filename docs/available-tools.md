@@ -97,7 +97,7 @@ photoshop_set_active_document({ document_id: 42 })
 photoshop_set_active_document({ index: 0 })
 ```
 
-Mutating tools (and most document-scoped reads) also accept optional `document_id`. Pass the id from `photoshop_get_state` / `photoshop_list_documents` so a Photoshop UI tab switch cannot retarget the edit. Omitted = current active document (previous behavior). Unknown ids fail with `document_not_found`.
+Mutating tools (and most document-scoped reads) also accept `document_id`. Pass the id from `photoshop_get_state` / `photoshop_list_documents` so a Photoshop UI tab switch cannot retarget the edit. Omitted, `null`, and `0` use the active document. A positive unknown id fails with `document_not_found` when another document is open. When nothing is open, a stale id does not block the call. `photoshop_create_document` and `photoshop_open_image` ignore `document_id`.
 
 #### `photoshop_list_artboards`
 List artboards in the active document (id, name, pixel bounds, `is_active`). Empty when the file is a regular canvas.
