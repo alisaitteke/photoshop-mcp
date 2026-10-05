@@ -1,0 +1,40 @@
+name: Documentation
+description: Report missing, outdated, or unclear documentation (README, docs/, website, or AGENTS.md / llms.txt).
+labels: ['documentation']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve the docs! Small fixes can go straight to a pull request — see [CONTRIBUTING.md](https://github.com/alisaitteke/photoshop-mcp/blob/master/CONTRIBUTING.md).
+
+  - type: input
+    id: location
+    attributes:
+      label: Page or file
+      description: A link or path to the documentation in question.
+      placeholder: 'docs/standalone-ui.md#action-plan-beta or https://photoshop-mcp.com/…'
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is wrong or missing?
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested change
+      description: What should the documentation say instead?
+
+  - type: dropdown
+    id: translation
+    attributes:
+      label: Does this affect translated READMEs?
+      description: README.md has zh-CN, es, de, ja, and tr translations.
+      options:
+        - 'No / not sure'
+        - 'Yes — the translations need the same change'
+        - 'Only a translation is affected'

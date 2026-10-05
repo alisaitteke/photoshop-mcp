@@ -1,0 +1,73 @@
+name: Feature request
+description: Suggest a new tool, recipe, prompt template, provider, or UI improvement.
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea! English is preferred so maintainers and future contributors can search the issue.
+        For large or architectural changes, please agree on the approach here before opening a pull request (see [CONTRIBUTING.md](https://github.com/alisaitteke/photoshop-mcp/blob/master/CONTRIBUTING.md)).
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Before you start
+      options:
+        - label: I searched [existing issues](https://github.com/alisaitteke/photoshop-mcp/issues?q=is%3Aissue) and this has not been requested yet.
+          required: true
+        - label: I checked [docs/available-tools.md](https://github.com/alisaitteke/photoshop-mcp/blob/master/docs/available-tools.md) and no existing tool or recipe already covers it.
+          required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - New atomic tool (photoshop_*)
+        - New or improved recipe (photoshop_recipe_*)
+        - Prompt template (ps.*)
+        - Standalone UI
+        - AI provider or auth mode
+        - Platform or Photoshop version support
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What are you trying to do in Photoshop, and what is missing or hard today?
+      placeholder: 'I export the same banner for five social networks every week and have to…'
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How should it work? Include an example prompt you would give the AI and the result you expect.
+      placeholder: |
+        Prompt: "Export this design as a LinkedIn banner and a YouTube thumbnail."
+        Expected: two files in the export folder, correctly sized, as a single undo step.
+    validations:
+      required: true
+
+  - type: textarea
+    id: photoshop-api
+    attributes:
+      label: Photoshop feature or API
+      description: The Photoshop menu command, action, ExtendScript / batchPlay descriptor, or UXP API this relies on, and the minimum Photoshop version, if you know them.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds you use today (for example `photoshop_execute_script` or chaining existing tools).
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I'd like to open a pull request for this.
