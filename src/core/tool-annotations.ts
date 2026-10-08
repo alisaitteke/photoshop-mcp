@@ -175,6 +175,7 @@ export const TOOL_ANNOTATIONS: Record<string, PhotoshopToolAnnotations> = {
   photoshop_recipe_batch_watermark: edit(false),
   photoshop_recipe_passport_photo: edit(false),
   photoshop_recipe_csv_to_cards: edit(false),
+  photoshop_recipe_sticker_outline: edit(true),
 };
 
 export function withToolAnnotations(tool: Tool): Tool {

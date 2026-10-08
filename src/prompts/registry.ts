@@ -23,6 +23,7 @@ import { splitCarouselTemplate } from './templates/split-carousel.js';
 import { batchWatermarkTemplate } from './templates/batch-watermark.js';
 import { passportPhotoTemplate } from './templates/passport-photo.js';
 import { csvToCardsTemplate } from './templates/csv-to-cards.js';
+import { stickerOutlineTemplate } from './templates/sticker-outline.js';
 
 export const PHOTOSHOP_GUIDE_PROMPT_NAMES = [
   'ps.gradient_blend',
@@ -58,6 +59,7 @@ export const PHOTOSHOP_PROMPT_TEMPLATES = [
   batchWatermarkTemplate,
   passportPhotoTemplate,
   csvToCardsTemplate,
+  stickerOutlineTemplate,
 ] as const;
 
 export function registerPhotoshopPrompts(registry: PromptRegistry): void {

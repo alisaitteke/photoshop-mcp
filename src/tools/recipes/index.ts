@@ -16,6 +16,7 @@ import { bindSplitCarousel } from './split-carousel.js';
 import { bindBatchWatermark } from './batch-watermark.js';
 import { bindPassportPhoto } from './passport-photo.js';
 import { bindCsvToCards } from './csv-to-cards.js';
+import { bindStickerOutline } from './sticker-outline.js';
 
 export function createRecipeTools(connection: PhotoshopConnection): ToolDefinition[] {
   return [
@@ -35,6 +36,7 @@ export function createRecipeTools(connection: PhotoshopConnection): ToolDefiniti
     bindBatchWatermark(connection),
     bindPassportPhoto(connection),
     bindCsvToCards(connection),
+    bindStickerOutline(connection),
   ];
 }
 
@@ -55,4 +57,5 @@ export const PHOTOSHOP_RECIPE_TOOL_NAMES = [
   'photoshop_recipe_batch_watermark',
   'photoshop_recipe_passport_photo',
   'photoshop_recipe_csv_to_cards',
+  'photoshop_recipe_sticker_outline',
 ] as const;

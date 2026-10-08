@@ -1,6 +1,6 @@
 # Available Tools
 
-**127 tools total** — 111 atomic `photoshop_*` tools plus 16 recipe `photoshop_recipe_*` workflows (single undo step each).
+**128 tools total** — 111 atomic `photoshop_*` tools plus 17 recipe `photoshop_recipe_*` workflows (single undo step each).
 
 Reference for all atomic `photoshop_*` MCP tools exposed by this server (parameters, examples, and return shapes).
 
@@ -1144,6 +1144,29 @@ Apply a layer effect (Action Manager `layerEffects`) to the active layer.
 ```javascript
 // Example: soft drop shadow on the active layer
 photoshop_apply_layer_style({ style: "drop_shadow", opacity: 55, size: 14, distance: 10 })
+```
+
+#### `photoshop_recipe_sticker_outline`
+One-click sticker / white-border outline. In `single` mode it applies a solid stroke **and** an optional soft drop shadow as one layer style (use this instead of calling `photoshop_apply_layer_style` twice — the atomic tool applies one effect at a time and overwrites the previous one). In `die_cut` mode it builds the classic double outline — a white border plus a thin dark outer line — by adding two stroked copies of the active layer. Both run in a single undoable step. Other layer effects already on the layer (outer glow, bevel, color/gradient/pattern overlays) are preserved; only the stroke and the drop shadow are set or replaced.
+
+**Parameters:**
+- `outline_style` (string, optional): `single` (default) or `die_cut`
+- `red`, `green`, `blue` (number, optional): Stroke (white border) color (default 255/255/255 = white)
+- `stroke_width` (number, optional): Stroke width in px (default 12)
+- `stroke_opacity` (number, optional): Stroke opacity 0-100 (default 100)
+- `stroke_position` (string, optional): `outside` | `inside` | `center` (default `outside`; forced to `outside` for `die_cut`)
+- `shadow` (boolean, optional): Add a soft drop shadow (default `true`)
+- `shadow_opacity`, `shadow_size`, `shadow_distance`, `shadow_angle` (number, optional): Shadow tuning (defaults 40 / 12 / 6 / 120)
+- `line_width` (number, optional): `die_cut` only — thickness of the dark outer line in px (default 3)
+- `line_red`, `line_green`, `line_blue` (number, optional): `die_cut` only — dark line color (default 0/0/0 = black)
+- `document_id` (number, optional): Target a specific open document
+
+```javascript
+// Single white sticker border + shadow
+photoshop_recipe_sticker_outline({ stroke_width: 14 })
+
+// Die-cut double outline: 16px white border + 4px black outer line
+photoshop_recipe_sticker_outline({ outline_style: "die_cut", stroke_width: 16, line_width: 4 })
 ```
 
 ### Color Grading
