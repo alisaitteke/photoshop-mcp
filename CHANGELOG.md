@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.34] - 2026-10-08
+
+[v1.7.33...v1.7.34](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.33...v1.7.34)
+
+### Added
+
+- `photoshop_recipe_sticker_outline` adds a sticker border in one undo step. `single` sets a stroke and an optional drop shadow together. `die_cut` builds a white border plus a thin dark outer line. Prompt template: `ps.sticker_outline`.
+
 ## [1.7.33] - 2026-10-05
 
 [v1.7.32...v1.7.33](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.32...v1.7.33)
