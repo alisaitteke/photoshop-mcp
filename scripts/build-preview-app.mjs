@@ -13,6 +13,7 @@ const bundleRoot = join(root, 'scripts/preview-app');
 const install = spawnSync('npm', ['install', '--ignore-scripts'], {
   cwd: bundleRoot,
   stdio: 'inherit',
+  shell: process.platform === 'win32',
 });
 if (install.status !== 0) {
   process.exit(install.status ?? 1);
