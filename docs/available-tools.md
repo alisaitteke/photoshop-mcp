@@ -1,6 +1,6 @@
 # Available Tools
 
-**128 tools total** — 111 atomic `photoshop_*` tools plus 17 recipe `photoshop_recipe_*` workflows (single undo step each).
+**132 tools total** — 115 atomic `photoshop_*` tools plus 17 recipe `photoshop_recipe_*` workflows (single undo step each).
 
 Reference for all atomic `photoshop_*` MCP tools exposed by this server (parameters, examples, and return shapes).
 
@@ -1265,6 +1265,40 @@ Create an independent Smart Object duplicate (`placedLayerMakeCopy`) — unlinke
 ```javascript
 photoshop_create_smart_object_via_copy({ layer_name: "Logo" })
 ```
+
+#### `photoshop_get_layer_sources`
+Report where layers come from. For each Smart Object: `source` (`linked` or `embedded`), `original_name` (the file name Photoshop stored), `source_path` (full path, linked only), `link_missing`, `link_changed`, `content_type` (`vectorData`, `rasterizeContent`, ...). Pixel, text, shape and group layers report `has_source: false`. Walks groups recursively; each layer carries a stable `id`. Read-only.
+
+Embedded Smart Objects, including vectors pasted from Illustrator, have no external path — `source_path` is `null` and `original_name` is something like `Vector Smart Object.ai`.
+
+**Parameters:**
+- `layer_id` (number, optional): report only this layer
+- `layer_name` (string, optional): report only the first layer with this exact name
+- `smart_objects_only` (boolean, optional): when listing the whole document, skip layers without a source
+
+```javascript
+photoshop_get_layer_sources({ smart_objects_only: true })
+```
+
+#### `photoshop_relink_smart_object`
+Point a linked Smart Object at another file (Relink to File). Also works on an embedded one: it becomes linked to the file and takes its contents. Returns the source info `before` and `after`. Photoshop renames the layer after the new file.
+
+**Parameters:**
+- `file_path` (string, required): absolute path of an existing file
+- `layer_id` (number, optional) / `layer_name` (string, optional): target; default is the active layer
+
+#### `photoshop_embed_linked_smart_object`
+Embed a linked Smart Object into the document (Embed Linked). No-op with `already_embedded` if it is embedded already. The reverse (Convert to Linked) is refused by Photoshop when called through scripting — export the contents, then relink to that file.
+
+**Parameters:**
+- `layer_id` (number, optional) / `layer_name` (string, optional): target; default is the active layer
+
+#### `photoshop_export_smart_object_contents`
+Save the contents of a Smart Object to a file (Export Contents) to recover its original asset. The document is unchanged.
+
+**Parameters:**
+- `file_path` (string, required): absolute destination path (the folder must exist)
+- `layer_id` (number, optional) / `layer_name` (string, optional): target; default is the active layer
 
 ### Image Stacking
 
