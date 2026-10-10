@@ -890,6 +890,154 @@ function __mcp_replaceSmartObjectContents(filePath) {
 }
 `;
 
+/**
+ * Layer source / Smart Object link helpers.
+ * Reads the layer descriptor (smartObject.linked / link / fileReference / linkMissing)
+ * and resolves layers by id, so near-duplicate layer names are never ambiguous.
+ * Requires `helperFunctions` (cTID/sTID) and MCP_SMART_OBJECT_HELPERS in the enclosing script.
+ */
+export const MCP_LAYER_SOURCE_HELPERS = `
+function __mcp_findLayerById(container, id) {
+  for (var i = 0; i < container.layers.length; i++) {
+    var l = container.layers[i];
+    if (l.id === id) return l;
+    if (l.typename === 'LayerSet') {
+      var nested = __mcp_findLayerById(l, id);
+      if (nested) return nested;
+    }
+  }
+  return null;
+}
+
+function __mcp_resolveLayerTarget(layerId, layerName) {
+  var doc = app.activeDocument;
+  var target = null;
+  if (typeof layerId === 'number') {
+    target = __mcp_findLayerById(doc, layerId);
+    if (!target) {
+      return { ok: false, code: 'layer_not_found', message: 'No layer with id ' + layerId, suggested_next_tool: 'photoshop_get_layer_sources' };
+    }
+  } else if (layerName) {
+    target = __mcp_findLayer(doc, layerName);
+    if (!target) {
+      return { ok: false, code: 'layer_not_found', message: 'Layer not found: ' + layerName, suggested_next_tool: 'photoshop_get_layer_sources' };
+    }
+  } else {
+    target = doc.activeLayer;
+    if (!target) return { ok: false, code: 'layer_not_found', message: 'No active layer' };
+  }
+  doc.activeLayer = target;
+  return { ok: true, layer: target };
+}
+
+function __mcp_layerDescriptor(layerId) {
+  var ref = new ActionReference();
+  ref.putIdentifier(sTID('layer'), layerId);
+  return executeActionGet(ref);
+}
+
+function __mcp_descValueToJs(desc, key, depth) {
+  var type = desc.getType(key);
+  if (type === DescValueType.STRINGTYPE) return desc.getString(key);
+  if (type === DescValueType.BOOLEANTYPE) return desc.getBoolean(key);
+  if (type === DescValueType.INTEGERTYPE) return desc.getInteger(key);
+  if (type === DescValueType.DOUBLETYPE) return desc.getDouble(key);
+  if (type === DescValueType.ALIASTYPE) return desc.getPath(key).fsName;
+  if (type === DescValueType.ENUMERATEDTYPE) return typeIDToStringID(desc.getEnumerationValue(key));
+  if (type === DescValueType.OBJECTTYPE && depth < 3) {
+    var sub = desc.getObjectValue(key);
+    var out = {};
+    for (var i = 0; i < sub.count; i++) {
+      var k = sub.getKey(i);
+      try { out[typeIDToStringID(k)] = __mcp_descValueToJs(sub, k, depth + 1); } catch (e) {}
+    }
+    return out;
+  }
+  return null;
+}
+
+function __mcp_layerKindName(layer) {
+  if (layer.typename === 'LayerSet') return 'GROUP';
+  return String(layer.kind).replace('LayerKind.', '');
+}
+
+function __mcp_describeLayerSource(layer, treePath) {
+  var info = {
+    id: layer.id,
+    name: layer.name,
+    kind: __mcp_layerKindName(layer),
+    visible: layer.visible,
+    tree_path: treePath,
+    has_source: false
+  };
+  if (layer.typename === 'LayerSet' || layer.kind !== LayerKind.SMARTOBJECT) return info;
+
+  info.has_source = true;
+  try {
+    var desc = __mcp_layerDescriptor(layer.id);
+    var soId = sTID('smartObject');
+    if (!desc.hasKey(soId)) {
+      info.source = 'unknown';
+      return info;
+    }
+    var so = desc.getObjectValue(soId);
+    var linked = so.hasKey(sTID('linked')) ? so.getBoolean(sTID('linked')) : false;
+    info.source = linked ? 'linked' : 'embedded';
+    info.linked = linked;
+    if (so.hasKey(sTID('fileReference'))) info.original_name = so.getString(sTID('fileReference'));
+    if (so.hasKey(sTID('placed'))) info.content_type = typeIDToStringID(so.getEnumerationValue(sTID('placed')));
+    if (so.hasKey(sTID('documentID'))) info.document_id = so.getString(sTID('documentID'));
+    if (so.hasKey(sTID('linkMissing'))) info.link_missing = so.getBoolean(sTID('linkMissing'));
+    if (so.hasKey(sTID('linkChanged'))) info.link_changed = so.getBoolean(sTID('linkChanged'));
+    info.source_path = null;
+    if (linked && so.hasKey(sTID('link'))) {
+      try {
+        var linkVal = __mcp_descValueToJs(so, sTID('link'), 0);
+        if (typeof linkVal === 'string') {
+          info.source_path = linkVal;
+        } else if (linkVal !== null) {
+          info.link_details = linkVal;
+          if (linkVal.fullPath) info.source_path = String(linkVal.fullPath);
+        }
+      } catch (linkErr) {
+        info.link_error = String(linkErr);
+      }
+    }
+    if (linked && info.source_path === null && info.link_missing) {
+      info.source_path_note = 'Link is missing; Photoshop no longer resolves the file path. Use photoshop_relink_smart_object.';
+    }
+  } catch (e) {
+    info.source = 'unreadable';
+    info.error = String(e).split(String.fromCharCode(13)).join(' ').split(String.fromCharCode(10)).join(' ');
+  }
+  return info;
+}
+
+function __mcp_collectLayerSources(container, treePath, smartOnly, out) {
+  for (var i = 0; i < container.layers.length; i++) {
+    var l = container.layers[i];
+    var isGroup = l.typename === 'LayerSet';
+    var isSmart = !isGroup && l.kind === LayerKind.SMARTOBJECT;
+    if (!smartOnly || isSmart) out.push(__mcp_describeLayerSource(l, treePath));
+    if (isGroup) {
+      __mcp_collectLayerSources(l, treePath ? treePath + ' / ' + l.name : l.name, smartOnly, out);
+    }
+  }
+}
+
+function __mcp_requireSmartObject(layer) {
+  if (layer.typename === 'LayerSet' || layer.kind !== LayerKind.SMARTOBJECT) {
+    return {
+      ok: false,
+      code: 'unsupported_layer_kind',
+      message: 'Target layer "' + layer.name + '" is not a Smart Object (kind=' + (layer.typename === 'LayerSet' ? 'GROUP' : layer.kind) + ').',
+      suggested_next_tool: 'photoshop_get_layer_sources'
+    };
+  }
+  return null;
+}
+`;
+
 export const MCP_LAYER_MASK_HELPERS = `
 function __mcp_hasLayerMaskAM() {
   var ref = new ActionReference();
@@ -4655,6 +4803,131 @@ export const ExtendScriptSnippets = {
     };
   `;
   },
+
+  /**
+   * List the origin of layers: Smart Object link state, original file name, and source path.
+   */
+  getLayerSources: (layerId?: number, layerName?: string, smartOnly = false) => {
+    const hasTarget = typeof layerId === 'number' || !!layerName;
+    return `
+    ${helperFunctions}
+    ${MCP_SMART_OBJECT_HELPERS}
+    ${MCP_LAYER_SOURCE_HELPERS}
+
+    if (app.documents.length === 0) {
+      return { ok: false, code: 'no_document', message: 'No active document' };
+    }
+    var doc = app.activeDocument;
+    var docPath = null;
+    try { docPath = doc.fullName.fsName; } catch (e) {}
+    var layers = [];
+    ${
+      hasTarget
+        ? `var tgt = __mcp_resolveLayerTarget(${typeof layerId === 'number' ? Math.trunc(layerId) : 'null'}, ${layerName ? `"${jsString(layerName)}"` : 'null'});
+    if (!tgt.ok) return tgt;
+    layers.push(__mcp_describeLayerSource(tgt.layer, ""));`
+        : `__mcp_collectLayerSources(doc, "", ${smartOnly ? 'true' : 'false'}, layers);`
+    }
+    var linkedCount = 0, embeddedCount = 0, missingCount = 0;
+    for (var i = 0; i < layers.length; i++) {
+      if (layers[i].source === 'linked') linkedCount++;
+      if (layers[i].source === 'embedded') embeddedCount++;
+      if (layers[i].link_missing) missingCount++;
+    }
+    return {
+      ok: true,
+      document: doc.name,
+      document_path: docPath,
+      layer_count: layers.length,
+      linked_count: linkedCount,
+      embedded_count: embeddedCount,
+      missing_link_count: missingCount,
+      layers: layers
+    };
+  `;
+  },
+
+  /**
+   * Relink a linked Smart Object to a different file (placedLayerRelinkToFile).
+   */
+  relinkSmartObject: (filePath: string, layerId?: number, layerName?: string) => `
+    ${helperFunctions}
+    ${MCP_SMART_OBJECT_HELPERS}
+    ${MCP_LAYER_SOURCE_HELPERS}
+
+    if (app.documents.length === 0) {
+      return { ok: false, code: 'no_document', message: 'No active document' };
+    }
+    app.displayDialogs = DialogModes.NO;
+    var sel = __mcp_resolveLayerTarget(${typeof layerId === 'number' ? Math.trunc(layerId) : 'null'}, ${layerName ? `"${jsString(layerName)}"` : 'null'});
+    if (!sel.ok) return sel;
+    var bad = __mcp_requireSmartObject(sel.layer);
+    if (bad) return bad;
+    var assetFile = new File("${jsString(filePath)}");
+    if (!assetFile.exists) {
+      return { ok: false, code: 'file_not_found', message: 'File not found: ' + assetFile.fsName };
+    }
+    var before = __mcp_describeLayerSource(sel.layer, "");
+    var desc = new ActionDescriptor();
+    desc.putPath(sTID('null'), assetFile);
+    executeAction(sTID('placedLayerRelinkToFile'), desc, DialogModes.NO);
+    var layer = app.activeDocument.activeLayer;
+    return { ok: true, before: before, after: __mcp_describeLayerSource(layer, "") };
+  `,
+
+  /**
+   * Embed a linked Smart Object into the document (placedLayerConvertToEmbedded).
+   * The reverse (Convert to Linked) is refused by Photoshop when run through scripting.
+   */
+  embedLinkedSmartObject: (layerId?: number, layerName?: string) => `
+    ${helperFunctions}
+    ${MCP_SMART_OBJECT_HELPERS}
+    ${MCP_LAYER_SOURCE_HELPERS}
+
+    if (app.documents.length === 0) {
+      return { ok: false, code: 'no_document', message: 'No active document' };
+    }
+    app.displayDialogs = DialogModes.NO;
+    var sel = __mcp_resolveLayerTarget(${typeof layerId === 'number' ? Math.trunc(layerId) : 'null'}, ${layerName ? `"${jsString(layerName)}"` : 'null'});
+    if (!sel.ok) return sel;
+    var bad = __mcp_requireSmartObject(sel.layer);
+    if (bad) return bad;
+    var before = __mcp_describeLayerSource(sel.layer, "");
+    if (!before.linked) {
+      return { ok: true, already_embedded: true, before: before, after: before };
+    }
+    executeAction(sTID('placedLayerConvertToEmbedded'), new ActionDescriptor(), DialogModes.NO);
+    var layer = app.activeDocument.activeLayer;
+    return { ok: true, before: before, after: __mcp_describeLayerSource(layer, "") };
+  `,
+
+  /**
+   * Export the contents of a Smart Object to a file (placedLayerExportContents).
+   */
+  exportSmartObjectContents: (filePath: string, layerId?: number, layerName?: string) => `
+    ${helperFunctions}
+    ${MCP_SMART_OBJECT_HELPERS}
+    ${MCP_LAYER_SOURCE_HELPERS}
+
+    if (app.documents.length === 0) {
+      return { ok: false, code: 'no_document', message: 'No active document' };
+    }
+    app.displayDialogs = DialogModes.NO;
+    var sel = __mcp_resolveLayerTarget(${typeof layerId === 'number' ? Math.trunc(layerId) : 'null'}, ${layerName ? `"${jsString(layerName)}"` : 'null'});
+    if (!sel.ok) return sel;
+    var bad = __mcp_requireSmartObject(sel.layer);
+    if (bad) return bad;
+    var outFile = new File("${jsString(filePath)}");
+    var desc = new ActionDescriptor();
+    desc.putPath(sTID('null'), outFile);
+    executeAction(sTID('placedLayerExportContents'), desc, DialogModes.NO);
+    return {
+      ok: true,
+      layer_name: sel.layer.name,
+      file_path: outFile.fsName,
+      exists: outFile.exists
+    };
+  `,
 
   /**
    * Open Smart Object embedded contents for editing (placedLayerEditContents).

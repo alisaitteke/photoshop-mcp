@@ -64,7 +64,7 @@ Routes, thresholds and the off switch:
 - 🎨 **Color grade & more** — film looks, sky replacement, generative fill (Adobe account required)
 - ⏪ **Stay safe** — every multi-step "recipe" is a single undo step in Photoshop
 
-Under the hood: 128 tools (111 atomic + 17 one-step recipes) — full list in
+Under the hood: 132 tools (115 atomic + 17 one-step recipes) — full list in
 [`docs/available-tools.md`](docs/available-tools.md).
 
 ## Try saying
@@ -153,7 +153,7 @@ next. Common fixes: [`docs/troubleshooting.md`](docs/troubleshooting.md).
 
 ## Documentation
 
-- [Available tools](docs/available-tools.md) — all 128 tools with parameters
+- [Available tools](docs/available-tools.md) — all 132 tools with parameters
 - [Standalone UI](docs/standalone-ui.md) — providers, auth modes, Action Plan, security
 - [Prompt layer](docs/prompt-layer.md) — prompt templates and recipes
 - [Architecture](docs/architecture.md) — how the bridge works under the hood
