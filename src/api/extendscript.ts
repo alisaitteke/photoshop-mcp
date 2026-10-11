@@ -909,7 +909,7 @@ function __mcp_findLayerById(container, id) {
   return null;
 }
 
-function __mcp_resolveLayerTarget(layerId, layerName) {
+function __mcp_resolveLayerTarget(layerId, layerName, activate) {
   var doc = app.activeDocument;
   var target = null;
   if (typeof layerId === 'number') {
@@ -926,7 +926,7 @@ function __mcp_resolveLayerTarget(layerId, layerName) {
     target = doc.activeLayer;
     if (!target) return { ok: false, code: 'layer_not_found', message: 'No active layer' };
   }
-  doc.activeLayer = target;
+  if (activate !== false) doc.activeLayer = target;
   return { ok: true, layer: target };
 }
 
@@ -4823,7 +4823,7 @@ export const ExtendScriptSnippets = {
     var layers = [];
     ${
       hasTarget
-        ? `var tgt = __mcp_resolveLayerTarget(${typeof layerId === 'number' ? Math.trunc(layerId) : 'null'}, ${layerName ? `"${jsString(layerName)}"` : 'null'});
+        ? `var tgt = __mcp_resolveLayerTarget(${typeof layerId === 'number' ? Math.trunc(layerId) : 'null'}, ${layerName ? `"${jsString(layerName)}"` : 'null'}, false);
     if (!tgt.ok) return tgt;
     layers.push(__mcp_describeLayerSource(tgt.layer, ""));`
         : `__mcp_collectLayerSources(doc, "", ${smartOnly ? 'true' : 'false'}, layers);`

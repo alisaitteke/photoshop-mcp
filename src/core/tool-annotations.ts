@@ -59,7 +59,7 @@ export const TOOL_ANNOTATIONS: Record<string, PhotoshopToolAnnotations> = {
   photoshop_replace_smart_object_contents: harm(true),
   photoshop_edit_smart_object_contents: edit(false),
   photoshop_get_layer_sources: read,
-  photoshop_relink_smart_object: edit(true),
+  photoshop_relink_smart_object: harm(true),
   photoshop_embed_linked_smart_object: edit(true),
   photoshop_export_smart_object_contents: edit(true),
   photoshop_create_smart_object_via_copy: edit(false),

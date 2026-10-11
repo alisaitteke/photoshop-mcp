@@ -3,12 +3,34 @@ import { dirname, isAbsolute } from 'node:path';
 import { ToolDefinition, ToolResult } from '../core/tool-registry.js';
 import { ExtendScriptSnippets } from '../api/extendscript.js';
 import { PhotoshopConnection } from '../platform/connection.js';
+import type { PhotoshopErrorCode } from '../errors/envelope.js';
 import {
   atomicFailureFromError,
   atomicSuccess,
   parseSnippetResult,
   runSnippet,
 } from './atomic-shared.js';
+
+const SNIPPET_CODES: readonly PhotoshopErrorCode[] = [
+  'no_active_document',
+  'no_active_layer',
+  'layer_not_found',
+  'file_not_found',
+  'invalid_arguments',
+];
+
+function failureFromSnippet(parsed: Record<string, unknown>, fallback: string): ToolResult {
+  const message = typeof parsed.message === 'string' && parsed.message ? parsed.message : fallback;
+  const raw = parsed.code === 'no_document' ? 'no_active_document' : parsed.code;
+  const code = SNIPPET_CODES.find((item) => item === raw);
+  const suggested =
+    typeof parsed.suggested_next_tool === 'string' ? parsed.suggested_next_tool : undefined;
+  return atomicFailureFromError(new Error(message), {
+    ...(code ? { code } : {}),
+    message,
+    ...(suggested ? { suggested_next_tool: suggested } : {}),
+  });
+}
 
 export function createSmartObjectTools(connection: PhotoshopConnection): ToolDefinition[] {
   return [
@@ -242,7 +264,7 @@ async function getLayerSources(
       return atomicFailureFromError(new Error(`Unparseable layer source result: ${String(raw)}`));
     }
     if (parsed.ok === false) {
-      return atomicFailureFromError(new Error(String(parsed.message || 'Could not read layer sources')));
+      return failureFromSnippet(parsed, 'Could not read layer sources');
     }
     const { ok: _ok, ...details } = parsed;
     const linked = Number(details.linked_count ?? 0);
@@ -271,7 +293,7 @@ async function runLayerSourceMutation(
       return atomicFailureFromError(new Error(`Unparseable Smart Object result: ${String(raw)}`));
     }
     if (parsed.ok === false) {
-      return atomicFailureFromError(new Error(String(parsed.message || 'Smart Object operation failed')));
+      return failureFromSnippet(parsed, 'Smart Object operation failed');
     }
     const { ok: _ok, ...details } = parsed;
     return atomicSuccess(successSummary, details, 'photoshop_get_layer_sources');
@@ -281,8 +303,14 @@ async function runLayerSourceMutation(
 }
 
 async function requireExistingFile(filePath: string): Promise<Error | null> {
+  if (filePath.includes('\0')) {
+    return new Error('file_path contains a null byte.');
+  }
   try {
-    await stat(filePath);
+    const info = await stat(filePath);
+    if (!info.isFile()) {
+      return new Error(`file_path is not a file: ${filePath}`);
+    }
     return null;
   } catch (error) {
     return new Error(
@@ -327,14 +355,28 @@ async function exportSmartObjectContents(
 ): Promise<ToolResult> {
   const filePath = typeof args.file_path === 'string' ? args.file_path.trim() : '';
   if (!filePath) return atomicFailureFromError(new Error('file_path is required.'));
+  if (filePath.includes('\0')) {
+    return atomicFailureFromError(new Error('file_path contains a null byte.'));
+  }
   if (!isAbsolute(filePath)) {
     return atomicFailureFromError(new Error('file_path must be an absolute path.'));
   }
   const folder = dirname(filePath);
   try {
-    await stat(folder);
+    const info = await stat(folder);
+    if (!info.isDirectory()) {
+      return atomicFailureFromError(new Error(`Destination folder does not exist: ${folder}`));
+    }
   } catch {
     return atomicFailureFromError(new Error(`Destination folder does not exist: ${folder}`));
+  }
+  try {
+    const dest = await stat(filePath);
+    if (dest.isDirectory()) {
+      return atomicFailureFromError(new Error(`Destination is a directory: ${filePath}`));
+    }
+  } catch {
+    // The file does not exist yet; Photoshop creates it.
   }
   return runLayerSourceMutation(
     connection,
