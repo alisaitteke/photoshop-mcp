@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The first tool call of a session no longer fails with "Photoshop info not available" until `photoshop_ping` has run. Every tool detects Photoshop on its own, without launching it.
+- When no Photoshop install is found, tools return `photoshop_not_detected` with a fix (start Photoshop, or set `PHOTOSHOP_PATH` and restart the MCP server) instead of `unknown`.
+- A cached install that was uninstalled, moved or upgraded no longer fails every call until the 24-hour detect cache expires. When the cached app cannot be resolved or launched, the server detects again and retries the call once.
+- Windows: a running Photoshop is found on any drive without `PHOTOSHOP_PATH`. Registry versions are compared as numbers and every listed install is tried, so a key left behind by an uninstalled version no longer blocks detection. Photoshop 2026 and later are found in Program Files.
+- An invalid `PHOTOSHOP_PATH` is logged as a warning instead of being skipped silently.
+
 ## [1.7.37] - 2026-10-15
 
 [v1.7.36...v1.7.37](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.36...v1.7.37)

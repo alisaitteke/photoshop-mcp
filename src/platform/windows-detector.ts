@@ -11,6 +11,23 @@ interface RegistryEntry {
   path: string;
 }
 
+/** Path of the first running Photoshop.exe; prints nothing when none runs. wmic is deprecated. */
+const RUNNING_PHOTOSHOP_PATH_COMMAND =
+  'powershell -NoProfile -NonInteractive -Command "(Get-Process -Name Photoshop -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty Path)"';
+
+const RUNNING_PATH_TIMEOUT_MS = 10_000;
+
+/** Compare dotted versions by number: "270.0" is newer than "90.0", unlike a string compare. */
+export function compareVersions(a: string, b: string): number {
+  const left = a.split('.').map((part) => parseInt(part, 10) || 0);
+  const right = b.split('.').map((part) => parseInt(part, 10) || 0);
+  for (let i = 0; i < Math.max(left.length, right.length); i++) {
+    const diff = (left[i] ?? 0) - (right[i] ?? 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
 export class WindowsDetector {
   private logger: Logger;
 
@@ -27,7 +44,14 @@ export class WindowsDetector {
       this.logger.debug(`Using environment variable: ${envPath}`);
       const info = await this.checkPath(envPath);
       if (info) return info;
+      this.logger.warn(
+        `PHOTOSHOP_PATH is set but no Photoshop.exe was found at ${envPath}. Falling back to automatic detection.`
+      );
     }
+
+    // A running Photoshop reports its own path, whichever drive it is on.
+    const runningInfo = await this.detectFromRunningProcess();
+    if (runningInfo) return runningInfo;
 
     // Try registry detection
     try {
@@ -47,6 +71,20 @@ export class WindowsDetector {
     throw new Error('Photoshop not found on this system');
   }
 
+  private async detectFromRunningProcess(): Promise<PhotoshopInfo | null> {
+    try {
+      const { stdout } = await execAsync(RUNNING_PHOTOSHOP_PATH_COMMAND, {
+        timeout: RUNNING_PATH_TIMEOUT_MS,
+        windowsHide: true,
+      });
+      const exePath = stdout.trim().split(/\r?\n/)[0]?.trim();
+      return exePath ? await this.checkPath(exePath) : null;
+    } catch (error) {
+      this.logger.debug('Running-process detection failed:', error);
+      return null;
+    }
+  }
+
   private async detectFromRegistry(): Promise<PhotoshopInfo | null> {
     try {
       // Query Adobe registry keys
@@ -55,21 +93,23 @@ export class WindowsDetector {
         'HKLM\\SOFTWARE\\WOW6432Node\\Adobe\\Photoshop',
       ];
 
+      const entries: RegistryEntry[] = [];
       for (const regPath of registryPaths) {
         try {
           const { stdout } = await execAsync(`reg query "${regPath}" /s`);
-          const entries = this.parseRegistryOutput(stdout);
-          
-          if (entries.length > 0) {
-            // Get the latest version
-            const latest = entries.sort((a, b) => b.version.localeCompare(a.version))[0];
-            const info = await this.checkPath(latest.path);
-            if (info) return info;
-          }
+          entries.push(...this.parseRegistryOutput(stdout));
         } catch {
           // Continue to next registry path
           continue;
         }
+      }
+
+      // Newest first. An uninstalled version can leave its key behind, so
+      // try every entry instead of giving up after the newest.
+      entries.sort((a, b) => compareVersions(b.version, a.version));
+      for (const entry of entries) {
+        const info = await this.checkPath(entry.path);
+        if (info) return info;
       }
 
       // Try COM CLSID registry
@@ -137,8 +177,11 @@ export class WindowsDetector {
 
     const paths: string[] = [];
     
-    // Generate paths for versions 2012-2025
-    for (let year = 2025; year >= 2012; year--) {
+    // Generate paths from next year's release (Adobe ships "Photoshop N+1"
+    // in the autumn of year N) back to 2012, so new versions are found
+    // without a code change.
+    const maxYear = new Date().getFullYear() + 1;
+    for (let year = maxYear; year >= 2012; year--) {
       paths.push(
         `${programFiles}\\Adobe\\Adobe Photoshop ${year}\\Photoshop.exe`,
         `${programFilesX86}\\Adobe\\Adobe Photoshop ${year}\\Photoshop.exe`,
@@ -158,8 +201,11 @@ export class WindowsDetector {
 
   private async checkPath(path: string): Promise<PhotoshopInfo | null> {
     try {
-      // Clean up path
-      let cleanPath = path.trim().replace(/^"|"$/g, '');
+      // Clean up path; registry ApplicationPath values end with a backslash
+      let cleanPath = path
+        .trim()
+        .replace(/^"|"$/g, '')
+        .replace(/[\\/]+$/, '');
       
       // If path is a directory, append Photoshop.exe
       if (!cleanPath.toLowerCase().endsWith('.exe')) {

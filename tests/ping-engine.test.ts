@@ -87,6 +87,14 @@ describe('probePhotoshopEngine', () => {
     expect(textOf(result)).toContain(PING_NOT_FOUND_REASON);
   });
 
+  it('says Photoshop was not found when the tool path cannot detect it either', async () => {
+    vi.spyOn(PhotoshopConnection.prototype, 'ping').mockResolvedValue(true);
+    vi.spyOn(PhotoshopConnection.prototype, 'ensureDetected').mockResolvedValue(null);
+    const result = await probePhotoshopEngine(new PhotoshopConnection());
+    expect(result.content[0]).toMatchObject({ type: 'text', text: PING_FAILED_TEXT });
+    expect(textOf(result)).toContain(PING_NOT_FOUND_REASON);
+  });
+
   it('lets AppleEvent failures reach the error envelope instead of a bare failure (#72)', async () => {
     vi.spyOn(MacOSExecutor.prototype, 'isPhotoshopRunning').mockResolvedValue(true);
     vi.spyOn(MacOSExecutor.prototype, 'execute').mockRejectedValue(

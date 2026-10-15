@@ -17,7 +17,7 @@ import { DEFAULT_SCRIPT_TIMEOUT_MS } from '../platform/script-timeout.js';
 export const PING_PROBE_SCRIPT = 'return app.documents.length;';
 
 const NOT_RUNNING = /photoshop is not running/i;
-const NOT_FOUND = /photoshop not found|photoshop info not available/i;
+const NOT_FOUND = /photoshop not found|photoshop not detected|photoshop info not available/i;
 
 export async function probePhotoshopEngine(
   connection: PhotoshopConnection

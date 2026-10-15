@@ -25,6 +25,14 @@ export function escapeForPgrep(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/**
+ * osascript failures meaning AppleScript could not resolve the application
+ * itself: -1728 (can't get it), -2741 (its terms did not load, so the script
+ * did not compile), -10814 (Launch Services found no such app). The script
+ * never reached Photoshop.
+ */
+export const MAC_APP_NOT_RESOLVED_PATTERN = /\((?:-1728|-2741|-10814)\)/;
+
 /** Quote a value as an AppleScript string literal. */
 export function appleScriptString(value: string): string {
   return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;

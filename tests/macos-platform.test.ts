@@ -9,6 +9,7 @@ import {
   killTimeoutMs,
 } from '../src/platform/macos-executor.js';
 import { MacOSDetector } from '../src/platform/macos-detector.js';
+import { Logger } from '../src/utils/logger.js';
 
 let savedActivate: string | undefined;
 
@@ -288,5 +289,36 @@ describe('detector with PHOTOSHOP_PATH inside the bundle (#72)', () => {
     expect(info.path).toBe(join(root, 'Adobe Photoshop 2026.app'));
     expect(info.version).toBe('27.10.0');
     expect(info.appName).toBe('Adobe Photoshop 2026');
+  });
+});
+
+describe('detector with an invalid PHOTOSHOP_PATH', () => {
+  let savedPath: string | undefined;
+
+  beforeEach(() => {
+    savedPath = process.env.PHOTOSHOP_PATH;
+  });
+
+  afterEach(() => {
+    if (savedPath === undefined) delete process.env.PHOTOSHOP_PATH;
+    else process.env.PHOTOSHOP_PATH = savedPath;
+    vi.restoreAllMocks();
+  });
+
+  it('warns instead of silently falling back to automatic detection', async () => {
+    const missing = join(tmpdir(), 'ph-mcp-missing', 'Adobe Photoshop 2026.app');
+    process.env.PHOTOSHOP_PATH = missing;
+    const detector = new MacOSDetector() as unknown as {
+      detectUsingSpotlight(): Promise<null>;
+      getCommonPaths(): string[];
+      detect(): Promise<unknown>;
+    };
+    vi.spyOn(detector, 'detectUsingSpotlight').mockResolvedValue(null);
+    vi.spyOn(detector, 'getCommonPaths').mockReturnValue([]);
+    const warn = vi.spyOn(Logger.prototype, 'warn');
+
+    await expect(detector.detect()).rejects.toThrow('Photoshop not found on this system');
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining(`PHOTOSHOP_PATH is set`));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining(missing));
   });
 });

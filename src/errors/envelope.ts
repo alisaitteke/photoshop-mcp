@@ -1,6 +1,7 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { recordMcpToolCall } from '../analytics/mcp-session.js';
 import type { ToolHandler } from '../core/tool-registry.js';
+import { MAC_APP_NOT_RESOLVED_PATTERN } from '../platform/macos-app.js';
 import { readOsDriveFreeBytes } from '../platform/os-free-space.js';
 import { EXECUTE_SCRIPT_RETRY_TIMEOUT_MS } from '../platform/script-timeout.js';
 
@@ -31,6 +32,7 @@ export type PhotoshopErrorCode =
   | 'photoshop_unreachable'
   | 'automation_permission_denied'
   | 'photoshop_app_not_resolved'
+  | 'photoshop_not_detected'
   | 'unknown';
 
 export interface PhotoshopErrorEnvelope {
@@ -177,12 +179,24 @@ const APPLE_EVENT_ERRORS: Array<{
     suggested_next_tool: 'photoshop_ping',
   },
   {
-    pattern: /\((?:-1728|-2741|-10814)\)/,
+    pattern: MAC_APP_NOT_RESOLVED_PATTERN,
     code: 'photoshop_app_not_resolved',
     hint: 'AppleScript could not resolve the Photoshop application. Set PHOTOSHOP_PATH to the full .app path, for example "/Applications/Adobe Photoshop 2026/Adobe Photoshop 2026.app", then restart the MCP server.',
     suggested_next_tool: 'photoshop_get_capabilities',
   },
 ];
+
+/**
+ * No Photoshop install was found. Covers the current message and the older
+ * "info not available" / "not found on this system" wording, which used to
+ * fall through to `unknown`. Checked after the osascript codes, which name a
+ * more specific cause.
+ */
+const PHOTOSHOP_NOT_DETECTED_PATTERN =
+  /photoshop not detected|photoshop info not available|photoshop not found on this system/i;
+
+const PHOTOSHOP_NOT_DETECTED_HINT =
+  'Start Photoshop, then call photoshop_ping. If Photoshop is installed in a non-standard location, set PHOTOSHOP_PATH to the Photoshop app (macOS: the .app bundle, Windows: Photoshop.exe), then restart the MCP server.';
 
 export function classifyError(message: string): PhotoshopErrorEnvelope {
   if (SCRATCH_DISK_FULL_PATTERN.test(message)) {
@@ -201,6 +215,15 @@ export function classifyError(message: string): PhotoshopErrorEnvelope {
     if (pattern.test(message)) {
       return { ok: false, code, message: `${message.trim()} ${hint}`, suggested_next_tool };
     }
+  }
+
+  if (PHOTOSHOP_NOT_DETECTED_PATTERN.test(message)) {
+    return {
+      ok: false,
+      code: 'photoshop_not_detected',
+      message: `${message.trim()} ${PHOTOSHOP_NOT_DETECTED_HINT}`,
+      suggested_next_tool: 'photoshop_ping',
+    };
   }
 
   for (const { pattern, code, suggested_next_tool } of ERROR_PATTERNS) {

@@ -5,11 +5,20 @@ process.env.PHOTOSHOP_UXP_BRIDGE_PORT = '0';
 
 const { PhotoshopAPIFactory, API_OVERRIDE_ENV } = await import('../src/api/photoshop-api.js');
 const { shutdownUxpBridgeServer } = await import('../src/platform/uxp-bridge-server.js');
+const { classifyError } = await import('../src/errors/envelope.js');
+const { PHOTOSHOP_NOT_DETECTED_MESSAGE } = await import('../src/platform/connection.js');
 
-function makeConnection() {
+function makeConnection(
+  info: { version: string; path: string; isRunning: boolean } | null = {
+    version: '2026',
+    path: 'C:\\Photoshop.exe',
+    isRunning: true,
+  }
+) {
   const executed: Array<{ script: string; timeout?: number }> = [];
   const connection = {
-    getPhotoshopInfo: () => ({ version: '2026', path: 'C:\\Photoshop.exe', isRunning: true }),
+    ensureDetected: () => Promise.resolve(info),
+    getPhotoshopInfo: () => info,
     executeScript: (script: string, timeout?: number) => {
       executed.push({ script, timeout });
       return Promise.resolve('ok');
@@ -59,6 +68,13 @@ describe('PhotoshopAPIFactory (issue #57)', () => {
     // Wrapped in the error-handling IIFE, not passed through raw.
     expect(executed[0].script).toContain('ERROR:');
     expect(executed[0].script).toContain('return { ok: true };');
+  });
+
+  it('reports photoshop_not_detected when detection finds nothing', async () => {
+    const { connection } = makeConnection(null);
+    const error = await new PhotoshopAPIFactory(connection).createAPI().catch((e: Error) => e);
+    expect((error as Error).message).toBe(PHOTOSHOP_NOT_DETECTED_MESSAGE);
+    expect(classifyError((error as Error).message).code).toBe('photoshop_not_detected');
   });
 
   it('accepts the override with surrounding whitespace (Windows `set X=uxp && ...`)', async () => {
