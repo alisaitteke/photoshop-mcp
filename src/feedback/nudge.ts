@@ -11,6 +11,8 @@ import { takeUpdateNoticeBlock } from '../update/check.js';
 
 export const FEEDBACK_NUDGE_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 export const FEEDBACK_NUDGE_MIN_AGE_MS = 15 * 60 * 1000;
+/** A due nudge waits while any other tool ran this recently (the user is mid-task). */
+export const FEEDBACK_NUDGE_ACTIVE_TASK_WINDOW_MS = 3 * 60 * 1000;
 export const FEEDBACK_SUGGESTION_MAX_CHARS = 200;
 export const FEEDBACK_NUDGE_MARKER = 'FEEDBACK_NUDGE';
 export const FEEDBACK_NUDGE_ENV = 'PSMCP_FEEDBACK';
@@ -40,6 +42,10 @@ export interface FeedbackNudgeStore {
 
 const STORE_FILE = 'feedback-nudge.json';
 const TRUNCATION_SUFFIX = '…[truncated]';
+/** Calls to these tools do not mean the user is working on a request. */
+const NUDGE_NEUTRAL_TOOLS = new Set(['photoshop_ping', 'photoshop_submit_feedback']);
+
+let lastTaskToolCallAt: number | undefined;
 
 function getStorePath(): string {
   return join(getPhotoshopMcpHomeDir(), STORE_FILE);
@@ -84,6 +90,25 @@ export function truncateFeedbackSuggestion(value: string | undefined): string | 
 
 function isFiniteTimestamp(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
+}
+
+/**
+ * Note a tool call from the MCP dispatch path. Ping is also called mid-task (after
+ * extendscript_timeout), so any other tool call holds a due nudge for
+ * FEEDBACK_NUDGE_ACTIVE_TASK_WINDOW_MS. In-process only: a new session starts idle.
+ */
+export function noteFeedbackTaskActivity(toolName: string, now = Date.now()): void {
+  if (NUDGE_NEUTRAL_TOOLS.has(toolName)) return;
+  lastTaskToolCallAt = now;
+}
+
+export function resetFeedbackTaskActivityForTests(): void {
+  lastTaskToolCallAt = undefined;
+}
+
+function isTaskActive(now: number): boolean {
+  if (lastTaskToolCallAt === undefined) return false;
+  return now - lastTaskToolCallAt < FEEDBACK_NUDGE_ACTIVE_TASK_WINDOW_MS;
 }
 
 export function isFeedbackNudgeDue(now = Date.now()): boolean {
@@ -191,7 +216,8 @@ export function buildFeedbackNudgeBlock(): string {
 /**
  * First text block is always the connection string so existing ping clients keep working.
  * A connected ping carries at most one extra block: UPDATE_AVAILABLE wins, and a due
- * FEEDBACK_NUDGE waits for a later ping (its cooldown is not started).
+ * FEEDBACK_NUDGE waits for a later ping (its cooldown is not started). A due nudge also
+ * waits, without starting its cooldown, while another tool ran in the active-task window.
  */
 export function buildPingToolResult(connected: boolean, now = Date.now()): CallToolResult {
   const content: CallToolResult['content'] = [
@@ -209,7 +235,7 @@ export function buildPingToolResult(connected: boolean, now = Date.now()): CallT
   const updateBlock = takeUpdateNoticeBlock(now);
   if (updateBlock) {
     content.push({ type: 'text', text: updateBlock });
-  } else if (feedbackEnabled && isFeedbackNudgeDue(now)) {
+  } else if (feedbackEnabled && !isTaskActive(now) && isFeedbackNudgeDue(now)) {
     markFeedbackNudgeShown(now);
     content.push({ type: 'text', text: buildFeedbackNudgeBlock() });
   }

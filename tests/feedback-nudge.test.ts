@@ -23,6 +23,7 @@ import { capture } from '../src/analytics/index.js';
 import { flushAnalyticsClient } from '../src/analytics/provider.js';
 import { sanitizeAnalyticsProperties } from '../src/analytics/events.js';
 import {
+  FEEDBACK_NUDGE_ACTIVE_TASK_WINDOW_MS,
   FEEDBACK_NUDGE_COOLDOWN_MS,
   FEEDBACK_NUDGE_ENV,
   FEEDBACK_NUDGE_LANGUAGE_RULE,
@@ -38,7 +39,9 @@ import {
   isFeedbackNudgeEnabled,
   markFeedbackFirstSeen,
   markFeedbackNudgeShown,
+  noteFeedbackTaskActivity,
   recordFeedback,
+  resetFeedbackTaskActivityForTests,
   submitFeedbackFromArgs,
 } from '../src/feedback/nudge.js';
 import { PHOTOSHOP_MCP_SURFACE_ENV } from '../src/lib/export-paths.js';
@@ -83,6 +86,7 @@ describe('MCP feedback nudge', () => {
     delete process.env[PHOTOSHOP_MCP_SURFACE_ENV];
     vi.mocked(capture).mockClear();
     vi.mocked(flushAnalyticsClient).mockClear();
+    resetFeedbackTaskActivityForTests();
   });
 
   afterEach(() => {
@@ -216,6 +220,41 @@ describe('MCP feedback nudge', () => {
     process.env[PHOTOSHOP_MCP_SURFACE_ENV] = 'ui';
     markFeedbackFirstSeen(1_000_000);
     expect(isFeedbackNudgeDue(1_000_000 + FEEDBACK_NUDGE_MIN_AGE_MS)).toBe(false);
+  });
+
+  it('still nudges on the first ping of a session when no other tool has run', () => {
+    const firstSeenAt = 1_000_000;
+    markFeedbackFirstSeen(firstSeenAt);
+    const dueAt = firstSeenAt + FEEDBACK_NUDGE_MIN_AGE_MS;
+    expect(textBlocks(buildPingToolResult(true, dueAt))[1]).toContain(FEEDBACK_NUDGE_MARKER);
+  });
+
+  it('holds a due nudge while another tool ran in the last 3 minutes, without starting the cooldown', () => {
+    const firstSeenAt = 1_000_000;
+    markFeedbackFirstSeen(firstSeenAt);
+    const dueAt = firstSeenAt + FEEDBACK_NUDGE_MIN_AGE_MS;
+    const lastToolAt = dueAt - 1_000;
+    noteFeedbackTaskActivity('photoshop_get_state', lastToolAt);
+
+    expect(textBlocks(buildPingToolResult(true, dueAt))).toEqual([PING_CONNECTED_TEXT]);
+    expect(
+      textBlocks(buildPingToolResult(true, lastToolAt + FEEDBACK_NUDGE_ACTIVE_TASK_WINDOW_MS - 1))
+    ).toEqual([PING_CONNECTED_TEXT]);
+    expect(readNudgeStore(home).lastShownAt).toBeUndefined();
+    expect(isFeedbackNudgeDue(dueAt)).toBe(true);
+
+    const quietAt = lastToolAt + FEEDBACK_NUDGE_ACTIVE_TASK_WINDOW_MS;
+    expect(textBlocks(buildPingToolResult(true, quietAt))[1]).toContain(FEEDBACK_NUDGE_MARKER);
+    expect(readNudgeStore(home).lastShownAt).toBe(quietAt);
+  });
+
+  it('does not treat ping or submit_feedback as an active task', () => {
+    const firstSeenAt = 1_000_000;
+    markFeedbackFirstSeen(firstSeenAt);
+    const dueAt = firstSeenAt + FEEDBACK_NUDGE_MIN_AGE_MS;
+    noteFeedbackTaskActivity('photoshop_ping', dueAt - 1_000);
+    noteFeedbackTaskActivity('photoshop_submit_feedback', dueAt - 1_000);
+    expect(textBlocks(buildPingToolResult(true, dueAt))[1]).toContain(FEEDBACK_NUDGE_MARKER);
   });
 
   it('does not append a second nudge in the same cooldown window', () => {
