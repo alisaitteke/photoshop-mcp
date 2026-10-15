@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The product-feedback question after `photoshop_ping` is neutral and about the current session ("Was there anything in Photoshop during this session that got in your way or felt missing?") instead of opening with "I can make this MCP faster". Answers keep up to 500 characters instead of 200.
+- After the user shares feedback, the question comes back 30 days later instead of never. **Don't ask again** still turns it off for good.
+
+### Fixed
+
+- The feedback question no longer interrupts work in progress. While another tool ran in the last 3 minutes, ping holds the question for a later ping, so a ping retried after `extendscript_timeout` does not ask mid-task.
+- Hosts without a question UI (for example Codex or Claude Desktop chat) finish the request first, ask at the end of the reply, and submit when the user answers. `photoshop_submit_feedback` rejects `choice: yes` without the user's own words, so placeholders such as "user will describe the problem in the next message" are no longer recorded.
+
 ## [1.7.37] - 2026-10-15
 
 [v1.7.36...v1.7.37](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.36...v1.7.37)

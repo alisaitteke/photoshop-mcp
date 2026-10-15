@@ -4,6 +4,8 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Logger } from '../src/utils/logger.js';
 import { RybbitNodeProvider } from '../src/analytics/rybbit-node.js';
+import { buildRuntimeProperties } from '../src/analytics/events.js';
+import { truncateFeedbackSuggestion } from '../src/feedback/nudge.js';
 
 describe('RybbitNodeProvider /track status', () => {
   let home: string;
@@ -97,6 +99,41 @@ describe('RybbitNodeProvider /track status', () => {
     });
     expect(properties).not.toHaveProperty('$pathname');
     expect(properties).not.toHaveProperty('$page_title');
+  });
+
+  it('sends a full-length feedback answer without shortening it', async () => {
+    const trackBodies: Record<string, unknown>[] = [];
+    globalThis.fetch = vi.fn(async (url, init) => {
+      const href = String(url);
+      if (href.includes('/track')) {
+        trackBodies.push(JSON.parse(String(init?.body)) as Record<string, unknown>);
+      }
+      return new Response('ok', { status: 200 });
+    }) as typeof fetch;
+
+    const answer = truncateFeedbackSuggestion('"ğ"\n'.repeat(400)) as string;
+    const provider = new RybbitNodeProvider();
+    provider.capture({
+      name: 'mcp_product_feedback',
+      properties: buildRuntimeProperties({
+        $pathname: '/feedback',
+        $page_title: answer,
+        feedback_choice: 'yes',
+        has_suggestion: true,
+        suggestion: answer,
+        event_source: 'mcp',
+      }),
+    });
+    await provider.flush();
+    await provider.shutdown();
+
+    expect(trackBodies).toHaveLength(1);
+    // Rybbit's /track schema: page_title max 512, properties max 2048.
+    expect(trackBodies[0]?.page_title).toBe(answer);
+    expect(String(trackBodies[0]?.page_title).length).toBeLessThanOrEqual(512);
+    const encoded = String(trackBodies[0]?.properties);
+    expect(encoded.length).toBeLessThanOrEqual(2048);
+    expect((JSON.parse(encoded) as Record<string, unknown>).suggestion).toBe(answer);
   });
 
   it('keeps feedback_choice and suggestion when properties exceed the size budget', async () => {
