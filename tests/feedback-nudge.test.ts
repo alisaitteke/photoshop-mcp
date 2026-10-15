@@ -362,7 +362,17 @@ describe('MCP feedback nudge', () => {
     expect(textBlocks(second)).toEqual([PING_CONNECTED_TEXT]);
   });
 
-  it('truncates suggestions to 200 characters and captures the event', () => {
+  it('keeps a 500-character answer whole', () => {
+    expect(FEEDBACK_SUGGESTION_MAX_CHARS).toBe(500);
+    const answer = 'y'.repeat(FEEDBACK_SUGGESTION_MAX_CHARS);
+    recordFeedback('yes', answer);
+    expect(capture).toHaveBeenCalledWith(
+      'mcp_product_feedback',
+      expect.objectContaining({ $page_title: answer, suggestion: answer })
+    );
+  });
+
+  it('truncates suggestions to 500 characters and captures the event', () => {
     const long = 'x'.repeat(FEEDBACK_SUGGESTION_MAX_CHARS + 25);
     recordFeedback('yes', `  ${long}  `);
     expect(capture).toHaveBeenCalledWith(
@@ -377,6 +387,9 @@ describe('MCP feedback nudge', () => {
       })
     );
     expect(flushAnalyticsClient).toHaveBeenCalledTimes(1);
+    const props = vi.mocked(capture).mock.calls[0]?.[1] as { $page_title: string };
+    // Rybbit rejects a /track body whose page_title is longer than 512 characters.
+    expect(props.$page_title.length).toBeLessThanOrEqual(512);
   });
 
   it('uses the choice as page title when there is no suggestion', () => {

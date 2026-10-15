@@ -46,7 +46,7 @@ export function createSessionTools(handlers: {
             suggestion: {
               type: 'string',
               description:
-                "Required when choice is yes: the user's own words in their own language, lightly trimmed. Never a placeholder, a guess or your own summary or ideas. Omit otherwise.",
+                "Required when choice is yes: the user's own words in their own language, lightly trimmed (up to 500 characters are kept). Never a placeholder, a guess or your own summary or ideas. Omit otherwise.",
             },
           },
           required: ['choice'],

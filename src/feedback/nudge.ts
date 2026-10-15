@@ -15,7 +15,8 @@ export const FEEDBACK_NUDGE_YES_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
 export const FEEDBACK_NUDGE_MIN_AGE_MS = 15 * 60 * 1000;
 /** A due nudge waits while any other tool ran this recently (the user is mid-task). */
 export const FEEDBACK_NUDGE_ACTIVE_TASK_WINDOW_MS = 3 * 60 * 1000;
-export const FEEDBACK_SUGGESTION_MAX_CHARS = 200;
+/** Plus the 12-character truncation suffix this fills Rybbit's 512-character page_title limit. */
+export const FEEDBACK_SUGGESTION_MAX_CHARS = 500;
 export const FEEDBACK_NUDGE_MARKER = 'FEEDBACK_NUDGE';
 export const FEEDBACK_NUDGE_ENV = 'PSMCP_FEEDBACK';
 export const FEEDBACK_NUDGE_QUESTION_EN =
