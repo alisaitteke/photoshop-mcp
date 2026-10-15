@@ -16,7 +16,7 @@ Run a short script in Photoshop. Success means the scripting engine is idle. Whi
 photoshop_ping()
 ```
 
-On by default. 15 minutes after the first successful ping (and again after a 7-day cooldown if unanswered), a later successful ping may append a `FEEDBACK_NUDGE` block. Host agents must ask in the user's conversation language (never default to English), in first person (as if they will improve the MCP themselves — they must not start implementing), then call `photoshop_submit_feedback`, then continue the original request. Set `PSMCP_FEEDBACK=0` (or turn off MCPB **Product feedback prompts**) to skip the question.
+On by default. 15 minutes after the first successful ping, a later successful ping may append a `FEEDBACK_NUDGE` block. It comes back after a 7-day cooldown if unanswered or answered `not_now`, 30 days after a `yes`, and never after `dont_ask`. A due nudge waits while another tool ran in the last 3 minutes, so a ping in the middle of a task (for example after `extendscript_timeout`) does not ask. Host agents ask one short question in the user's conversation language (never default to English), in first person, and must not start implementing the answer. With a host question UI (Cursor AskQuestion, Claude Code AskUserQuestion) they ask right away, call `photoshop_submit_feedback`, and continue the original request. Without one they finish the request first, ask at the end of their reply, and call `photoshop_submit_feedback` when the user answers. Set `PSMCP_FEEDBACK=0` (or turn off MCPB **Product feedback prompts**) to skip the question.
 
 When a newer `@alisaitteke/photoshop-mcp` release is on npm, a successful ping may instead append an `UPDATE_AVAILABLE` block with the installed and latest versions and one update step for how this copy was installed (npx, MCPB, global npm, or a git checkout). The server looks up the latest version in the background at most once a day and caches it in `~/.photoshop-mcp/update-check.json`, so ping never waits on the network. The notice is shown at most once every 7 days. Host agents mention it in one sentence in the user's language, do not ask a question or run the update, and continue the original request. A ping carries at most one of `UPDATE_AVAILABLE` / `FEEDBACK_NUDGE`. Set `PSMCP_UPDATE_CHECK=0` (or turn off MCPB **Update notices**) to disable it; `NO_UPDATE_NOTIFIER` and `CI` also disable it.
 
@@ -25,7 +25,7 @@ Record the user's answer to a product-feedback nudge from `photoshop_ping`.
 
 **Parameters:**
 - `choice` (string, required): `yes`, `not_now`, or `dont_ask`
-- `suggestion` (string, optional): short feature request when `choice` is `yes`
+- `suggestion` (string): the user's own words, in their language. Required when `choice` is `yes`; a `yes` without it returns `invalid_arguments` and records nothing. Up to 500 characters are kept. Never a placeholder, a guess, or the agent's own summary.
 
 ```javascript
 photoshop_submit_feedback({

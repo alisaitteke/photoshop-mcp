@@ -103,7 +103,7 @@ pathname `/feedback` instead.
 | `mcp_tool_batch` | 3s after last tool, 60s max hold, client disconnect, or session end | `tools_called_count`, `tools_error_count`, `unique_tools_count`, `tool_usage_summary`, `tools_used[]`, `had_errors`, `error_codes[]?`, `error_codes_summary?`, `batch_flush_reason`, `mcp_client_name?` |
 | `mcp_prompt_requested` | Prompt template fetch (still one event per `prompts/get`) | `prompt_name`, `mcp_client_name?`, `mcp_client_version?` |
 | `mcp_prompt_batch` | 3s after the last prompt get, 60s max hold, client disconnect, or session end. Separate timers from `mcp_tool_batch`. | `prompts_requested_count`, `unique_prompts_count`, `prompt_usage_summary`, `prompts_used[]`, `full_catalog` (unique count equals the registry size passed at record time), `catalog_size`, `repeat` (requested / unique), `batch_flush_reason`, `mcp_client_name?` |
-| `mcp_product_feedback` | User answered the optional MCP product-feedback nudge | pathname `/feedback`; Rybbit `page_title` is the suggestion (or the choice if none); `feedback_choice` (`yes` / `not_now` / `dont_ask`), `has_suggestion`, `suggestion?` (truncated), `event_source: mcp` |
+| `mcp_product_feedback` | User answered the optional MCP product-feedback nudge | pathname `/feedback`; Rybbit `page_title` is the suggestion (or the choice if none); `feedback_choice` (`yes` / `not_now` / `dont_ask`), `has_suggestion`, `suggestion?` (the user's words, cut at 500 characters), `event_source: mcp` |
 | `pageleave` | Previous logical session closed after 30 minutes idle (next process start) | `duration_ms`, `shutdown_reason` (`idle_timeout`) |
 | `mcp_session_ended` | Previous logical session closed after 30 minutes idle | `duration_ms`, `shutdown_reason` (`idle_timeout`) |
 
@@ -129,14 +129,21 @@ use a persisted local flag only.
 
 The product-feedback question is **on by default**. It is shown on a successful
 `photoshop_ping` **15 minutes after the first connected ping** (not on first
-install / first ping), then at most once every 7 days until the user answers
-`yes` or `dont_ask`. The first connected ping only stamps `firstSeenAt` in
-`~/.photoshop-mcp/feedback-nudge.json`.
+install / first ping), then at most once every 7 days. After a `yes` answer it
+is asked again 30 days later; after `dont_ask` it is never asked again. The
+first connected ping only stamps `firstSeenAt` in
+`~/.photoshop-mcp/feedback-nudge.json`. A due question also waits while any
+other tool ran in the last 3 minutes (tracked in memory only), so it does not
+interrupt a task; it is shown on a later ping and its cooldown does not start
+while it waits.
 It is skipped when `PSMCP_FEEDBACK=0` (or MCPB **Product feedback prompts** is
 off), when analytics are disabled, and when the server is spawned by the
 standalone UI (`PHOTOSHOP_MCP_SURFACE=ui`). The host agent asks in the user's
-conversation language, in first person;
-the user-facing question does not mention a team or anonymous sending.
+conversation language, in first person; hosts without a question UI ask at the
+end of their reply and submit when the user answers in the next message.
+The user-facing question does not mention a team or anonymous sending.
+`suggestion` is the user's own words, cut at 500 characters. A `yes` without
+a suggestion is rejected and nothing is sent.
 `mcp_product_feedback` is still flushed immediately after submit so it is not
 left in the 5-second analytics queue.
 
@@ -179,7 +186,7 @@ UI server events use pathname `/ui-server`; the browser UI uses `/ui`.
 - API keys or OAuth tokens
 - Chat messages, prompts, or model responses **by default** (the optional MCP
   product-feedback question is the exception: if they answer with a problem or
-  feature, `choice` and an optional truncated `suggestion` are sent as
+  feature, `choice` and their answer as `suggestion` (up to 500 characters) are sent as
   `mcp_product_feedback`; the question is skipped when analytics are off or
   `PSMCP_FEEDBACK=0`)
 - Photoshop document or layer names, file paths, or image content
