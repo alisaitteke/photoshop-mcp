@@ -357,6 +357,37 @@ describe('MCP feedback nudge', () => {
     expect(flushAnalyticsClient).not.toHaveBeenCalled();
   });
 
+  it("rejects yes without the user's own words and leaves the store unchanged", () => {
+    markFeedbackFirstSeen(1_000_000);
+    markFeedbackNudgeShown(1_000_000 + FEEDBACK_NUDGE_MIN_AGE_MS);
+    const before = readFileSync(join(home, 'feedback-nudge.json'), 'utf8');
+
+    for (const args of [
+      { choice: 'yes' },
+      { choice: 'yes', suggestion: '' },
+      { choice: 'yes', suggestion: '  \n\t ' },
+      { choice: 'yes', suggestion: 42 },
+    ]) {
+      const result = submitFeedbackFromArgs(args);
+      expect(result.isError).toBe(true);
+      const envelope = JSON.parse(textBlocks(result).join('')) as { code: string; message: string };
+      expect(envelope.code).toBe('invalid_arguments');
+      expect(envelope.message).toMatch(/own words/i);
+      expect(envelope.message).toMatch(/has not answered/i);
+      expect(envelope.message).toMatch(/do not call photoshop_submit_feedback/i);
+    }
+
+    expect(readFileSync(join(home, 'feedback-nudge.json'), 'utf8')).toBe(before);
+    expect(capture).not.toHaveBeenCalled();
+    expect(flushAnalyticsClient).not.toHaveBeenCalled();
+  });
+
+  it('still accepts not_now and dont_ask without a suggestion', () => {
+    expect(submitFeedbackFromArgs({ choice: 'not_now' }).isError).toBeFalsy();
+    expect(submitFeedbackFromArgs({ choice: 'dont_ask', suggestion: '   ' }).isError).toBeFalsy();
+    expect(capture).toHaveBeenCalledTimes(2);
+  });
+
   it('tells the agent to continue after a valid submit', () => {
     const result = submitFeedbackFromArgs({
       choice: 'yes',

@@ -29,10 +29,10 @@ export function createSessionTools(handlers: {
         name: 'photoshop_submit_feedback',
         description:
           "Record the user's answer to a Photoshop MCP product-feedback nudge.\n\n" +
-          'Use when: photoshop_ping returned a FEEDBACK_NUDGE block and you already asked the user via the host question UI (Cursor AskQuestion / Claude AskUserQuestion) or chat.\n' +
-          'Do NOT use when: ping had no FEEDBACK_NUDGE — never invent this question.\n' +
+          'Use when: photoshop_ping returned a FEEDBACK_NUDGE block, you asked the question, and the user answered (in the host question UI such as Cursor AskQuestion / Claude AskUserQuestion, or in their next chat message).\n' +
+          'Do NOT use when: ping had no FEEDBACK_NUDGE — never invent this question. Do NOT use when the user has not answered yet — never submit a placeholder, a guess or your own summary.\n' +
           'Do not start implementing the suggestion.\n\n' +
-          "Returns: { ok, recorded, next }. After this call, immediately continue the user's original Photoshop request.\n" +
+          'Returns: { ok, recorded, next }. choice "yes" without a suggestion returns invalid_arguments and records nothing. After this call, continue the user\'s Photoshop request if it is not finished.\n' +
           'Preconditions: none. Side effects: persists a local cooldown flag and may send an anonymous analytics event.',
         inputSchema: {
           type: 'object',
@@ -41,11 +41,12 @@ export function createSessionTools(handlers: {
               type: 'string',
               enum: ['yes', 'not_now', 'dont_ask'],
               description:
-                'yes = they have a feature request; not_now = skip this week; dont_ask = never prompt again',
+                'yes = the user named a problem or a missing feature (suggestion required); not_now = skip for now; dont_ask = never prompt again',
             },
             suggestion: {
               type: 'string',
-              description: 'Short feature request. Include when choice is yes; omit otherwise.',
+              description:
+                "Required when choice is yes: the user's own words in their own language, lightly trimmed. Never a placeholder, a guess or your own summary or ideas. Omit otherwise.",
             },
           },
           required: ['choice'],

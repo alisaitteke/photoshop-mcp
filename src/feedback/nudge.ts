@@ -273,6 +273,15 @@ export function submitFeedbackFromArgs(args: Record<string, unknown>): CallToolR
   }
 
   const suggestion = typeof args.suggestion === 'string' ? args.suggestion : undefined;
+  if (choice === 'yes' && !suggestion?.trim()) {
+    return envelopeToToolResult({
+      ok: false,
+      code: 'invalid_arguments',
+      message:
+        'choice "yes" needs suggestion: the user\'s own words, in their language. If the user has not answered yet, do not call photoshop_submit_feedback. Wait for their reply, then call it. Never send a placeholder, a guess or your own summary.',
+    });
+  }
+
   const recorded = recordFeedback(choice, suggestion);
   return {
     content: [
