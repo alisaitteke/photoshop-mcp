@@ -10,6 +10,8 @@ import { getPhotoshopMcpHomeDir, PHOTOSHOP_MCP_SURFACE_ENV } from '../lib/export
 import { takeUpdateNoticeBlock } from '../update/check.js';
 
 export const FEEDBACK_NUDGE_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+/** After the user shared feedback (`yes`), ask again this long after their answer. */
+export const FEEDBACK_NUDGE_YES_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
 export const FEEDBACK_NUDGE_MIN_AGE_MS = 15 * 60 * 1000;
 /** A due nudge waits while any other tool ran this recently (the user is mid-task). */
 export const FEEDBACK_NUDGE_ACTIVE_TASK_WINDOW_MS = 3 * 60 * 1000;
@@ -111,13 +113,24 @@ function isTaskActive(now: number): boolean {
   return now - lastTaskToolCallAt < FEEDBACK_NUDGE_ACTIVE_TASK_WINDOW_MS;
 }
 
+/**
+ * A `yes` answer is asked again after FEEDBACK_NUDGE_YES_COOLDOWN_MS. Stores written by
+ * older versions (which never re-asked) carry submittedAt, else lastShownAt.
+ */
+function isYesCooldownOver(store: FeedbackNudgeStore, now: number): boolean {
+  const answeredAt = isFiniteTimestamp(store.submittedAt) ? store.submittedAt : store.lastShownAt;
+  if (!isFiniteTimestamp(answeredAt)) return false;
+  return now - answeredAt >= FEEDBACK_NUDGE_YES_COOLDOWN_MS;
+}
+
 export function isFeedbackNudgeDue(now = Date.now()): boolean {
   if (!isFeedbackNudgeEnabled()) return false;
   if (!isAnalyticsEnabled() || !hasAnalyticsKey()) return false;
   if (isUiMcpSurface()) return false;
 
   const store = readStore();
-  if (store.status === 'dont_ask' || store.status === 'yes') return false;
+  if (store.status === 'dont_ask') return false;
+  if (store.status === 'yes') return isYesCooldownOver(store, now);
   if (isFiniteTimestamp(store.lastShownAt)) {
     return now - store.lastShownAt >= FEEDBACK_NUDGE_COOLDOWN_MS;
   }
@@ -137,7 +150,8 @@ export function markFeedbackFirstSeen(now = Date.now()): void {
 
 export function markFeedbackNudgeShown(now = Date.now()): void {
   const store = readStore();
-  if (store.status === 'dont_ask' || store.status === 'yes') return;
+  if (store.status === 'dont_ask') return;
+  if (store.status === 'yes' && !isYesCooldownOver(store, now)) return;
   writeStore({
     ...store,
     status: 'shown',
@@ -147,9 +161,9 @@ export function markFeedbackNudgeShown(now = Date.now()): void {
 
 export function recordFeedback(
   choice: FeedbackChoice,
-  suggestion?: string
+  suggestion?: string,
+  now = Date.now()
 ): { recorded: true; choice: FeedbackChoice; has_suggestion: boolean } {
-  const now = Date.now();
   const truncated = truncateFeedbackSuggestion(suggestion);
   const hasSuggestion = Boolean(truncated);
 

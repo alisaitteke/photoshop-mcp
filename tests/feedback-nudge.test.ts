@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -31,6 +31,7 @@ import {
   FEEDBACK_NUDGE_MIN_AGE_MS,
   FEEDBACK_NUDGE_QUESTION_EN,
   FEEDBACK_NUDGE_QUESTION_TR,
+  FEEDBACK_NUDGE_YES_COOLDOWN_MS,
   FEEDBACK_SUGGESTION_MAX_CHARS,
   PING_CONNECTED_TEXT,
   PING_FAILED_TEXT,
@@ -62,6 +63,10 @@ function readNudgeStore(home: string): {
     lastShownAt?: number;
     status?: string;
   };
+}
+
+function writeNudgeStore(home: string, store: Record<string, unknown>): void {
+  writeFileSync(join(home, 'feedback-nudge.json'), JSON.stringify(store));
 }
 
 describe('MCP feedback nudge', () => {
@@ -186,19 +191,62 @@ describe('MCP feedback nudge', () => {
     expect(isFeedbackNudgeDue(lastShownAt + FEEDBACK_NUDGE_COOLDOWN_MS)).toBe(true);
   });
 
-  it('does not ask again after yes', () => {
-    const now = 1_000_000;
-    markFeedbackFirstSeen(now);
-    markFeedbackNudgeShown(now + FEEDBACK_NUDGE_MIN_AGE_MS);
-    recordFeedback('yes', 'batch rename layers');
-    expect(
-      isFeedbackNudgeDue(now + FEEDBACK_NUDGE_MIN_AGE_MS + FEEDBACK_NUDGE_COOLDOWN_MS * 4)
-    ).toBe(false);
+  it('asks again 30 days after yes', () => {
+    const firstSeenAt = 1_000_000;
+    markFeedbackFirstSeen(firstSeenAt);
+    markFeedbackNudgeShown(firstSeenAt + FEEDBACK_NUDGE_MIN_AGE_MS);
+    const submittedAt = firstSeenAt + FEEDBACK_NUDGE_MIN_AGE_MS + 60_000;
+    recordFeedback('yes', 'batch rename layers', submittedAt);
+    expect(readNudgeStore(home).status).toBe('yes');
+    expect(isFeedbackNudgeDue(submittedAt + FEEDBACK_NUDGE_COOLDOWN_MS * 4)).toBe(false);
+    expect(isFeedbackNudgeDue(submittedAt + FEEDBACK_NUDGE_YES_COOLDOWN_MS - 1)).toBe(false);
+    expect(isFeedbackNudgeDue(submittedAt + FEEDBACK_NUDGE_YES_COOLDOWN_MS)).toBe(true);
+  });
+
+  it('shows the nudge again on ping after the yes cooldown, then uses the 7-day cooldown', () => {
+    const submittedAt = 2_000_000;
+    markFeedbackFirstSeen(1_000_000);
+    recordFeedback('yes', 'batch rename layers', submittedAt);
+    markFeedbackNudgeShown(submittedAt + 1);
+    expect(readNudgeStore(home).status).toBe('yes');
+
+    const dueAt = submittedAt + FEEDBACK_NUDGE_YES_COOLDOWN_MS;
+    expect(textBlocks(buildPingToolResult(true, dueAt))[1]).toContain(FEEDBACK_NUDGE_MARKER);
+    const stored = readNudgeStore(home);
+    expect(stored.status).toBe('shown');
+    expect(stored.lastShownAt).toBe(dueAt);
+    expect(isFeedbackNudgeDue(dueAt + FEEDBACK_NUDGE_COOLDOWN_MS - 1)).toBe(false);
+    expect(isFeedbackNudgeDue(dueAt + FEEDBACK_NUDGE_COOLDOWN_MS)).toBe(true);
+  });
+
+  it('applies the 30-day rule to a yes saved by an older version', () => {
+    const submittedAt = 3_000_000;
+    writeNudgeStore(home, {
+      status: 'yes',
+      firstSeenAt: 1_000_000,
+      lastShownAt: submittedAt,
+      submittedAt,
+      choice: 'yes',
+    });
+    expect(isFeedbackNudgeDue(submittedAt + FEEDBACK_NUDGE_YES_COOLDOWN_MS - 1)).toBe(false);
+    expect(isFeedbackNudgeDue(submittedAt + FEEDBACK_NUDGE_YES_COOLDOWN_MS)).toBe(true);
+  });
+
+  it('falls back to lastShownAt for a legacy yes without submittedAt', () => {
+    const lastShownAt = 3_000_000;
+    writeNudgeStore(home, { status: 'yes', lastShownAt });
+    expect(isFeedbackNudgeDue(lastShownAt + FEEDBACK_NUDGE_YES_COOLDOWN_MS - 1)).toBe(false);
+    expect(isFeedbackNudgeDue(lastShownAt + FEEDBACK_NUDGE_YES_COOLDOWN_MS)).toBe(true);
   });
 
   it('does not ask again after dont_ask', () => {
-    recordFeedback('dont_ask');
-    expect(isFeedbackNudgeDue(Date.now() + FEEDBACK_NUDGE_COOLDOWN_MS * 4)).toBe(false);
+    const answeredAt = 2_000_000;
+    markFeedbackFirstSeen(1_000_000);
+    recordFeedback('dont_ask', undefined, answeredAt);
+    const muchLater = answeredAt + FEEDBACK_NUDGE_YES_COOLDOWN_MS * 12;
+    expect(isFeedbackNudgeDue(muchLater)).toBe(false);
+    expect(textBlocks(buildPingToolResult(true, muchLater))).toEqual([PING_CONNECTED_TEXT]);
+    expect(readNudgeStore(home).status).toBe('dont_ask');
   });
 
   it('asks again 7 days after not_now', () => {
