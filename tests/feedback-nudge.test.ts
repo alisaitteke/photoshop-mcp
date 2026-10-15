@@ -22,6 +22,7 @@ vi.mock('../src/analytics/provider.js', async (importOriginal) => {
 import { capture } from '../src/analytics/index.js';
 import { flushAnalyticsClient } from '../src/analytics/provider.js';
 import { sanitizeAnalyticsProperties } from '../src/analytics/events.js';
+import { buildPhotoshopInstructions } from '../src/prompts/instructions.js';
 import {
   FEEDBACK_NUDGE_ACTIVE_TASK_WINDOW_MS,
   FEEDBACK_NUDGE_COOLDOWN_MS,
@@ -35,6 +36,7 @@ import {
   FEEDBACK_SUGGESTION_MAX_CHARS,
   PING_CONNECTED_TEXT,
   PING_FAILED_TEXT,
+  buildFeedbackNudgeBlock,
   buildPingToolResult,
   isFeedbackNudgeDue,
   isFeedbackNudgeEnabled,
@@ -163,6 +165,51 @@ describe('MCP feedback nudge', () => {
     expect(texts[1]).not.toMatch(/Photoshop MCP team/i);
     expect(texts[1]).not.toMatch(/anonymously/i);
     expect(readNudgeStore(home).lastShownAt).toBe(dueAt);
+  });
+
+  it('asks a neutral question about this session', () => {
+    expect(FEEDBACK_NUDGE_QUESTION_EN).toBe(
+      'Was there anything in Photoshop during this session that got in your way or felt missing? One sentence is enough.'
+    );
+    expect(FEEDBACK_NUDGE_QUESTION_TR).toBe(
+      "Bu oturumda Photoshop'ta takıldığın ya da eksik bulduğun bir şey oldu mu? Bir cümle yeterli."
+    );
+    const block = buildFeedbackNudgeBlock();
+    expect(block).not.toMatch(/faster and more useful/i);
+    expect(block).not.toMatch(/faster/i);
+    expect(block).not.toMatch(/as if you will/i);
+  });
+
+  it('gives hosts without a question UI a path that does not interrupt the request', () => {
+    const block = buildFeedbackNudgeBlock();
+    expect(block).toMatch(/AskQuestion/);
+    expect(block).toMatch(/AskUserQuestion/);
+    expect(block).toMatch(/no question UI: do not interrupt/i);
+    expect(block).toMatch(/end of your final reply/i);
+    expect(block).toMatch(/next message/i);
+    expect(block).not.toMatch(/ask in chat and wait/i);
+  });
+
+  it("tells the agent to submit only the user's own words", () => {
+    const block = buildFeedbackNudgeBlock();
+    expect(block).toMatch(/own words in their own language/i);
+    expect(block).toMatch(/placeholder/i);
+    expect(block).toMatch(/your own summary/i);
+    expect(block).toMatch(/no real answer, do not call photoshop_submit_feedback/i);
+    expect(block).toContain(FEEDBACK_NUDGE_LANGUAGE_RULE);
+    expect(block).toMatch(/Do not mention a team, anonymous sending, or a survey/);
+    expect(block).toMatch(/Do not write code or add tools from the answer/);
+  });
+
+  it('keeps the server instructions in line with the nudge block', () => {
+    const instructions = buildPhotoshopInstructions();
+    expect(instructions).not.toMatch(/faster and more useful/i);
+    expect(instructions).not.toMatch(/ask in chat and wait/i);
+    expect(instructions).toMatch(/no question UI: do not interrupt/i);
+    expect(instructions).toMatch(/end of your final reply/i);
+    expect(instructions).toMatch(/placeholder/i);
+    expect(instructions).toContain(FEEDBACK_NUDGE_QUESTION_EN);
+    expect(instructions).toContain(FEEDBACK_NUDGE_QUESTION_TR);
   });
 
   it('does not start the 15-minute clock on a failed ping', () => {
