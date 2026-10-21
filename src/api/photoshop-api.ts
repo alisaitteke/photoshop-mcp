@@ -1,5 +1,9 @@
 import { Logger } from '../utils/logger.js';
-import { PhotoshopConnection } from '../platform/connection.js';
+import {
+  PHOTOSHOP_NOT_DETECTED_MESSAGE,
+  PhotoshopConnection,
+  type PhotoshopInfo,
+} from '../platform/connection.js';
 import { documentGuardScript, getTargetDocumentId } from '../core/document-target.js';
 import { isUxpBridgeReachable } from '../platform/uxp-bridge-client.js';
 
@@ -49,6 +53,18 @@ async function probePluginOnce(): Promise<boolean> {
   return value;
 }
 
+/**
+ * The detectors' own "not found" adds nothing to the message. Anything else
+ * (an unsupported platform, say) is kept so the cause is not lost.
+ */
+function notDetectedError(cause?: unknown): Error {
+  const detail = cause === undefined ? '' : cause instanceof Error ? cause.message : String(cause);
+  if (!detail || /photoshop not found on this system/i.test(detail)) {
+    return new Error(PHOTOSHOP_NOT_DETECTED_MESSAGE);
+  }
+  return new Error(`${PHOTOSHOP_NOT_DETECTED_MESSAGE} ${detail}`);
+}
+
 export class PhotoshopAPIFactory {
   private logger: Logger;
   private connection: PhotoshopConnection;
@@ -59,10 +75,17 @@ export class PhotoshopAPIFactory {
   }
 
   async createAPI(): Promise<PhotoshopAPI> {
-    const info = this.connection.getPhotoshopInfo();
-
+    // Detect here instead of relying on an earlier photoshop_ping: on a fresh
+    // install or an expired detect cache, every other tool used to fail with
+    // "Photoshop info not available". Detection does not launch Photoshop.
+    let info: PhotoshopInfo | null;
+    try {
+      info = await this.connection.ensureDetected();
+    } catch (error) {
+      throw notDetectedError(error);
+    }
     if (!info) {
-      throw new Error('Photoshop info not available. Please detect Photoshop first.');
+      throw notDetectedError();
     }
 
     // Determine which API to use based on version

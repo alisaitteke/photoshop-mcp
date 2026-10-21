@@ -62,10 +62,15 @@ export function writePhotoshopDetectCache(
   writeFileSync(storePath(), JSON.stringify(record), { mode: 0o600 });
 }
 
-export function clearPhotoshopDetectCacheForTests(): void {
+/** Forget the cached detect, e.g. when its install can no longer be started. */
+export function clearPhotoshopDetectCache(): void {
   try {
     unlinkSync(storePath());
   } catch {
     // File may not exist.
   }
+}
+
+export function clearPhotoshopDetectCacheForTests(): void {
+  clearPhotoshopDetectCache();
 }

@@ -4,18 +4,25 @@ Common issues when connecting to or scripting Photoshop through the MCP server.
 
 ← Back to [README](../README.md)
 
-### "Photoshop not found"
+### "Photoshop not found" (`photoshop_not_detected`)
 
-1. Make sure Photoshop is installed in the default location
-2. Or set `PHOTOSHOP_PATH` environment variable to custom installation path
+Every tool detects Photoshop on its first call, so no `photoshop_ping` is needed first. Detection never launches Photoshop. When no install is found, tools return `photoshop_not_detected`.
+
+1. Start Photoshop, then call `photoshop_ping`. On Windows a running Photoshop is found on any drive.
+2. Without `PHOTOSHOP_PATH`, the server looks in:
+   - macOS: Spotlight, then `/Applications/Adobe Photoshop <year>` from next year's release back to 2012.
+   - Windows: the running `Photoshop.exe`, then every Photoshop version in the registry (newest first), then `Program Files\Adobe\Adobe Photoshop <year>` from next year's release back to 2012.
+3. For any other location, set `PHOTOSHOP_PATH` to the app (macOS: the `.app` bundle; Windows: `Photoshop.exe`) and restart the MCP server. A `PHOTOSHOP_PATH` that does not point at Photoshop is logged as a warning, and detection falls back to the locations above.
 
 ```json
 {
   "env": {
-    "PHOTOSHOP_PATH": "C:\\Custom\\Path\\Adobe Photoshop 2025\\Photoshop.exe"
+    "PHOTOSHOP_PATH": "D:\\Apps\\Adobe Photoshop 2026\\Photoshop.exe"
   }
 }
 ```
+
+A successful detect is cached for 24 hours in `~/.photoshop-mcp/photoshop-detect-cache.json` (`PHOTOSHOP_PATH` bypasses the cache). If the cached app can no longer be resolved or launched, the server forgets it, detects again and retries the call once.
 
 ### "Failed to connect to Photoshop"
 

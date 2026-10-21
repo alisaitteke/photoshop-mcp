@@ -23,6 +23,9 @@ export class MacOSDetector {
       this.logger.debug(`Using environment variable: ${envPath}`);
       const info = await this.checkPath(envPath);
       if (info) return info;
+      this.logger.warn(
+        `PHOTOSHOP_PATH is set but no Photoshop .app was found at ${envPath}. Falling back to automatic detection.`
+      );
     }
 
     // Try mdfind (Spotlight) for fast detection
