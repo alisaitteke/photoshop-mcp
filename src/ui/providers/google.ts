@@ -4,8 +4,14 @@ import type { ProviderAdapter, ProviderModel } from './types.js';
 
 // Curated to Gemini models that support tool calling on the Google AI Studio
 // (Generative Language) API. Prices in USD per 1M tokens; Pro tiers reflect
-// the lower context bracket (<=200K for 2.5 Pro, <=128K for 1.5 Pro).
+// the lower context bracket (<=200K for 2.5 Pro). Gemini 3.8 Flash rates are
+// Google's 2026 price; they double on 2027-01-01.
 const MODELS: ProviderModel[] = [
+  {
+    id: 'gemini-3.8-flash',
+    label: 'Gemini 3.8 Flash',
+    pricing: { inputUsdPerMTok: 0.75, outputUsdPerMTok: 3.75, cachedInputUsdPerMTok: 0.075 },
+  },
   {
     id: 'gemini-2.5-pro',
     label: 'Gemini 2.5 Pro',
@@ -20,21 +26,6 @@ const MODELS: ProviderModel[] = [
     id: 'gemini-2.5-flash-lite',
     label: 'Gemini 2.5 Flash-Lite',
     pricing: { inputUsdPerMTok: 0.1, outputUsdPerMTok: 0.4, cachedInputUsdPerMTok: 0.025 },
-  },
-  {
-    id: 'gemini-2.0-flash',
-    label: 'Gemini 2.0 Flash',
-    pricing: { inputUsdPerMTok: 0.1, outputUsdPerMTok: 0.4 },
-  },
-  {
-    id: 'gemini-1.5-pro',
-    label: 'Gemini 1.5 Pro',
-    pricing: { inputUsdPerMTok: 1.25, outputUsdPerMTok: 5 },
-  },
-  {
-    id: 'gemini-1.5-flash',
-    label: 'Gemini 1.5 Flash',
-    pricing: { inputUsdPerMTok: 0.075, outputUsdPerMTok: 0.3 },
   },
 ];
 

@@ -39,7 +39,7 @@ const KV_KEY = 'config';
 const DEFAULT_CONFIG: UIConfig = {
   providers: {},
   activeProvider: 'anthropic',
-  activeModel: 'claude-sonnet-4-5',
+  activeModel: 'claude-sonnet-5',
   actionPlanBeta: false,
   customProvider: null,
 };

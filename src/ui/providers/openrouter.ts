@@ -5,13 +5,13 @@ import type { ProviderAdapter, ProviderModel } from './types.js';
 // per 1M tokens; OpenRouter passes provider rates through without markup.
 const MODELS: ProviderModel[] = [
   {
-    id: 'anthropic/claude-sonnet-4.5',
-    label: 'Claude Sonnet 4.5',
+    id: 'anthropic/claude-sonnet-5.5',
+    label: 'Claude Sonnet 5.5',
     pricing: {
-      inputUsdPerMTok: 3,
-      outputUsdPerMTok: 15,
-      cachedInputUsdPerMTok: 0.3,
-      cachedWriteUsdPerMTok: 3.75,
+      inputUsdPerMTok: 2,
+      outputUsdPerMTok: 10,
+      cachedInputUsdPerMTok: 0.1,
+      cachedWriteUsdPerMTok: 2.5,
     },
   },
   {
@@ -25,14 +25,14 @@ const MODELS: ProviderModel[] = [
     },
   },
   {
-    id: 'openai/gpt-5',
-    label: 'GPT-5',
-    pricing: { inputUsdPerMTok: 1.25, outputUsdPerMTok: 10, cachedInputUsdPerMTok: 0.125 },
+    id: 'openai/gpt-6.1-sol',
+    label: 'GPT-6.1 Sol',
+    pricing: { inputUsdPerMTok: 2, outputUsdPerMTok: 10, cachedInputUsdPerMTok: 0.1 },
   },
   {
-    id: 'openai/gpt-4.1-mini',
-    label: 'GPT-4.1 mini',
-    pricing: { inputUsdPerMTok: 0.4, outputUsdPerMTok: 1.6, cachedInputUsdPerMTok: 0.1 },
+    id: 'openai/gpt-6-luna',
+    label: 'GPT-6 Luna',
+    pricing: { inputUsdPerMTok: 0.1, outputUsdPerMTok: 0.5, cachedInputUsdPerMTok: 0.01 },
   },
   {
     id: 'google/gemini-2.5-pro',
@@ -73,7 +73,7 @@ export const openrouterAdapter: ProviderAdapter = {
     return MODELS.map((m) => ({ ...m }));
   },
   defaultModel() {
-    return 'anthropic/claude-sonnet-4.5';
+    return 'anthropic/claude-sonnet-5.5';
   },
   getLanguageModel({ apiKey, modelId }) {
     return createOpenRouter({ apiKey })(modelId);
