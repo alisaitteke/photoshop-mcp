@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `PHOTOSHOP_MCP_NO_LAUNCH` environment variable: never start Photoshop; tool calls fail with "Photoshop is not running" instead (#89)
+
+### Fixed
+
+- ExtendScript `toSource()` results parsed with a literal reader instead of `new Function`, so the server never executes text returned from Photoshop (#90)
+
 ## [1.7.37] - 2026-10-15
 
 [v1.7.36...v1.7.37](https://github.com/alisaitteke/photoshop-mcp/compare/v1.7.36...v1.7.37)

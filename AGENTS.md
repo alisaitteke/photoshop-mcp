@@ -83,6 +83,7 @@ Examples: [examples/cursor-config.json](examples/cursor-config.json), [examples/
 | -------- | ------- |
 | `LOG_LEVEL` | `0`=DEBUG, `1`=INFO, `2`=WARN, `3`=ERROR |
 | `PHOTOSHOP_PATH` | Optional custom Photoshop install path |
+| `PHOTOSHOP_MCP_NO_LAUNCH` | Set `1` to never start Photoshop; tool calls fail with "Photoshop is not running" instead |
 | `PHOTOSHOP_SCRIPT_TIMEOUT` | Default ExtendScript timeout in ms (default `30000`, max `600000`) |
 | `PSMCP_UI_TOKEN` | Pin standalone UI API token (see README) |
 | `PSMCP_FEEDBACK` | Set `0` to disable the product-feedback ping question (on by default) |
