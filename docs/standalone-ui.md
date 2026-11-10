@@ -180,6 +180,7 @@ the server. Requests without a valid token get `401 unauthorized`.
 ## Environment variables
 
 - `PHOTOSHOP_PATH`: (Optional) Specify custom Photoshop installation path
+- `PHOTOSHOP_MCP_NO_LAUNCH`: Set `1` to never start Photoshop; tool calls fail with "Photoshop is not running" instead
 - `PHOTOSHOP_SCRIPT_TIMEOUT`: Default ExtendScript timeout in milliseconds (default `30000`, max `600000`)
 - `LOG_LEVEL`: Logging level (0=DEBUG, 1=INFO, 2=WARN, 3=ERROR)
 - `PSMCP_UI_TOKEN`: Pin the standalone UI session token (see above)

@@ -96,3 +96,63 @@ describe('PhotoshopConnection on macOS', () => {
     expect(seenAppNames).toEqual(['Adobe Photoshop 2026']);
   });
 });
+
+describe('PHOTOSHOP_MCP_NO_LAUNCH', () => {
+  let previousNoLaunch: string | undefined;
+
+  beforeEach(() => {
+    // Prototype spies accumulate calls across tests; clear so each test
+    // asserts only its own launch behavior.
+    vi.clearAllMocks();
+    previousNoLaunch = process.env.PHOTOSHOP_MCP_NO_LAUNCH;
+  });
+
+  afterEach(() => {
+    if (previousNoLaunch === undefined) delete process.env.PHOTOSHOP_MCP_NO_LAUNCH;
+    else process.env.PHOTOSHOP_MCP_NO_LAUNCH = previousNoLaunch;
+  });
+
+  it('fails without launching when set and Photoshop is not running', async () => {
+    process.env.PHOTOSHOP_MCP_NO_LAUNCH = '1';
+    vi.spyOn(MacOSExecutor.prototype, 'isPhotoshopRunning').mockResolvedValue(false);
+    const launch = vi
+      .spyOn(MacOSExecutor.prototype, 'launchPhotoshop')
+      .mockResolvedValue(undefined);
+    await expect(new PhotoshopConnection().executeScript('return 1;')).rejects.toThrow(
+      /not running/i
+    );
+    expect(launch).not.toHaveBeenCalled();
+  });
+
+  it('launches by default when Photoshop is not running', async () => {
+    delete process.env.PHOTOSHOP_MCP_NO_LAUNCH;
+    vi.spyOn(MacOSExecutor.prototype, 'isPhotoshopRunning').mockResolvedValue(false);
+    const launch = vi
+      .spyOn(MacOSExecutor.prototype, 'launchPhotoshop')
+      .mockResolvedValue(undefined);
+    await new PhotoshopConnection().executeScript('return 1;');
+    expect(launch).toHaveBeenCalledTimes(1);
+  });
+
+  it('still launches when the value is not truthy', async () => {
+    process.env.PHOTOSHOP_MCP_NO_LAUNCH = 'false';
+    vi.spyOn(MacOSExecutor.prototype, 'isPhotoshopRunning').mockResolvedValue(false);
+    const launch = vi
+      .spyOn(MacOSExecutor.prototype, 'launchPhotoshop')
+      .mockResolvedValue(undefined);
+    await new PhotoshopConnection().executeScript('return 1;');
+    expect(launch).toHaveBeenCalledTimes(1);
+  });
+
+  it('throws from ensurePhotoshopRunning without launching when set', async () => {
+    process.env.PHOTOSHOP_MCP_NO_LAUNCH = 'yes';
+    vi.spyOn(MacOSExecutor.prototype, 'isPhotoshopRunning').mockResolvedValue(false);
+    const launch = vi
+      .spyOn(MacOSExecutor.prototype, 'launchPhotoshop')
+      .mockResolvedValue(undefined);
+    await expect(new PhotoshopConnection().ensurePhotoshopRunning()).rejects.toThrow(
+      /not running/i
+    );
+    expect(launch).not.toHaveBeenCalled();
+  });
+});

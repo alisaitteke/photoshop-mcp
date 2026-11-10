@@ -6,6 +6,12 @@ import { ScriptExecutor } from './script-executor.js';
 import { WindowsExecutor } from './windows-executor.js';
 import { MacOSExecutor } from './macos-executor.js';
 
+/** PHOTOSHOP_MCP_NO_LAUNCH=1/true/yes: fail tool calls instead of starting Photoshop (#89). */
+function noLaunchRequested(): boolean {
+  const value = process.env.PHOTOSHOP_MCP_NO_LAUNCH?.trim().toLowerCase();
+  return value === '1' || value === 'true' || value === 'yes';
+}
+
 export interface PhotoshopInfo {
   version: string;
   path: string;
@@ -143,7 +149,7 @@ export class PhotoshopConnection {
 
       const isRunning = await executor.isPhotoshopRunning();
       if (!isRunning) {
-        if (options?.launch === false) {
+        if (options?.launch === false || noLaunchRequested()) {
           throw new Error('Photoshop is not running');
         }
         this.logger.info('Photoshop not running, launching...');
@@ -172,6 +178,9 @@ export class PhotoshopConnection {
     this.applyMacOSTarget();
     const isRunning = await executor.isPhotoshopRunning();
     if (!isRunning) {
+      if (noLaunchRequested()) {
+        throw new Error('Photoshop is not running');
+      }
       this.logger.info('Launching Photoshop...');
       await executor.launchPhotoshop(this.photoshopInfo.path);
     }
