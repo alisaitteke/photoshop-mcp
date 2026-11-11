@@ -3858,8 +3858,11 @@ export const ExtendScriptSnippets = {
     }
 
     /**
-     * Firefly inpainting. Empty descriptors on removeTool/generativeFill raise
-     * Photoshop Error 8 ("Syntax error"). The recorded event is syntheticFill.
+     * Firefly inpainting for both generative fill and remove. Empty descriptors on
+     * removeTool/generativeFill raise Photoshop Error 8 ("Syntax error").
+     * generativeFill, generativeLayerFill and firefly are not real Photoshop
+     * events; they fail with "<unknown> command is not currently available" (#108).
+     * The recorded event is syntheticFill.
      * @see https://community.adobe.com/feature-requests-713/please-please-create-a-larger-generative-ai-prompt-field-1615149
      */
     function __mcp_syntheticFill(doc, prompt, workflow) {
@@ -3914,24 +3917,16 @@ export const ExtendScriptSnippets = {
         return { ok: false, code: 'generative_no_selection', message: 'Active pixel selection required for generative fill' };
       }
 
-      var baselineHist = doc.activeHistoryState.index;
-      var result = __mcp_tryGenerativeAction(
-        ['generativeFill', 'generativeLayerFill', 'firefly'],
-        function(actionId) {
-          var desc = new ActionDescriptor();
-          try { desc.putString(sTID('prompt'), ${escaped}); } catch (eP) {}
-          try { desc.putString(sTID('text'), ${escaped}); } catch (eT) {}
-          try { desc.putString(sTID('promptText'), ${escaped}); } catch (ePT) {}
-          return desc;
-        }
-      );
-
-      if (!result.ok) {
-        var msg = String(result.error || '');
-        if (/credit|quota|sign in|subscription/i.test(msg)) {
-          return { ok: false, code: 'generative_credits_exhausted', message: msg };
-        }
-        return { ok: false, code: 'generative_unavailable', message: msg };
+      var baselineHist = __mcp_historyIndex(doc);
+      var actionId = '';
+      try {
+        actionId = __mcp_syntheticFill(doc, ${escaped}, 'in_painting');
+      } catch (eFill) {
+        var msg = String(eFill.message || eFill);
+        var code = /credit|quota|sign in|subscription/i.test(msg)
+          ? 'generative_credits_exhausted'
+          : 'generative_unavailable';
+        return { ok: false, code: code, message: msg };
       }
 
       var wait = __mcp_waitGenerativeComplete(doc, baselineHist, 90000);
@@ -3939,8 +3934,8 @@ export const ExtendScriptSnippets = {
 
       return {
         ok: true,
-        summary: 'Generative fill invoked via ' + result.action_id,
-        details: { action_id: result.action_id, prompt: ${escaped}, wait: wait },
+        summary: 'Generative fill invoked via ' + actionId,
+        details: { action_id: actionId, prompt: ${escaped}, wait: wait },
         next_suggested_tool: 'photoshop_get_preview'
       };
     `;

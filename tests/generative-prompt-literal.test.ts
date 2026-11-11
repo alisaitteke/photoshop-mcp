@@ -7,13 +7,21 @@ const QUOTED_PROMPT = '"Photorealistic, highly detailed S\\u00e3o Paulo city sky
 describe('generative prompt string literals', () => {
   it('wraps generativeFill prompt in a real JS string (issue #31)', () => {
     const jsx = ExtendScriptSnippets.generativeFill(MULTI_WORD);
-    expect(jsx).toContain(`desc.putString(sTID('prompt'), ${QUOTED_PROMPT})`);
-    expect(jsx).not.toMatch(/putString\(sTID\('prompt'\), Photorealistic/);
+    expect(jsx).toContain(`__mcp_syntheticFill(doc, ${QUOTED_PROMPT}, 'in_painting')`);
+    expect(jsx).not.toMatch(/'in_painting'\), Photorealistic/);
+  });
+
+  it('routes generative fill through the real syntheticFill event (issue #108)', () => {
+    const jsx = ExtendScriptSnippets.generativeFill(MULTI_WORD);
+    expect(jsx).toContain(`__mcp_syntheticFill(doc, ${QUOTED_PROMPT}, 'in_painting')`);
+    expect(jsx).not.toContain("'generativeFill'");
+    expect(jsx).not.toContain("'generativeLayerFill'");
+    expect(jsx).not.toContain("'firefly'");
   });
 
   it('escapes caller-supplied quotes instead of treating them as delimiters', () => {
     const jsx = ExtendScriptSnippets.generativeFill('say "hi"');
-    expect(jsx).toContain(`desc.putString(sTID('prompt'), "say \\"hi\\"")`);
+    expect(jsx).toContain(`__mcp_syntheticFill(doc, "say \\"hi\\"", 'in_painting')`);
   });
 
   it('wraps generativeExpand prompt and direction', () => {
