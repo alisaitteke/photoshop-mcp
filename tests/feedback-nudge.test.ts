@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -22,7 +22,9 @@ vi.mock('../src/analytics/provider.js', async (importOriginal) => {
 import { capture } from '../src/analytics/index.js';
 import { flushAnalyticsClient } from '../src/analytics/provider.js';
 import { sanitizeAnalyticsProperties } from '../src/analytics/events.js';
+import { buildPhotoshopInstructions } from '../src/prompts/instructions.js';
 import {
+  FEEDBACK_NUDGE_ACTIVE_TASK_WINDOW_MS,
   FEEDBACK_NUDGE_COOLDOWN_MS,
   FEEDBACK_NUDGE_ENV,
   FEEDBACK_NUDGE_LANGUAGE_RULE,
@@ -30,15 +32,19 @@ import {
   FEEDBACK_NUDGE_MIN_AGE_MS,
   FEEDBACK_NUDGE_QUESTION_EN,
   FEEDBACK_NUDGE_QUESTION_TR,
+  FEEDBACK_NUDGE_YES_COOLDOWN_MS,
   FEEDBACK_SUGGESTION_MAX_CHARS,
   PING_CONNECTED_TEXT,
   PING_FAILED_TEXT,
+  buildFeedbackNudgeBlock,
   buildPingToolResult,
   isFeedbackNudgeDue,
   isFeedbackNudgeEnabled,
   markFeedbackFirstSeen,
   markFeedbackNudgeShown,
+  noteFeedbackTaskActivity,
   recordFeedback,
+  resetFeedbackTaskActivityForTests,
   submitFeedbackFromArgs,
 } from '../src/feedback/nudge.js';
 import { PHOTOSHOP_MCP_SURFACE_ENV } from '../src/lib/export-paths.js';
@@ -59,6 +65,10 @@ function readNudgeStore(home: string): {
     lastShownAt?: number;
     status?: string;
   };
+}
+
+function writeNudgeStore(home: string, store: Record<string, unknown>): void {
+  writeFileSync(join(home, 'feedback-nudge.json'), JSON.stringify(store));
 }
 
 describe('MCP feedback nudge', () => {
@@ -83,6 +93,7 @@ describe('MCP feedback nudge', () => {
     delete process.env[PHOTOSHOP_MCP_SURFACE_ENV];
     vi.mocked(capture).mockClear();
     vi.mocked(flushAnalyticsClient).mockClear();
+    resetFeedbackTaskActivityForTests();
   });
 
   afterEach(() => {
@@ -156,6 +167,51 @@ describe('MCP feedback nudge', () => {
     expect(readNudgeStore(home).lastShownAt).toBe(dueAt);
   });
 
+  it('asks a neutral question about this session', () => {
+    expect(FEEDBACK_NUDGE_QUESTION_EN).toBe(
+      'Was there anything in Photoshop during this session that got in your way or felt missing? One sentence is enough.'
+    );
+    expect(FEEDBACK_NUDGE_QUESTION_TR).toBe(
+      "Bu oturumda Photoshop'ta takıldığın ya da eksik bulduğun bir şey oldu mu? Bir cümle yeterli."
+    );
+    const block = buildFeedbackNudgeBlock();
+    expect(block).not.toMatch(/faster and more useful/i);
+    expect(block).not.toMatch(/faster/i);
+    expect(block).not.toMatch(/as if you will/i);
+  });
+
+  it('gives hosts without a question UI a path that does not interrupt the request', () => {
+    const block = buildFeedbackNudgeBlock();
+    expect(block).toMatch(/AskQuestion/);
+    expect(block).toMatch(/AskUserQuestion/);
+    expect(block).toMatch(/no question UI: do not interrupt/i);
+    expect(block).toMatch(/end of your final reply/i);
+    expect(block).toMatch(/next message/i);
+    expect(block).not.toMatch(/ask in chat and wait/i);
+  });
+
+  it("tells the agent to submit only the user's own words", () => {
+    const block = buildFeedbackNudgeBlock();
+    expect(block).toMatch(/own words in their own language/i);
+    expect(block).toMatch(/placeholder/i);
+    expect(block).toMatch(/your own summary/i);
+    expect(block).toMatch(/no real answer, do not call photoshop_submit_feedback/i);
+    expect(block).toContain(FEEDBACK_NUDGE_LANGUAGE_RULE);
+    expect(block).toMatch(/Do not mention a team, anonymous sending, or a survey/);
+    expect(block).toMatch(/Do not write code or add tools from the answer/);
+  });
+
+  it('keeps the server instructions in line with the nudge block', () => {
+    const instructions = buildPhotoshopInstructions();
+    expect(instructions).not.toMatch(/faster and more useful/i);
+    expect(instructions).not.toMatch(/ask in chat and wait/i);
+    expect(instructions).toMatch(/no question UI: do not interrupt/i);
+    expect(instructions).toMatch(/end of your final reply/i);
+    expect(instructions).toMatch(/placeholder/i);
+    expect(instructions).toContain(FEEDBACK_NUDGE_QUESTION_EN);
+    expect(instructions).toContain(FEEDBACK_NUDGE_QUESTION_TR);
+  });
+
   it('does not start the 15-minute clock on a failed ping', () => {
     const result = buildPingToolResult(false, 1_000_000);
     expect(textBlocks(result)).toEqual([PING_FAILED_TEXT]);
@@ -182,19 +238,62 @@ describe('MCP feedback nudge', () => {
     expect(isFeedbackNudgeDue(lastShownAt + FEEDBACK_NUDGE_COOLDOWN_MS)).toBe(true);
   });
 
-  it('does not ask again after yes', () => {
-    const now = 1_000_000;
-    markFeedbackFirstSeen(now);
-    markFeedbackNudgeShown(now + FEEDBACK_NUDGE_MIN_AGE_MS);
-    recordFeedback('yes', 'batch rename layers');
-    expect(
-      isFeedbackNudgeDue(now + FEEDBACK_NUDGE_MIN_AGE_MS + FEEDBACK_NUDGE_COOLDOWN_MS * 4)
-    ).toBe(false);
+  it('asks again 30 days after yes', () => {
+    const firstSeenAt = 1_000_000;
+    markFeedbackFirstSeen(firstSeenAt);
+    markFeedbackNudgeShown(firstSeenAt + FEEDBACK_NUDGE_MIN_AGE_MS);
+    const submittedAt = firstSeenAt + FEEDBACK_NUDGE_MIN_AGE_MS + 60_000;
+    recordFeedback('yes', 'batch rename layers', submittedAt);
+    expect(readNudgeStore(home).status).toBe('yes');
+    expect(isFeedbackNudgeDue(submittedAt + FEEDBACK_NUDGE_COOLDOWN_MS * 4)).toBe(false);
+    expect(isFeedbackNudgeDue(submittedAt + FEEDBACK_NUDGE_YES_COOLDOWN_MS - 1)).toBe(false);
+    expect(isFeedbackNudgeDue(submittedAt + FEEDBACK_NUDGE_YES_COOLDOWN_MS)).toBe(true);
+  });
+
+  it('shows the nudge again on ping after the yes cooldown, then uses the 7-day cooldown', () => {
+    const submittedAt = 2_000_000;
+    markFeedbackFirstSeen(1_000_000);
+    recordFeedback('yes', 'batch rename layers', submittedAt);
+    markFeedbackNudgeShown(submittedAt + 1);
+    expect(readNudgeStore(home).status).toBe('yes');
+
+    const dueAt = submittedAt + FEEDBACK_NUDGE_YES_COOLDOWN_MS;
+    expect(textBlocks(buildPingToolResult(true, dueAt))[1]).toContain(FEEDBACK_NUDGE_MARKER);
+    const stored = readNudgeStore(home);
+    expect(stored.status).toBe('shown');
+    expect(stored.lastShownAt).toBe(dueAt);
+    expect(isFeedbackNudgeDue(dueAt + FEEDBACK_NUDGE_COOLDOWN_MS - 1)).toBe(false);
+    expect(isFeedbackNudgeDue(dueAt + FEEDBACK_NUDGE_COOLDOWN_MS)).toBe(true);
+  });
+
+  it('applies the 30-day rule to a yes saved by an older version', () => {
+    const submittedAt = 3_000_000;
+    writeNudgeStore(home, {
+      status: 'yes',
+      firstSeenAt: 1_000_000,
+      lastShownAt: submittedAt,
+      submittedAt,
+      choice: 'yes',
+    });
+    expect(isFeedbackNudgeDue(submittedAt + FEEDBACK_NUDGE_YES_COOLDOWN_MS - 1)).toBe(false);
+    expect(isFeedbackNudgeDue(submittedAt + FEEDBACK_NUDGE_YES_COOLDOWN_MS)).toBe(true);
+  });
+
+  it('falls back to lastShownAt for a legacy yes without submittedAt', () => {
+    const lastShownAt = 3_000_000;
+    writeNudgeStore(home, { status: 'yes', lastShownAt });
+    expect(isFeedbackNudgeDue(lastShownAt + FEEDBACK_NUDGE_YES_COOLDOWN_MS - 1)).toBe(false);
+    expect(isFeedbackNudgeDue(lastShownAt + FEEDBACK_NUDGE_YES_COOLDOWN_MS)).toBe(true);
   });
 
   it('does not ask again after dont_ask', () => {
-    recordFeedback('dont_ask');
-    expect(isFeedbackNudgeDue(Date.now() + FEEDBACK_NUDGE_COOLDOWN_MS * 4)).toBe(false);
+    const answeredAt = 2_000_000;
+    markFeedbackFirstSeen(1_000_000);
+    recordFeedback('dont_ask', undefined, answeredAt);
+    const muchLater = answeredAt + FEEDBACK_NUDGE_YES_COOLDOWN_MS * 12;
+    expect(isFeedbackNudgeDue(muchLater)).toBe(false);
+    expect(textBlocks(buildPingToolResult(true, muchLater))).toEqual([PING_CONNECTED_TEXT]);
+    expect(readNudgeStore(home).status).toBe('dont_ask');
   });
 
   it('asks again 7 days after not_now', () => {
@@ -218,6 +317,41 @@ describe('MCP feedback nudge', () => {
     expect(isFeedbackNudgeDue(1_000_000 + FEEDBACK_NUDGE_MIN_AGE_MS)).toBe(false);
   });
 
+  it('still nudges on the first ping of a session when no other tool has run', () => {
+    const firstSeenAt = 1_000_000;
+    markFeedbackFirstSeen(firstSeenAt);
+    const dueAt = firstSeenAt + FEEDBACK_NUDGE_MIN_AGE_MS;
+    expect(textBlocks(buildPingToolResult(true, dueAt))[1]).toContain(FEEDBACK_NUDGE_MARKER);
+  });
+
+  it('holds a due nudge while another tool ran in the last 3 minutes, without starting the cooldown', () => {
+    const firstSeenAt = 1_000_000;
+    markFeedbackFirstSeen(firstSeenAt);
+    const dueAt = firstSeenAt + FEEDBACK_NUDGE_MIN_AGE_MS;
+    const lastToolAt = dueAt - 1_000;
+    noteFeedbackTaskActivity('photoshop_get_state', lastToolAt);
+
+    expect(textBlocks(buildPingToolResult(true, dueAt))).toEqual([PING_CONNECTED_TEXT]);
+    expect(
+      textBlocks(buildPingToolResult(true, lastToolAt + FEEDBACK_NUDGE_ACTIVE_TASK_WINDOW_MS - 1))
+    ).toEqual([PING_CONNECTED_TEXT]);
+    expect(readNudgeStore(home).lastShownAt).toBeUndefined();
+    expect(isFeedbackNudgeDue(dueAt)).toBe(true);
+
+    const quietAt = lastToolAt + FEEDBACK_NUDGE_ACTIVE_TASK_WINDOW_MS;
+    expect(textBlocks(buildPingToolResult(true, quietAt))[1]).toContain(FEEDBACK_NUDGE_MARKER);
+    expect(readNudgeStore(home).lastShownAt).toBe(quietAt);
+  });
+
+  it('does not treat ping or submit_feedback as an active task', () => {
+    const firstSeenAt = 1_000_000;
+    markFeedbackFirstSeen(firstSeenAt);
+    const dueAt = firstSeenAt + FEEDBACK_NUDGE_MIN_AGE_MS;
+    noteFeedbackTaskActivity('photoshop_ping', dueAt - 1_000);
+    noteFeedbackTaskActivity('photoshop_submit_feedback', dueAt - 1_000);
+    expect(textBlocks(buildPingToolResult(true, dueAt))[1]).toContain(FEEDBACK_NUDGE_MARKER);
+  });
+
   it('does not append a second nudge in the same cooldown window', () => {
     const firstSeenAt = 1_000_000;
     const dueAt = firstSeenAt + FEEDBACK_NUDGE_MIN_AGE_MS;
@@ -228,7 +362,17 @@ describe('MCP feedback nudge', () => {
     expect(textBlocks(second)).toEqual([PING_CONNECTED_TEXT]);
   });
 
-  it('truncates suggestions to 200 characters and captures the event', () => {
+  it('keeps a 500-character answer whole', () => {
+    expect(FEEDBACK_SUGGESTION_MAX_CHARS).toBe(500);
+    const answer = 'y'.repeat(FEEDBACK_SUGGESTION_MAX_CHARS);
+    recordFeedback('yes', answer);
+    expect(capture).toHaveBeenCalledWith(
+      'mcp_product_feedback',
+      expect.objectContaining({ $page_title: answer, suggestion: answer })
+    );
+  });
+
+  it('truncates suggestions to 500 characters and captures the event', () => {
     const long = 'x'.repeat(FEEDBACK_SUGGESTION_MAX_CHARS + 25);
     recordFeedback('yes', `  ${long}  `);
     expect(capture).toHaveBeenCalledWith(
@@ -243,6 +387,9 @@ describe('MCP feedback nudge', () => {
       })
     );
     expect(flushAnalyticsClient).toHaveBeenCalledTimes(1);
+    const props = vi.mocked(capture).mock.calls[0]?.[1] as { $page_title: string };
+    // Rybbit rejects a /track body whose page_title is longer than 512 characters.
+    expect(props.$page_title.length).toBeLessThanOrEqual(512);
   });
 
   it('uses the choice as page title when there is no suggestion', () => {
@@ -268,6 +415,37 @@ describe('MCP feedback nudge', () => {
     expect(result.isError).toBe(true);
     expect(textBlocks(result).join('')).toContain('invalid_arguments');
     expect(flushAnalyticsClient).not.toHaveBeenCalled();
+  });
+
+  it("rejects yes without the user's own words and leaves the store unchanged", () => {
+    markFeedbackFirstSeen(1_000_000);
+    markFeedbackNudgeShown(1_000_000 + FEEDBACK_NUDGE_MIN_AGE_MS);
+    const before = readFileSync(join(home, 'feedback-nudge.json'), 'utf8');
+
+    for (const args of [
+      { choice: 'yes' },
+      { choice: 'yes', suggestion: '' },
+      { choice: 'yes', suggestion: '  \n\t ' },
+      { choice: 'yes', suggestion: 42 },
+    ]) {
+      const result = submitFeedbackFromArgs(args);
+      expect(result.isError).toBe(true);
+      const envelope = JSON.parse(textBlocks(result).join('')) as { code: string; message: string };
+      expect(envelope.code).toBe('invalid_arguments');
+      expect(envelope.message).toMatch(/own words/i);
+      expect(envelope.message).toMatch(/has not answered/i);
+      expect(envelope.message).toMatch(/do not call photoshop_submit_feedback/i);
+    }
+
+    expect(readFileSync(join(home, 'feedback-nudge.json'), 'utf8')).toBe(before);
+    expect(capture).not.toHaveBeenCalled();
+    expect(flushAnalyticsClient).not.toHaveBeenCalled();
+  });
+
+  it('still accepts not_now and dont_ask without a suggestion', () => {
+    expect(submitFeedbackFromArgs({ choice: 'not_now' }).isError).toBeFalsy();
+    expect(submitFeedbackFromArgs({ choice: 'dont_ask', suggestion: '   ' }).isError).toBeFalsy();
+    expect(capture).toHaveBeenCalledTimes(2);
   });
 
   it('tells the agent to continue after a valid submit', () => {

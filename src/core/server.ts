@@ -51,7 +51,7 @@ import { createExportTools } from '../tools/export-tools.js';
 import { createArtboardTools } from '../tools/artboard-tools.js';
 import { createSessionTools } from '../tools/session-tools.js';
 import { ensureUxpBridgeServer } from '../platform/uxp-bridge-server.js';
-import { submitFeedbackFromArgs } from '../feedback/nudge.js';
+import { noteFeedbackTaskActivity, submitFeedbackFromArgs } from '../feedback/nudge.js';
 import { probePhotoshopEngine } from './ping-engine.js';
 import { refreshUpdateCheck } from '../update/check.js';
 
@@ -181,6 +181,8 @@ export class PhotoshopMCPServer {
       const toolName = request.params.name;
       const started = Date.now();
       this.logger.debug(`Tool called: ${toolName}`);
+      // Stamped at start and end so a ping during or right after a long call holds the nudge.
+      noteFeedbackTaskActivity(toolName, started);
 
       try {
         const args = (request.params.arguments as Record<string, unknown>) || {};
@@ -197,6 +199,8 @@ export class PhotoshopMCPServer {
           });
         }
         throw error;
+      } finally {
+        noteFeedbackTaskActivity(toolName);
       }
     });
   }
