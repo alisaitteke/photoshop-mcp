@@ -1387,6 +1387,18 @@ export const ExtendScriptSnippets = {
       throw new Error('No active document');
     }
     var doc = app.activeDocument;
+    ${
+      save
+        ? `// A never-saved document has no file; SAVECHANGES would open the
+    // Save As dialog, which DialogModes.NO does not suppress and no script
+    // can dismiss (#117).
+    var hasFile = false;
+    try { hasFile = !!doc.fullName; } catch (eNoFile) {}
+    if (!hasFile) {
+      throw new Error('document_not_saved: this document has never been saved, so save=true would open the Save As dialog and block Photoshop. Call photoshop_save_document with a path first, or close with save=false.');
+    }`
+        : ''
+    }
     doc.close(${save ? 'SaveOptions.SAVECHANGES' : 'SaveOptions.DONOTSAVECHANGES'});
     return { closed: true };
   `,

@@ -104,6 +104,13 @@ Error recovery contract
     "Scratch Disk Low", and then freeze so a script times out. Free at least
     100 GB on the primary scratch disk (the OS drive by default), then restart
     Photoshop. Ping and \`get_state\` wait until that restart.
+  - \`photoshop_starting\` — Photoshop is open but its scripting engine
+    cannot load scripts yet (ExtendScript "Error 52: I/O error"). Wait a few
+    seconds and call \`photoshop_ping\` again until it succeeds. Do not treat
+    it as a broken install.
+  - If \`photoshop_ping\` keeps returning \`extendscript_timeout\`, a dialog
+    may be open in Photoshop (a save prompt or a warning). Scripts cannot
+    close it; ask the user to dismiss it, then ping again.
   - \`artboard_not_found\` — call \`photoshop_list_artboards\` or
     \`photoshop_create_artboard\`.
   - \`font_not_found\` — the name is not in Photoshop's font list. Call

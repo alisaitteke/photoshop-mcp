@@ -46,6 +46,7 @@ export function createActionTools(connection: PhotoshopConnection): ToolDefiniti
           'a bare trailing expression returns undefined. Example: `return { ok: true };` ' +
           'Objects are serialized with toSource() and parsed automatically on macOS and Windows.\n' +
           'Long scripts: pass timeout_ms (up to 600000) so the default 30s budget does not kill the job.\n' +
+          'Dialogs: scripts run with app.displayDialogs = DialogModes.NO, but some prompts still appear and block Photoshop until a person dismisses them. Always pass SaveOptions to doc.close() (a bare close() asks to save), and use doc.saveAs(file, options) instead of doc.save() on a document that has never been saved.\n' +
           'Preconditions: valid ExtendScript; active document if script expects one. Side effects: depends on code.',
         inputSchema: {
           type: 'object',

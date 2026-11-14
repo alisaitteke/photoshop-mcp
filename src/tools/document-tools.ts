@@ -160,7 +160,7 @@ export function createDocumentTools(connection: PhotoshopConnection): ToolDefini
           'Use when: the user is done with a file, or when cleaning up extra open tabs after photoshop_list_documents.\n' +
           'Do NOT use when: you only need to switch tabs — use photoshop_set_active_document.\n\n' +
           'Returns: confirmation that the document closed.\n' +
-          'Preconditions: target document is open. Side effects: closes that tab; save=true writes unsaved changes first.',
+          'Preconditions: target document is open. save=true needs a document that already has a file on disk; a never-saved document fails with invalid_arguments instead of opening the Save As dialog — call photoshop_save_document with a path first. Side effects: closes that tab; save=true writes unsaved changes first.',
         inputSchema: {
           type: 'object',
           properties: {

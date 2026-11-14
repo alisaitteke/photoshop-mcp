@@ -95,6 +95,8 @@ Examples: [examples/cursor-config.json](examples/cursor-config.json), [examples/
 | ------- | --- |
 | Photoshop not found | Start Photoshop; set `PHOTOSHOP_PATH` if non-standard install |
 | Tool times out | Retry `photoshop_ping` until it succeeds. Ping runs a short script and returns `extendscript_timeout` while Photoshop is still busy; only then call `get_state`. Pass `timeout_ms` on `photoshop_execute_script` (max 600s), or set `PHOTOSHOP_SCRIPT_TIMEOUT`; batch recipes already use 600s. |
+| `photoshop_starting` | Photoshop is still starting and returned `Error 52: I/O error`. Wait a few seconds, then ping again until it succeeds. |
+| Ping always times out | A dialog may be open in Photoshop (save prompt, warning). Scripts cannot close it; ask the user to dismiss it, then ping again. |
 | Scratch disk full | `scratch_disk_full` means Photoshop froze or refused the command because the scratch disk is full. Free at least 100 GB on the OS drive (the default scratch disk), then restart Photoshop. Ping again only after that restart. |
 | Font not in the list | `font_not_found`. Photoshop only lists fonts installed for this user. `photoshop_install_font` copies a `.ttf`/`.otf`/`.ttc` the user already has into the current-user font folder and calls `app.refreshFonts()` so an open Photoshop sees it. Use the returned `postScriptName`. |
 | `generative_unavailable` / `version_unsupported` | Call `get_capabilities`; feature may need newer Photoshop or Adobe login |

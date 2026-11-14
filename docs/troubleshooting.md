@@ -51,6 +51,17 @@ photoshop_execute_script({
 })
 ```
 
+### A dialog in Photoshop blocks every call
+
+Every script runs with `app.displayDialogs = DialogModes.NO`, but a few prompts still appear: the save prompt from a bare `doc.close()`, or Save As for `doc.save()` on a document that was never saved. While a dialog is open, Photoshop accepts no scripts, so every tool, including `photoshop_ping`, ends in `extendscript_timeout`. No script can close the dialog. Dismiss it in Photoshop, then ping again.
+
+- `photoshop_close_document` with `save: true` refuses a never-saved document (`invalid_arguments`) instead of opening Save As. Save it with `photoshop_save_document` first.
+- In `photoshop_execute_script`, always pass `SaveOptions` to `close()` and use `saveAs(file, options)` for new documents.
+
+### `photoshop_starting` (Error 52: I/O error)
+
+Photoshop is open but has not finished starting, so its scripting engine cannot load the script file yet. ExtendScript reports `Error 52: I/O error`. Wait a few seconds and call `photoshop_ping` again until it succeeds.
+
 ### Scratch disk full
 
 Photoshop shows "Could not initialize Photoshop because the scratch disks are full", "Could not complete your request because the scratch disks are full", or "Scratch Disk Low", then freezes or refuses to launch. A script that does run reports ExtendScript error `-25010`. The MCP envelope code is `scratch_disk_full`.
