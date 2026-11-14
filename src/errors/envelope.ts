@@ -31,6 +31,7 @@ export type PhotoshopErrorCode =
   | 'photoshop_unreachable'
   | 'automation_permission_denied'
   | 'photoshop_app_not_resolved'
+  | 'photoshop_starting'
   | 'unknown';
 
 export interface PhotoshopErrorEnvelope {
@@ -46,6 +47,11 @@ const ERROR_PATTERNS: Array<{
   code: PhotoshopErrorCode;
   suggested_next_tool?: string;
 }> = [
+  {
+    pattern: /document_not_saved/i,
+    code: 'invalid_arguments',
+    suggested_next_tool: 'photoshop_save_document',
+  },
   {
     pattern: /document_not_found/i,
     code: 'document_not_found',
@@ -184,9 +190,32 @@ const APPLE_EVENT_ERRORS: Array<{
   },
 ];
 
+/**
+ * ExtendScript error 52 from `$.evalFile` before Photoshop's scripting engine
+ * is ready (#120). The same error raised inside the wrapper carries
+ * "(number: 52)"; that one is a real file error in the script, not startup.
+ */
+const STARTUP_IO_ERROR_PATTERN = /\berror 52\b|\bI\/O error\b/i;
+const IN_SCRIPT_ERROR_52_PATTERN = /\(number:\s*52\)/;
+
+const STARTUP_HINT =
+  'Photoshop is still starting and its scripting engine cannot load scripts yet. Wait a few seconds, then call photoshop_ping again until it succeeds.';
+
+function isPhotoshopStartingError(message: string): boolean {
+  return STARTUP_IO_ERROR_PATTERN.test(message) && !IN_SCRIPT_ERROR_52_PATTERN.test(message);
+}
+
 export function classifyError(message: string): PhotoshopErrorEnvelope {
   if (SCRATCH_DISK_FULL_PATTERN.test(message)) {
     return scratchDiskFullEnvelope(message);
+  }
+  if (isPhotoshopStartingError(message)) {
+    return {
+      ok: false,
+      code: 'photoshop_starting',
+      message: `${message.trim()} ${STARTUP_HINT}`,
+      suggested_next_tool: 'photoshop_ping',
+    };
   }
   if (/font_not_found/i.test(message)) {
     return {
@@ -247,7 +276,7 @@ export function refineTimeoutEnvelope(
   if (toolName === 'photoshop_ping') {
     return {
       ...envelope,
-      message: `${envelope.message} Photoshop is still running a previous script. Retry photoshop_ping until it succeeds before photoshop_get_state or photoshop_get_layers.`,
+      message: `${envelope.message} Photoshop is still running a previous script, or a dialog is open in Photoshop (a save prompt or a warning). Scripts cannot close dialogs. Retry photoshop_ping until it succeeds before photoshop_get_state or photoshop_get_layers. If ping keeps timing out, ask the user to check Photoshop for an open dialog and dismiss it.`,
       suggested_next_tool: 'photoshop_ping',
     };
   }

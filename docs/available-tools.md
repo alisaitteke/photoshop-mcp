@@ -9,7 +9,7 @@ Reference for all atomic `photoshop_*` MCP tools exposed by this server (paramet
 ### Connection & Info
 
 #### `photoshop_ping`
-Run a short script in Photoshop. Success means the scripting engine is idle. While a previous script is still running, the call returns `extendscript_timeout` instead of succeeding; retry ping before `photoshop_get_state` or `photoshop_get_layers`. If the OS drive has under 10 GB free, a timeout is reported as `scratch_disk_full` instead. Does not launch Photoshop when it is not running.
+Run a short script in Photoshop. Success means the scripting engine is idle. While a previous script is still running, the call returns `extendscript_timeout` instead of succeeding; retry ping before `photoshop_get_state` or `photoshop_get_layers`. If the OS drive has under 10 GB free, a timeout is reported as `scratch_disk_full` instead. While Photoshop is still starting and its scripting engine cannot load scripts (`Error 52: I/O error`), returns `photoshop_starting`; wait a few seconds and ping again. If ping never succeeds, a dialog may be open in Photoshop; scripts cannot close it, so the user has to. Does not launch Photoshop when it is not running.
 
 ```javascript
 // Example: Check if Photoshop is accessible
@@ -159,7 +159,7 @@ photoshop_save_document({
 Close a document tab. Defaults to the active document; pass `document_id` from `photoshop_list_documents` to close a specific file.
 
 **Parameters:**
-- `save` (boolean, optional): Save before closing (default: false)
+- `save` (boolean, optional): Save before closing (default: false). A document that has never been saved fails with `invalid_arguments` instead of opening the Save As dialog; call `photoshop_save_document` with a path first.
 - `document_id` (number, optional): Close that open document instead of the front tab
 
 ```javascript
